@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>作者简介</title>
+<link rel="stylesheet" href="styles.css">
+    <style>
+        /* 全局重置样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+ 
+        body {
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+ 
+        .top-nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+ 
+        .top-nav li a {
+            text-decoration: none;
+            color: #007BFF;
+            font-size: 1rem;
+            padding: 5px 10px;
+            border: 1px solid #007BFF;
+            border-radius: 5px;
+        }
+ 
+        .top-nav li a:hover {
+            background-color: #007BFF;
+            color: #fff;
+        }
+ 
+        .about-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+ 
+        .about-content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+ 
+        .profile-image {
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+            border-radius: 50%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+ 
+        .profile-text {
+            flex: 1;
+            text-align: left;
+        }
+ 
+        .profile-text h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+ 
+        .profile-text h2 {
+            font-size: 1.5rem;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+ 
+        .profile-text p {
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+ 
+        .profile-text ul {
+            padding-left: 20px;
+            margin-bottom: 10px;
+        }
+ 
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .about-content {
+                flex-direction: column;
+                align-items: center;
+            }
+ 
+            .profile-image {
+                max-width: 200px;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="top-nav">
+        <ul>
+            <li><a href="index.html"> 返回首页</a></li>
+        </ul>
+    </nav>
+ 
+    <div class="about-container">
+        <div class="about-content">
+            <img src="https://6948.kstore.space/ckn.png"  alt="我的照片" class="profile-image">
+            <div class="profile-text">
+                <h1>关于作者</h1>
+                <p>我的笔名 “三省轩主”，取自《论语》里 “吾日三省吾身” 这句话。它像一盏明灯，时刻提醒我审视内心，在岁月长河里追寻自我完善的方向。​
+我生于烟雨朦胧的南方，却在北方的黄土地上长大。南北迥异的水土与文化，在我生命里交织碰撞，打磨出我既细腻又豪爽的性子。儿时看惯了江南的小桥流水，转眼又被北方的辽阔大地震撼，这份奇妙的经历，让我的视野比旁人多了几分开阔。​
+年轻时，我毅然投身军旅。大漠孤烟的苍凉、长河落日的壮美，都成了我生命中最深刻的印记。在那片广袤天地间，我深刻体会到自然的雄浑与生命的坚韧，也对 “家国” 二字有了更深的理解。作为侦察兵，每一次执行任务都是对身心的极致考验。在一次次摸爬滚打中，我不仅锻炼出敏锐的观察力，更铸就了坚不可摧的意志力。那段在军营的日子，汗水与热血交织，艰苦与荣耀并存，是我此生最珍贵的财富。​
+退伍后，我进入政府部门工作。身份转变了，但军营里结下的战友情谊从未褪色。闲暇时，我总爱和老战友们聚一聚，聊聊当年的趣事，谈谈各自的生活。看着他们熟悉的面孔，听着那些带着岁月温度的话语，仿佛又回到了那段并肩作战的青春岁月。这份情谊，是支撑我走过人生风雨的精神支柱。​
+如今，我已退休多年，享受着副师级待遇，生活安稳又平静。但我并未停下脚步，而是将多年来的人生感悟化作笔下的文字。每当伏案写作，那些过往的片段就如潮水般涌来：江南的杏花春雨、北方的漫天飞雪、军营里的嘹亮号角、战友间的欢声笑语…… 这些文字不仅是对过去的追忆，更是我对人生哲理的思索与沉淀。​
+闲暇时，我常坐在书房里，轻轻翻阅自己的作品。指尖抚过泛黄的纸页，字里行间流淌着我对生活的热爱，对理想的执着。岁月虽已让我满头银发，但那份对生命的热忱，永远不会褪色。我愿继续用文字，记录下生命的每一份感动，让这些感悟在岁月中传承下去。</p>
+ 
+      
+            </div>
+        </div>
+    </div>
+</body>
+</html>

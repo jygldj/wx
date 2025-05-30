@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=1.0">
+    <meta name="description" content="张三的个人文学创作集，包含诗词、散文、杂记等原创作品">
+    <meta name="keywords" content="诗词,散文,杂记,文学创作">
+    <link rel="canonical" href="https://jygldj.github.io/"  />
+    
+    <title>张三文学阁 | 诗词散文杂记合集</title>
+    <link rel="stylesheet" href="styles.css"> 
+    <link rel="preload" href="script.js"  as="script">
+    <link rel="apple-touch-icon" href="images/apple-touch-icon.png"> 
+</head>
+ 
+<body>
+    <!-- 顶部导航 -->
+    <header>
+        <nav class="top-nav" aria-label="主导航">
+            <ul>
+                <li><a href="#" data-category="poetry" aria-current="page">诗词集</a></li>
+                <li><a href="#" data-category="prose">散文集</a></li>
+                <li><a href="#" data-category="essays">杂记录</a></li>
+                <li><a href="jianjie.html"  aria-label="作者简介">简介</a></li>
+                <li><a href="submit.html"  aria-label="投稿指南">投稿</a></li>
+            </ul>
+        </nav>
+    </header>
+ 
+    <!-- 主体内容 -->
+    <div class="container">
+        <!-- 左侧目录 -->
+        <aside class="sidebar" aria-labelledby="category-title">
+            <h2 id="category-title">诗词集</h2>
+            <div class="loading" id="sidebar-loading">正在加载目录...</div>
+            <ul id="article-list" aria-live="polite"></ul>
+        </aside>
+ 
+        <!-- 右侧内容 -->
+        <main class="content" aria-live="polite">
+            <div class="loading" id="content-loading">请从左侧选择文章</div>
+            <article id="article-content" class="markdown-body"></article>
+        </main>
+    </div>
+ 
+    <!-- 页脚 -->
+    <footer>
+        <p>© 2023 张三文学阁 | 
+            <a href="#top" class="back-to-top">返回顶部</a>
+        </p>
+    </footer>
+ 
+    <!-- 异步加载脚本 -->
+    <script src="script.js"  async></script>
+</body>
+</html>

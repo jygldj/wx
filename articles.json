@@ -1,0 +1,33 @@
+{
+    "poetry": [
+        {
+            "title": "闹元宵",
+            "filename": "nyx.md",
+            "date": "2023-02-05"
+        },
+        {
+            "title": "秋日游宛湖",
+            "filename": "qrywh.md",
+            "date": "2023-10-12"
+        },
+        {
+            "title": "自得其乐颂",
+            "filename": "zdqls.md",
+            "date": "2023-07-15"
+        }
+    ],
+    "essays": [
+        {
+            "title": "工作安排",
+            "filename": "2003gzap.md",
+            "date": "2003-11-08"
+        }
+    ],
+    "prose": [
+        {
+            "title": "长廊序言",
+            "filename": "clxuy.md",
+            "date": "2022-05-30"
+        }
+    ]
+}

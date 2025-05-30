@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>投稿 - 个人文学网站</title>
+    <link rel="stylesheet" href="styles.css"> 
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <nav class="top-nav">
+        <ul>
+            <li><a href="index.html"> 返回首页</a></li>
+        </ul>
+    </nav>
+ 
+    <div class="submit-container">
+        <h1>作品投稿</h1>
+        <form id="submission-form">
+            <div class="form-group">
+                <label for="category">作品类别:</label>
+                <select id="category" name="category" required>
+                    <option value="poetry">诗词</option>
+                    <option value="prose">散文</option>
+                    <option value="essays">杂记</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="title">题目:</label>
+                <input type="text" id="title" name="title" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="content">正文:</label>
+                <textarea id="content" name="content" rows="15" required></textarea>
+                <p>或上传文件: <input type="file" id="file-upload" accept=".txt,.doc,.docx"></p>
+            </div>
+            
+            <div class="form-group">
+                <label for="submit-date">提交时间:</label>
+                <input type="datetime-local" id="submit-date" name="submit-date" required>
+            </div>
+            
+            <button type="submit" class="submit-btn">提交作品</button>
+        </form>
+    </div>
+ 
+    <script src="script.js"></script> 
+</body>
+</html>

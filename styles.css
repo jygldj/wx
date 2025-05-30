@@ -1,0 +1,266 @@
+/* 张三文学阁 - 终极CSS真经 */
+/* 配合index.html 和script.js 使用 */
+ 
+:root {
+    /* 主色系 (可自行调整) */
+    --primary-color: #8b4513;        /* 主色 - 檀木棕 */
+    --secondary-color: #a0522d;      /* 次色 - 赭石褐 */
+    --background-color: #fff9f0;     /* 背景 - 羊皮纸 */
+    --text-color: #333;              /* 正文 - 墨色 */
+    --light-gray: #f5f5f5;           /* 浅灰 */
+    --border-color: #ddd;            /* 边框 */
+    --error-color: #dc3545;          /* 错误红 */
+    --success-color: #28a745;        /* 成功绿 */
+    
+    /* 字体设置 */
+    --font-main: 'SimSun', '宋体', serif;
+    --font-poetry: 'STKaiti', '楷体', cursive;
+    --font-code: 'Courier New', monospace;
+    
+    /* 间距 */
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 2rem;
+}
+ 
+/* 基础净化 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+ 
+html {
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
+    scroll-behavior: smooth;
+}
+ 
+body {
+    font-family: var(--font-main);
+    line-height: 1.8;
+    color: var(--text-color);
+    background-color: var(--background-color);
+    padding: var(--space-md);
+    max-width: 1200px;
+    margin: 0 auto;
+}
+ 
+/* 导航栏 - 如金刚杵般坚固 */
+.top-nav {
+    background-color: var(--primary-color);
+    color: white;
+    padding: var(--space-md);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+ 
+.top-nav ul {
+    display: flex;
+    list-style: none;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+}
+ 
+.top-nav a {
+    color: white;
+    text-decoration: none;
+    padding: var(--space-sm) var(--space-md);
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+    border-radius: 4px;
+}
+ 
+.top-nav a:hover {
+    background-color: rgba(255,255,255,0.2);
+}
+ 
+/* 主体布局 - 如太极阴阳 */
+.container {
+    display: flex;
+    min-height: calc(100vh - 100px);
+    margin-top: var(--space-md);
+    gap: var(--space-lg);
+}
+ 
+/* 侧边栏 - 如经书架 */
+.sidebar {
+    width: 280px;
+    background-color: white;
+    padding: var(--space-md);
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    height: fit-content;
+}
+ 
+#category-title {
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-bottom: 2px solid var(--primary-color);
+}
+ 
+#article-list {
+    list-style: none;
+}
+ 
+#article-list li {
+    margin-bottom: var(--space-sm);
+    transition: all 0.3s;
+}
+ 
+#article-list a {
+    color: var(--text-color);
+    text-decoration: none;
+    display: block;
+    padding: var(--space-sm);
+    border-radius: 4px;
+}
+ 
+#article-list a:hover {
+    background-color: var(--light-gray);
+    transform: translateX(5px);
+}
+ 
+.date {
+    color: #666;
+    font-size: 0.8rem;
+    margin-left: var(--space-sm);
+}
+ 
+/* 内容区 - 如展开的经卷 */
+.content {
+    flex: 1;
+    background-color: white;
+    padding: var(--space-lg);
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.08);
+}
+ 
+.markdown-body {
+    font-size: 1.1rem;
+    line-height: 2;
+    color: var(--text-color);
+}
+ 
+.markdown-body h1 {
+    color: var(--primary-color);
+    margin: var(--space-lg) 0 var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--border-color);
+}
+ 
+.markdown-body h2 {
+    color: var(--secondary-color);
+    margin: var(--space-md) 0 var(--space-sm);
+}
+ 
+.markdown-body p {
+    margin-bottom: var(--space-md);
+    text-align: justify;
+    text-justify: inter-ideograph;
+}
+ 
+.markdown-body img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    margin: var(--space-md) 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+ 
+/* 加载状态 - 如转经轮 */
+.loading {
+    text-align: center;
+    padding: var(--space-lg);
+    color: var(--primary-color);
+}
+ 
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+ 
+.loading::after {
+    content: "";
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(139, 69, 19, 0.3);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: var(--space-sm);
+}
+ 
+/* 错误提示 - 如金刚怒目 */
+.error {
+    color: var(--error-color);
+    text-align: center;
+    padding: var(--space-lg);
+    border: 1px dashed var(--error-color);
+    border-radius: 8px;
+    background-color: rgba(220, 53, 69, 0.05);
+}
+ 
+/* 页脚 - 如莲花托底 */
+footer {
+    text-align: center;
+    margin-top: var(--space-lg);
+    padding: var(--space-md);
+    color: #666;
+    font-size: 0.9rem;
+}
+ 
+.back-to-top {
+    display: inline-block;
+    margin-top: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    background-color: var(--primary-color);
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: all 0.3s;
+}
+ 
+.back-to-top:hover {
+    background-color: var(--secondary-color);
+    transform: translateY(-2px);
+}
+ 
+/* 移动端适配 - 如观音千手 */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        margin-bottom: var(--space-md);
+    }
+    
+    .top-nav ul {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .markdown-body {
+        font-size: 1rem;
+        line-height: 1.8;
+    }
+}
+ 
+/* 诗词特殊样式 */
+.poetry-content {
+    font-family: var(--font-poetry);
+    text-align: center;
+    line-height: 2.5;
+}
+ 
+.poetry-line {
+    display: block;
+    margin: 0.5em 0;
+}
