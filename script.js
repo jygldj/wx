@@ -76,9 +76,9 @@ async function loadArticle(category, filename) {
         // 如果filename已经包含子目录，则不需要再加category
         let filePath;
         if (filename.includes('/'))  {
-            filePath = `./articles/${filename}`;
+            filePath = `/wx/articles/${filename}`;
         } else {
-            filePath = `./articles/${category}/${filename}`;
+            filePath = `/wx/articles/${category}/${filename}`;
         }
         
         // 修复3: 确保文件扩展名正确
