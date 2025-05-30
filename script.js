@@ -1,13 +1,13 @@
 /**
- * 张三文学阁 - 全功能脚本 
+ * 张三文学阁 - 全功能脚本 (修复版)
  * 功能：动态加载文章列表和内容
- * 使用方法：只需维护articles.json 文件 
+ * 使用方法：只需维护articles.json  文件 
  */
  
 // 全局变量 
-let currentCategory = 'poetry'; // 默认显示诗词
+let currentCategory = 'poetry'; // 默认显示诗词 
  
-// DOM加载完成后执行
+// DOM加载完成后执行 
 document.addEventListener('DOMContentLoaded',  function() {
     // 初始化加载 
     loadCategory(currentCategory);
@@ -15,8 +15,8 @@ document.addEventListener('DOMContentLoaded',  function() {
     // 导航栏点击事件
     document.querySelectorAll('.top-nav  a[data-category]').forEach(link => {
         link.addEventListener('click',  function(e) {
-            e.preventDefault(); 
-            currentCategory = this.dataset.category; 
+            e.preventDefault();  
+            currentCategory = this.dataset.category;  
             loadCategory(currentCategory);
         });
     });
@@ -27,28 +27,26 @@ document.addEventListener('DOMContentLoaded',  function() {
  */
 async function loadCategory(category) {
     try {
-        // 显示加载状态
+        // 显示加载状态 
         document.getElementById('article-list').innerHTML  = '<li class="loading">正在加载...</li>';
         document.getElementById('category-title').textContent  = 
             { poetry: '诗词集', prose: '散文集', essays: '杂记录' }[category];
         
-        // 加载JSON数据
-        const response = await fetch('/w/articles.json'); 
+        // 修复1: 使用正确的JSON路径
+        const response = await fetch('./articles.json');  
         if (!response.ok)  throw new Error('网络响应不正常');
-        const data = await response.json(); 
+        const data = await response.json();  
         
         // 生成文章列表
         const articles = data[category] || [];
-        const listHtml = articles.length  
-            ? articles.map(article  => `
+        const listHtml = articles.length  ? articles.map(article  => `
                 <li>
-                    <a href="#" onclick="loadArticle('${category}', '${article.filename}')"> 
-                        ${article.title}  
+                    <a href="#" onclick="loadArticle('${category}', '${article.filename}')">  
+                        ${article.title}   
                         ${article.date  ? `<span class="date">${article.date}</span>`  : ''}
                     </a>
                 </li>
-              `).join('')
-            : '<li class="empty">暂无文章</li>';
+              `).join('') : '<li class="empty">暂无文章</li>';
         
         document.getElementById('article-list').innerHTML  = listHtml;
         
@@ -74,11 +72,25 @@ async function loadArticle(category, filename) {
         document.getElementById('article-content').innerHTML  = 
             '<div class="loading">文章加载中...</div>';
         
-        const response = await fetch(`articles/${category}/${filename}`);
-        if (!response.ok)  throw new Error('文章不存在');
-        const content = await response.text(); 
+        // 修复2: 确保路径拼接正确
+        // 如果filename已经包含子目录，则不需要再加category
+        let filePath;
+        if (filename.includes('/'))  {
+            filePath = `./articles/${filename}`;
+        } else {
+            filePath = `./articles/${category}/${filename}`;
+        }
         
-        // 简单Markdown转换（如需要复杂解析可后续添加库）
+        // 修复3: 确保文件扩展名正确
+        if (!filePath.endsWith('.md'))  {
+            filePath += '.md';
+        }
+        
+        const response = await fetch(filePath);
+        if (!response.ok)  throw new Error('文章不存在');
+        const content = await response.text();  
+        
+        // 简单Markdown转换
         const htmlContent = content 
             .replace(/^# (.*$)/gm, '<h1>$1</h1>')
             .replace(/^## (.*$)/gm, '<h2>$1</h2>')
