@@ -264,3 +264,78 @@ footer {
     display: block;
     margin: 0.5em 0;
 }
+
+/* 在现有CSS文件末尾添加以下规则 */
+ 
+/* 投稿页面专用样式 - 解放自目录框 */
+.submit-container {
+    width: 100%;
+    max-width: 800px;
+    margin: var(--space-lg) auto;
+    padding: var(--space-lg);
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.08);
+}
+ 
+.submit-container h1 {
+    color: var(--primary-color);
+    text-align: center;
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-md);
+    border-bottom: 2px solid var(--primary-color);
+}
+ 
+.form-group {
+    margin-bottom: var(--space-md);
+}
+ 
+.form-group label {
+    display: block;
+    margin-bottom: var(--space-sm);
+    font-weight: bold;
+    color: var(--secondary-color);
+}
+ 
+.form-group input[type="text"],
+.form-group input[type="datetime-local"],
+.form-group select,
+.form-group textarea { 
+    width: 100%;
+    padding: var(--space-sm);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-family: var(--font-main);
+}
+ 
+.form-group textarea {
+    min-height: 300px;
+    resize: vertical;
+}
+ 
+.submit-btn {
+    display: block;
+    width: 100%;
+    padding: var(--space-md);
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+ 
+.submit-btn:hover {
+    background-color: var(--secondary-color);
+    transform: translateY(-2px);
+}
+ 
+/* 确保投稿页面不使用侧边栏布局 */
+body.submit-page  .container {
+    display: block;
+}
+ 
+body.submit-page  .sidebar {
+    display: none;
+}
