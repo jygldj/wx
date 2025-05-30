@@ -3,7 +3,11 @@
  * 功能：动态加载文章列表和内容
  * 使用方法：只需维护articles.json  文件 
  */
+ // 神圣的CORS代理真言（添加到所有fetch请求前）
+const holyProxy = url => `https://api.allorigins.win/raw?url=${encodeURIComponent('https://jygldj.github.io'  + url)}`;
  
+// 修改所有fetch请求如：
+const response = await fetch(holyProxy('/wx/articles.json')); 
 // 全局变量 
 let currentCategory = 'poetry'; // 默认显示诗词 
  
