@@ -1,3 +1,11 @@
+window.addEventListener('error', (e) => {
+  console.error('全局错误:', e.message, e.filename, e.lineno);
+});
+
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('未处理的 Promise 错误:', e.reason);
+});
+
 /**
  * 张三文学阁 - 全功能脚本 (修复版)
  * 功能：动态加载文章列表和内容
@@ -32,7 +40,7 @@ async function loadCategory(category) {
             { poetry: '诗词集', prose: '散文集', essays: '杂记录' }[category];
         
         // 直接访问 articles.json
-        const response = await fetch('/wx/articles.json');  
+        const response = await fetch('articles.json');  
         if (!response.ok) throw new Error('网络响应不正常');
         const data = await response.json();  
         
@@ -75,9 +83,9 @@ async function loadArticle(category, filename) {
         // 如果 filename 已经包含子目录，则不需要再加 category
         let filePath;
         if (filename.includes('/')) {
-            filePath = `/wx/articles/${filename}`;
+            filePath = `articles/${filename}`;
         } else {
-            filePath = `/wx/articles/${category}/${filename}`;
+            filePath = `articles/${category}/${filename}`;
         }
         
         // 确保文件扩展名正确
