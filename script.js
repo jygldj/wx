@@ -32,7 +32,7 @@ async function loadCategory(category) {
             { poetry: '诗词集', prose: '散文集', essays: '杂记录' }[category];
         
         // 直接访问 articles.json
-        const response = await fetch('https://jygldj.github.io/wx/articles.json');  
+        const response = await fetch('/wx/articles.json');  
         if (!response.ok) throw new Error('网络响应不正常');
         const data = await response.json();  
         
@@ -86,7 +86,7 @@ async function loadArticle(category, filename) {
         }
         
         // 直接访问文章内容
-        const response = await fetch('https://jygldj.github.io' + filePath);
+        const response = await fetch(filePath);
         if (!response.ok) throw new Error('文章不存在');
         const content = await response.text();  
         
