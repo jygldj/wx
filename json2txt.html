@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON转TXT格式转换器 3.2 正式版</title>
+    <style>
+        /* 全局颜色变量 - 基于蓝本定义 */
+        :root {
+            --rice-paper: #FFFEFC; /* 仿古宣纸色 */
+            --bamboo-green: #3A6351; /* 竹青色 */
+            --light-celadon: #C7D8D2; /* 淡竹叶青 */
+            --lotus: #D1E0D7; /* 嫩荷色 */
+            --ink: #5A4A3F; /* 茶墨色 */
+            --shadow: rgba(58, 99, 81, 0.1);
+        }
+        
+        /* ========== 整体美化 ========== */
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 15px;
+            background-color: var(--rice-paper);
+            color: var(--ink);
+            background-image: linear-gradient(to bottom, 
+                rgba(199, 216, 210, 0.1) 0%, 
+                rgba(255, 254, 252, 1) 100px);
+        }
+        
+        /* ========== 容器美化 ========== */
+        .container {
+            background-color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px var(--shadow);
+            border: 1px solid var(--light-celadon);
+            transition: all 0.3s ease;
+        }
+        
+        .container:hover {
+            box-shadow: 0 6px 25px rgba(58, 99, 81, 0.15);
+        }
+        
+        /* ========== 标题美化 ========== */
+        h1 {
+            color: var(--bamboo-green);
+            text-align: center;
+            padding-bottom: 8px;
+            margin: 5px 0 10px;
+            position: relative;
+            font-size: 1.4rem;
+            font-weight: normal;
+        }
+        
+        h1:after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 30%;
+            width: 40%;
+            height: 1px;
+            background: linear-gradient(to right, 
+                transparent, 
+                var(--light-celadon), 
+                transparent);
+        }
+        
+        /* ========== 选项与导航组合 ========== */
+        .option-nav-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0 15px;
+        }
+        
+        .format-options {
+            margin: 0;
+            padding: 8px 12px;
+            background: rgba(232, 241, 242, 0.5);
+            border-radius: 8px;
+            display: flex;
+            gap: 15px;
+            border: 1px solid var(--light-celadon);
+        }
+        
+        .format-options label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--ink);
+        }
+        
+        .format-options input[type="radio"] {
+            accent-color: var(--bamboo-green);
+            width: 14px;
+            height: 14px;
+        }
+        
+        .nav-links {
+            margin: 0;
+        }
+        
+        .nav-link {
+            display: inline-block;
+            color: var(--bamboo-green);
+            text-decoration: none;
+            font-size: 14px;
+            margin: 0 6px;
+            padding: 3px 10px;
+            background: var(--lotus);
+            border-radius: 12px;
+            transition: all 0.3s;
+            border: 1px solid var(--light-celadon);
+        }
+        
+        .nav-link:hover {
+            background: var(--bamboo-green);
+            color: white;
+        }
+        
+        /* ========== 输入输出区域 ========== */
+        textarea {
+            width: 100%;
+            height: 320px;
+            padding: 12px;
+            border: 1px solid var(--light-celadon);
+            border-radius: 6px;
+            resize: vertical;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            background-color: rgba(255, 255, 255, 0.9);
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: var(--bamboo-green);
+            box-shadow: 0 0 0 2px rgba(58, 99, 81, 0.2);
+        }
+        
+        .output-area {
+            min-height: 100px;
+            white-space: pre-wrap;
+            background-color: var(--lotus);
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px dashed var(--light-celadon);
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            transition: all 0.3s;
+            margin-top: 15px;
+            word-break: break-word;
+        }
+        
+        /* ========== 按钮美化 ========== */
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin: 15px 0;
+        }
+        
+        button {
+            background-color: var(--bamboo-green);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: all 0.3s;
+            flex: 1;
+            font-weight: 500;
+            box-shadow: 0 2px 5px var(--shadow);
+        }
+        
+        button:hover {
+            background-color: #2A5341;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(58, 99, 81, 0.2);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        /* ========== 时间显示 ========== */
+        .timestamp {
+            text-align: right;
+            color: #7f8c8d;
+            font-size: 0.85em;
+            margin-top: 15px;
+            font-style: italic;
+            opacity: 0.8;
+        }
+        
+        /* ========== 版本标识 ========== */
+        .version-badge {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: var(--bamboo-green);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            opacity: 0.7;
+        }
+        
+        /* ========== 响应式设计 ========== */
+        @media (max-width: 768px) {
+            .container {
+                padding: 12px;
+            }
+            
+            .option-nav-wrapper {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 1.3rem;
+            }
+            
+            .nav-link {
+                display: block;
+                margin: 6px 0;
+                text-align: center;
+                max-width: 120px;
+            }
+            
+            textarea {
+                height: 280px;
+            }
+            
+            .version-badge {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>JSON→TXT 格式转换器</h1>
+        
+        <div class="option-nav-wrapper">
+            <div class="format-options">
+                <label><input type="radio" name="format" value="txt" checked> 纯文本格式</label>
+                <label><input type="radio" name="format" value="md"> Markdown格式</label>
+            </div>
+            <div class="nav-links">
+                <a href="txt2json.html"  class="nav-link">逆向转换</a>
+                <a href="index1.html"  class="nav-link">返回首页</a>
+            </div>
+        </div>
+        
+        <textarea id="jsonInput" placeholder='请粘贴您的JSON数据（支持多篇作品数组格式）：
+例如：[
+  {
+    "id": 1,
+    "title": "《道玄疏》",
+    "category": "散文",
+    "content": "夫道者，形而上之谓也..."
+  }
+]'></textarea>
+        
+        <div class="button-group">
+            <button onclick="convertToTxt()">转换为TXT格式</button>
+            <button onclick="downloadTxt()">下载TXT文件</button>
+        </div>
+        
+        <div class="output-area" id="txtOutput">
+            转换结果将显示在这里...
+        </div>
+        
+        <div class="timestamp" id="currentTime">
+            2025年6月28日 星期六 17:30（农历六月初四）
+        </div>
+    </div>
+ 
+    <div class="version-badge">v3.2 正式版</div>
+ 
+    <script>
+    // JSON→TXT 格式转换器 3.2 正式版
+    function getFormatType() {
+        return document.querySelector('input[name="format"]:checked').value;  
+    }
+     
+    function convertToTxt() {
+        const formatType = getFormatType();
+        const jsonInput = document.getElementById('jsonInput').value;  
+        let output = '';
+        
+        try {
+            const data = JSON.parse(jsonInput);  
+            const items = Array.isArray(data)   ? data : [data];
+            
+            items.forEach(item   => {
+                if (formatType === 'md') {
+                    output += `## ${item.title   || '无题'}\n`;
+                    output += `**类别**：${item.category   || '未分类'}  \n`;
+                    output += `**日期**：${item.date   || '无日期'}\n\n`;
+                    
+                    let content = item.content   || '';
+                    content = content.replace(/<br\s*\/?>/gi,   '  \n')
+                                   .replace(/<\/p>/gi, '\n\n')
+                                   .replace(/<[^>]*>/g, '');
+                    output += content + '\n\n';
+     
+                    if (item.note   || item.annotation)   {
+                        output += '> **注**：\n';
+                        [item.note, item.annotation].filter(Boolean).forEach(note   => {
+                            output += '> ' + note.replace(/\n/g,   '\n> ') + '\n';
+                        });
+                    }
+                    output += '---\n\n';
+                } else {
+                    // 纯文本处理 
+                    output += `${item.title   || '无题'}\n`;
+                    if (item.category   || item.date)   {
+                        output += `${item.category   || ''}${item.category   && item.date   ? '｜' : ''}${item.date   || ''}\n\n`;
+                    }
+                    let content = item.content   || '';
+                    content = content.replace(/<br\s*\/?>/gi,   '\n')
+                                   .replace(/<\/p>/gi, '\n\n')
+                                   .replace(/<[^>]*>/g, '')
+                                   .replace(/&nbsp;/g, ' ')
+                                   .replace(/^\s+/gm, '');
+                    output += content + '\n\n';
+                    if (item.note   || item.annotation)   {
+                        output += `注：\n${[item.note, item.annotation].filter(Boolean).join('\n')}\n\n`;  
+                    }
+                    output += '──────────────────────\n\n';
+                }
+            });
+            
+            document.getElementById('txtOutput').textContent   = output;
+        } catch (e) {
+            document.getElementById('txtOutput').textContent   = '转换失败：' + e.message;  
+        }
+    }
+     
+    function downloadTxt() {
+        const content = document.getElementById('txtOutput').textContent;  
+        if (!content || content.includes('  转换结果将显示')) {
+            alert('请先转换数据');
+            return;
+        }
+        
+        const formatType = getFormatType();
+        const extension = formatType === 'md' ? '.md' : '.txt';
+        const blob = new Blob(["\uFEFF" + content], {type: 'text/plain;charset=utf-8'});
+        const url = URL.createObjectURL(blob);  
+        const a = document.createElement('a');  
+        a.href   = url;
+        a.download   = `作品_${new Date().toLocaleDateString('zh-CN')}${extension}`;
+        document.body.appendChild(a);  
+        a.click();  
+        document.body.removeChild(a);  
+    }
+     
+    function updateTime() {
+        const now = new Date();
+        document.getElementById('currentTime').textContent   = 
+            now.toLocaleDateString('zh-CN',   { 
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                weekday: 'long'
+            }) + ` ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}  （农历六月初四）`;
+    }
+    updateTime();
+    setInterval(updateTime, 60000);
+    </script>
+</body>
+</html>
