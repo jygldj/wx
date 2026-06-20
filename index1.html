@@ -618,6 +618,7 @@ var _hmt = _hmt || [];
             <nav class="page-navigation" id="mainNav">
                 <a href="index.html"  class="page-link">扉页</a>
                 <a href="https://mp.weixin.qq.com/mp/appmsgalbum?__biz=Mzk0ODc1MzcxMg==&action=getalbum&album_id=4070727578921992197#wechat_redirect"  class="page-link">微信公众号</a>
+                <a href="search.html" class="page-link">全文搜索</a>
                 <a href="txt2json.html"  class="page-link">文本工具</a>              
             </nav>
             
@@ -758,33 +759,47 @@ var _hmt = _hmt || [];
         // ============================================================
         // 3. 从 articles1.js 加载数据
         // ============================================================
-        async function loadArticlesFromTxt() {
-            try {
-                const response = await fetch('articles1.js?t=' + Date.now());
-                if (!response.ok) throw new Error('文件加载失败 (HTTP ' + response.status + ')');
-                const text = await response.text();
-                
-                // 去掉开头的 "const articlesData = `" 和末尾的 "`;"
-                let cleanText = text;
-                cleanText = cleanText.replace(/^const\s+articlesData\s*=\s*`/, '');
-                cleanText = cleanText.replace(/`\s*;?\s*$/, '');
-                
-                const parsed = parseArticlesFromTxt(cleanText);
-                if (parsed.length === 0) {
-                    throw new Error('未能解析出任何文章，请检查格式');
+
+async function loadArticlesFromTxt() {
+    try {
+        const response = await fetch('articles1.js?t=' + Date.now());
+        if (!response.ok) throw new Error('文件加载失败 (HTTP ' + response.status + ')');
+        const text = await response.text();
+        
+        let cleanText = text;
+        cleanText = cleanText.replace(/^const\s+articlesData\s*=\s*`/, '');
+        cleanText = cleanText.replace(/`\s*;?\s*$/, '');
+        
+        const parsed = parseArticlesFromTxt(cleanText);
+        if (parsed.length === 0) {
+            throw new Error('未能解析出任何文章，请检查格式');
+        }
+        
+        articles = parsed;
+        isDataLoaded = true;
+        console.log('✅ 成功加载 ' + articles.length + ' 篇文章');
+        
+        renderVolumeNav();
+        renderArticleList();
+        
+        // ⭐ 新增：检查 URL 参数，支持从搜索页跳转
+        const urlParams = new URLSearchParams(window.location.search);
+        const articleId = urlParams.get('article');
+        if (articleId !== null) {
+            const index = parseInt(articleId);
+            if (!isNaN(index) && index >= 0 && index < articles.length) {
+                const vol = Math.floor(index / ARTICLES_PER_VOLUME) + 1;
+                if (vol !== currentVolume) {
+                    switchVolume(vol);
                 }
-                
-                articles = parsed;
-                isDataLoaded = true;
-                console.log('✅ 成功加载 ' + articles.length + ' 篇文章');
-                
-                // 渲染卷导航
-                renderVolumeNav();
-                
-                renderArticleList();
-                if (articles.length > 0) {
-                    loadArticle(0);
-                }
+                setTimeout(() => loadArticle(index), 300);
+                return;
+            }
+        }
+        
+        if (articles.length > 0) {
+            loadArticle(0);
+        }
                 
             } catch (error) {
                 console.error('❌ 加载失败:', error);
@@ -919,7 +934,7 @@ var _hmt = _hmt || [];
                     const realIndex = articles.indexOf(article);
                     li.innerHTML = `
                         <a href="#" onclick="loadArticle(${realIndex})" class="${currentArticleIndex === realIndex ? 'active' : ''}">
-                            <span class="article-number">${index + 1}.</span>
+                            <span class="article-number">${realIndex + 1}.</span>
                             ${currentSearchKeyword ? highlightKeyword(article.title, currentSearchKeyword) : article.title}
                             <small>(${article.category})</small>
                         </a>
