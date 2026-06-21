@@ -1,7 +1,4 @@
-﻿const articlesData = `<!-- 图片插入模板（复制下面这行到文章正文中需要的位置）：
-<img src="images/图片名.jpg" alt="图片说明" class="dx-image">
-示例：<img src="images/daoxuanshu.jpg" alt="道玄疏封面" class="dx-image">
---> 道玄疏
+﻿const articlesData = `道玄疏
 散文｜乙巳年五月初一
 
 ——仿《周易·系辞》体
@@ -2069,11 +2066,16 @@ p>锄头把上（呀）刻《三字经》！
 再铸荣光！
 注：
 1955年，镜铁山矿被发现。1958年，选定厂址在酒泉城西二十公里、嘉峪关城楼东五公里之间的戈壁滩上，定名为"酒泉钢铁厂"。同年8月1日，酒泉钢铁公司在酒泉正式成立。12月15日，举行高炉、焦炉等七大工程全面开工典礼。
+<img src="images/58.webp" alt="58年" class="dx-image">
+
 庚戌年（1970）1970年，在全国众多单位支援下，9月30日，1号高炉炼出第一炉铁水。
+<img src="images70.webp" alt="70年" class="dx-image">
+
 1980年，嘉峪关市与酒钢分设建制，酒钢革委会撤消，恢复酒泉钢铁公司。
+<img src="images/80.webp" alt="80年" class="dx-image">
+<img src="images/83.webp" alt="83年" class="dx-image">
 1985年，转炉流出第一炉钢水，彻底告别"有铁无钢"的困境。
 1988年高速线材工程投产，标志着铁、钢、材全产业链成型。
-今日酒钢厂区全景
 
 
 ──────────────────────
