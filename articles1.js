@@ -2069,7 +2069,7 @@ p>锄头把上（呀）刻《三字经》！
 <img src="images/58.webp" alt="58年" class="dx-image">
 
 庚戌年（1970）1970年，在全国众多单位支援下，9月30日，1号高炉炼出第一炉铁水。
-<img src="images70.webp" alt="70年" class="dx-image">
+<img src="images/70.webp" alt="70年" class="dx-image">
 
 1980年，嘉峪关市与酒钢分设建制，酒钢革委会撤消，恢复酒泉钢铁公司。
 <img src="images/80.webp" alt="80年" class="dx-image">
