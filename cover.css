@@ -1,0 +1,239 @@
+:root {
+    --paper-color: #E8F1F2;
+    --ink-color: #2E5E6E;
+    --accent-color: #3A7B8C;
+    --shadow-color: rgba(0,0,0,0.1);
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+body {
+    font-family: "楷体", "STKaiti", serif;
+    /*
+     * 封面背景：主色为仿古宣纸色(#FFFEFC)，叠加渐变模拟水墨效果。
+     * 若要使用图片背景，请取消下方注释并将 URL 替换为本地图片路径
+     * （如 wsf.jpg 改名为 cover-bg.jpg，或下载自己喜欢的水墨背景图）。
+     *
+     * 注意：img.zcool.cn 域名有防盗链限制，直接用网络图片在本地 file://
+     * 协议下会无法显示。建议使用本地图片，或在部署后使用相对路径图片。
+     */
+    background: var(--paper-color) fixed;
+    /* background-image: url('cover-bg.jpg');  ← 如需图片背景，取消此行注释 */
+    color: var(--ink-color);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* 水墨渐变叠加层（与背景图可二选一） */
+    background-image:
+        radial-gradient(ellipse at 20% 30%, rgba(200, 220, 240, 0.5) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 70%, rgba(180, 200, 220, 0.4) 0%, transparent 45%),
+        linear-gradient(160deg, #E8F1F2 0%, #D5E3E8 40%, #C8D8E0 100%);
+    background-size: cover;
+    background-attachment: fixed;
+    background-blend-mode: normal;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.book-cover {
+    width: 90%;
+    max-width: 900px;
+    min-height: 60vh;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: all 0.8s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* ================================================================
+   修复：翻书动画遮罩
+   问题：rotateY(-150deg) 时露出翻转过程的空白背面。
+   方案：在书封面前面增加一个 book-back 层，翻转时同步显示，
+         用渐变模拟书页横截面的质感，让动画更真实。
+   ================================================================ */
+.book-back {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 100%;
+    border-radius: 8px;
+    /* 默认隐藏，配合 .book-cover.opened 同步显示 */
+    opacity: 0;
+    pointer-events: none;
+    /* 书页横截面质感：中间浅、两边略深的渐变 */
+    background: linear-gradient(
+        90deg,
+        rgba(160,140,120,0.15) 0%,
+        rgba(220,200,180,0.35) 15%,
+        rgba(200,180,160,0.2) 50%,
+        rgba(220,200,180,0.35) 85%,
+        rgba(160,140,120,0.15) 100%
+    );
+    border: 1px solid rgba(180,160,140,0.3);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    z-index: 1;
+    transition: opacity 0.05s;
+}
+
+.book-cover.opened ~ .book-back,
+.book-cover.opened + .book-back {
+    /* 与书封同步翻转过渡 */
+}
+
+.front-cover {
+    background: rgba(232, 241, 242, 0.95);
+    border: 1px solid #A3C4D2;
+    box-shadow: 0 10px 25px var(--shadow-color);
+    padding: 2rem;
+    text-align: center;
+    transform-origin: left center;
+    backface-visibility: hidden;
+    width: 100%;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+}
+
+.author-portrait {
+    width: 200px;
+    height: 250px;
+    margin: 0 auto 1.5rem;
+    background: url('wsf.webp') center/cover;
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    clip-path: ellipse(45% 50% at 50% 50%);
+}
+
+.open-book {
+    display: inline-block;
+    padding: 0.8rem 2.5rem;
+    background: var(--accent-color);
+    color: white;
+    border-radius: 3px;
+    font-size: 1rem;
+    transition: all 0.3s;
+    margin: 1.5rem 0;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 6px var(--shadow-color);
+    font-family: "楷体", serif;
+}
+
+.open-book:hover {
+    background: var(--ink-color);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px var(--shadow-color);
+}
+
+/* ===== 移动端优先的布局样式 ===== */
+.links-section {
+    width: 100%;
+    max-width: 400px;
+    padding: 1.2rem;
+    background: rgba(255, 255, 255, 0.88);
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    margin-top: 1.5rem;
+    order: 3;
+}
+
+.friend-links-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 0.8rem;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+}
+
+.friend-links-grid a {
+    color: var(--accent-color);
+    text-decoration: none;
+    padding: 0.5rem 0.3rem;
+    border-bottom: 1px dashed rgba(58, 123, 140, 0.4);
+    transition: all 0.3s;
+    font-size: 0.9rem;
+}
+
+.friend-links-grid a:hover {
+    color: var(--ink-color);
+    border-bottom-color: var(--ink-color);
+}
+
+.links-title {
+    text-align: center;
+    margin-bottom: 1rem;
+    color: var(--accent-color);
+    font-size: 1rem;
+    letter-spacing: 1px;
+}
+
+/* ================================================================
+   翻书动画：book-back 同步遮罩
+   book-cover 翻转后，用 book-back 替代显示，消除空白背面。
+   ================================================================ */
+.book-cover.opened {
+    transform: rotateY(-150deg);
+    pointer-events: none;
+}
+
+/* 书封翻走后，书背立即显现（opacity 与 transform 同步） */
+.book-cover.opened + .book-back,
+.book-cover.opened ~ .book-back {
+    opacity: 1;
+    z-index: 3;
+}
+
+/* ===== 桌面端布局调整 ===== */
+@media (min-width: 768px) {
+    .front-cover {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding: 2.5rem;
+    }
+
+    .author-portrait {
+        width: 240px;
+        height: 300px;
+        margin: 0 2rem 0 0;
+    }
+
+    .links-section {
+        max-width: 280px;
+        margin-top: 0;
+        order: 0;
+    }
+
+    .friend-links-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .open-book {
+        padding: 1rem 3rem;
+        font-size: 1.1rem;
+        margin: 2rem 0;
+    }
+}
+
+@media (min-width: 992px) {
+    .author-portrait {
+        width: 280px;
+        height: 350px;
+    }
+
+    .links-section {
+        max-width: 320px;
+    }
+}
