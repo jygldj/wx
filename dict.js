@@ -103,7 +103,14 @@
             // 阻止 onOutside 误触发
             ev.stopPropagation();
         });
+        closeBtn.addEventListener('mouseup', function (ev) {
+            // 关键修复：阻止 mouseup 冒泡触发"重新查词"
+            ev.stopPropagation();
+        });
         closeBtn.addEventListener('touchstart', function (ev) {
+            ev.stopPropagation();
+        });
+        closeBtn.addEventListener('touchend', function (ev) {
             ev.stopPropagation();
         });
         popup.appendChild(closeBtn);
@@ -149,6 +156,11 @@
 
     // 桌面端：鼠标松开时触发
     document.addEventListener('mouseup', function (e) {
+        // 点击关闭按钮时，mouseup 不应触发新的查词
+        if (e.target && e.target.classList && e.target.classList.contains('dx-dict-close')) return;
+        // 弹窗内任何位置点击也不应触发新查词（避免点字典内容再划）
+        var popup = document.getElementById(POPUP_ID);
+        if (popup && popup.contains(e.target)) return;
         // 延迟一帧，等浏览器完成选区计算
         setTimeout(function () {
             var text = getSelectedText();
@@ -160,6 +172,9 @@
 
     // 移动端：手指抬起时触发
     document.addEventListener('touchend', function (e) {
+        // 弹窗内 touchend 不触发
+        var popup = document.getElementById(POPUP_ID);
+        if (popup && e.target && popup.contains(e.target)) return;
         var t = e.changedTouches && e.changedTouches[0];
         if (!t) return;
         setTimeout(function () {
@@ -173,6 +188,10 @@
     // 移动端备用：长按选区变化触发（取选区包围盒上方居中位置）
     var lastText = '';
     document.addEventListener('selectionchange', function () {
+        // 弹窗内文本选择不应触发查词
+        var popup = document.getElementById(POPUP_ID);
+        var sel = window.getSelection();
+        if (popup && sel && sel.anchorNode && popup.contains(sel.anchorNode)) return;
         var text = getSelectedText();
         if (text.length > 0 && text.length <= MAX_LEN && text !== lastText) {
             var sel = window.getSelection();
