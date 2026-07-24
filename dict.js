@@ -88,13 +88,40 @@
         popup = document.createElement('div');
         popup.id = POPUP_ID;
         popup.setAttribute('role', 'tooltip');
+        // 右上角关闭按钮（独立 DOM，固定位置，不受内容转义影响）
+        var closeBtn = document.createElement('button');
+        closeBtn.className = 'dx-dict-close';
+        closeBtn.type = 'button';
+        closeBtn.setAttribute('aria-label', '关闭');
+        closeBtn.title = '关闭';
+        closeBtn.textContent = '\u00d7'; // ×
+        closeBtn.addEventListener('click', function (ev) {
+            ev.stopPropagation();
+            hidePopup();
+        });
+        closeBtn.addEventListener('mousedown', function (ev) {
+            // 阻止 onOutside 误触发
+            ev.stopPropagation();
+        });
+        closeBtn.addEventListener('touchstart', function (ev) {
+            ev.stopPropagation();
+        });
+        popup.appendChild(closeBtn);
         document.body.appendChild(popup);
         return popup;
     }
 
     function showPopup(html, x, y) {
         var popup = ensurePopup();
-        popup.innerHTML = html;
+        // 第一次创建时已 appendChild 了关闭按钮；之后只替换内容区
+        // 用 .dx-dict-body 包裹便于管理（保留按钮 DOM）
+        var body = popup.querySelector('.dx-dict-body');
+        if (!body) {
+            body = document.createElement('div');
+            body.className = 'dx-dict-body';
+            popup.appendChild(body);
+        }
+        body.innerHTML = html;
         popup.style.display = 'block';
 
         // 先显示再测尺寸，才能正确夹取
@@ -181,9 +208,17 @@
             'max-width:320px;min-width:120px;box-sizing:border-box;' +
             'background:#fffdf8;border:1px solid #d8c4a6;border-radius:10px;' +
             'box-shadow:0 6px 24px rgba(90,57,33,.22);' +
-            'padding:12px 14px;font-size:15px;line-height:1.7;color:#3a2a18;' +
+            'padding:14px 16px 12px 14px;font-size:15px;line-height:1.7;color:#3a2a18;' +
             'word-break:break-word;pointer-events:auto;' +
             'font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;}' +
+            '#' + POPUP_ID + ' .dx-dict-body{}' +
+            '#' + POPUP_ID + ' .dx-dict-close{' +
+            'position:absolute;top:4px;right:6px;width:22px;height:22px;' +
+            'border:none;background:transparent;color:#a08a72;' +
+            'font-size:18px;line-height:1;cursor:pointer;padding:0;' +
+            'border-radius:50%;transition:background .15s,color .15s;}' +
+            '#' + POPUP_ID + ' .dx-dict-close:hover{' +
+            'background:#f0e6d4;color:#5a3921;}' +
             '#' + POPUP_ID + ' .dx-dict-word{font-size:17px;font-weight:700;color:#5a3921;margin-bottom:4px;}' +
             '#' + POPUP_ID + ' .dx-dict-py{font-size:13px;font-weight:400;color:#8a6d4b;margin-left:6px;}' +
             '#' + POPUP_ID + ' .dx-dict-exp{margin-top:2px;}' +
