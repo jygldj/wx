@@ -8,7 +8,7 @@
  *   - 后台检测到内容更新时，通知页面提示读者刷新。
  * 兼容性：不支持 Service Worker 的浏览器自动静默跳过，不影响正常访问。
  */
-var CACHE = 'dxwj-v3';   // ← 版本升至 v3，替换旧缓存
+var CACHE = 'dxwj-v4';   // ← 版本升至 v4，替换旧缓存（迁移到 Cloudflare Pages 后清掉旧 github.io 缓存）
 var RACE_TIMEOUT = 3000;
 
 /* 预缓存清单：网站骨架与文章数据 */
@@ -30,94 +30,77 @@ var CORE = [
 
 self.addEventListener('install', function (e) {
     e.waitUntil(
-        caches.open(CACHE).then(function (c) {
-            return Promise.all(CORE.map(function (u) { return c.add(u).catch(function () {}); }));
-        }).then(function () { return self.skipWaiting(); })
+        caches.open(CACHE).then(function (cache) {
+            // 加 ?v=4 时间戳参数，绕过 CDN 边缘缓存、强制重新拉取
+            var bust = cache.addAll(CORE.map(function (u) { return u + '?v=4'; }));
+            return bust;
+        })
     );
 });
 
 self.addEventListener('activate', function (e) {
+    // 接管时清掉所有旧版本缓存（dxwj-v1/v2/v3 等）
     e.waitUntil(
         caches.keys().then(function (keys) {
             return Promise.all(keys.map(function (k) {
-                if (k !== CACHE) return caches.delete(k);
+                if (k.indexOf('dxwj-') === 0 && k !== CACHE) {
+                    return caches.delete(k);
+                }
             }));
         }).then(function () { return self.clients.claim(); })
     );
 });
 
-/* 内容有更新时，通知所有打开的页面 */
-function notifyUpdate(req) {
-    var p = new URL(req.url).pathname;
-    if (!/articles\.js$|index1?\.html$|search\.html$/.test(p)) return;
-    self.clients.matchAll().then(function (cs) {
-        cs.forEach(function (c) { c.postMessage({ type: 'dx-update-available' }); });
-    });
-}
-
-/* 网络优先 + 超时竞速 */
-function raceNetworkFirst(req) {
-    var net = fetch(new Request(req.url, { cache: 'no-cache' })).then(function (res) {
-        if (res && res.status === 200) {
-            var copy = res.clone();
-            caches.open(CACHE).then(function (c) { c.put(req, copy); });
-        }
-        return res;
-    }).catch(function () { return null; });
-
-    var cache = new Promise(function (resolve) {
-        setTimeout(function () {
-            caches.match(req).then(function (hit) { resolve(hit || null); });
-        }, RACE_TIMEOUT);
-    });
-
-    return Promise.race([net, cache]).then(function (winner) {
-        if (winner) return winner;
-        return net.then(function (res) {
-            if (res) return res;
-            return caches.match(req);
-        });
-    });
-}
-
-/* 缓存优先 + 后台更新 */
-function cacheFirstSWR(req) {
-    return caches.match(req).then(function (hit) {
-        var fetched = fetch(req).then(function (res) {
-            if (!res || res.status !== 200 || res.type === 'opaque') return res;
-            var copy = res.clone();
-            var done = hit
-                ? Promise.all([hit.text(), copy.text()]).then(function (r) {
-                    if (r[0] !== r[1]) {
-                        return caches.open(CACHE).then(function (c) {
-                            return c.put(req, new Response(r[1], {
-                                headers: copy.headers, status: copy.status, statusText: copy.statusText
-                            })).then(function () { notifyUpdate(req); });
-                        });
-                    }
-                })
-                : caches.open(CACHE).then(function (c) { return c.put(req, copy); });
-            done.catch(function () {});
-            return res;
-        }).catch(function () {
-            return hit;
-        });
-        return hit || fetched;
-    });
-}
-
+/* 页面与文章数据：网络优先 + 3s 超时回退缓存 */
 self.addEventListener('fetch', function (e) {
     var req = e.request;
     if (req.method !== 'GET') return;
-    if (!req.url.startsWith(self.location.origin)) return;
 
-    var p = new URL(req.url).pathname;
-    var isPage = /\/$/.test(p) || /\.html$/.test(p);
-    var isData = /articles\.js$/.test(p);
+    var url = new URL(req.url);
 
-    if (isPage || isData) {
-        e.respondWith(raceNetworkFirst(req));
-    } else {
-        e.respondWith(cacheFirstSWR(req));
+    // 只处理同源请求；跨域（如 og:image 反代之类）一律放行，不缓存
+    if (url.origin !== self.location.origin) return;
+
+    var accept = req.headers.get('accept') || '';
+    var isHTML = req.mode === 'navigate' || accept.indexOf('text/html') !== -1;
+    var isArticleData = url.pathname.indexOf('/articles.js') !== -1;
+
+    if (isHTML || isArticleData) {
+        // 网络优先 + 3 秒竞速
+        e.respondWith(
+            Promise.race([
+                fetch(req).then(function (resp) {
+                    var copy = resp.clone();
+                    caches.open(CACHE).then(function (c) { c.put(req, copy); });
+                    return resp;
+                }),
+                new Promise(function (resolve) {
+                    setTimeout(function () {
+                        caches.match(req).then(function (cached) {
+                            if (cached) resolve(cached);
+                            else resolve(new Response('离线且无缓存', { status: 503 }));
+                        });
+                    }, RACE_TIMEOUT);
+                })
+            ]).catch(function () {
+                return caches.match(req);
+            })
+        );
+        return;
     }
+
+    // 静态资源（CSS / JS / 图片）：缓存优先，后台静默更新
+    e.respondWith(
+        caches.match(req).then(function (cached) {
+            var fetchPromise = fetch(req).then(function (resp) {
+                if (resp && resp.ok) {
+                    var copy = resp.clone();
+                    caches.open(CACHE).then(function (c) { c.put(req, copy); });
+                }
+                return resp;
+            }).catch(function () { return cached; });
+
+            return cached || fetchPromise;
+        })
+    );
 });
