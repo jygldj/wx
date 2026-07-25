@@ -9,12 +9,22 @@
     <link rel="stylesheet" href="style.css">
     <style>
         .dict-page{max-width:680px;margin:0 auto;padding:24px 18px 60px;}
-        .dict-title{font-size:26px;color:#5a3921;margin:8px 0 2px;}
-        .dict-sub{color:#8a6d4b;margin:0 0 18px;font-size:14px;}
-        .dict-search{display:flex;gap:8px;margin-bottom:18px;}
-        .dict-search input{flex:1;padding:10px 12px;font-size:16px;border:1px solid #d8c4a6;border-radius:8px;outline:none;}
+        .collection-header h1{font-size:20px;color:#5a3921;margin:6px 0 4px;}
+        .dict-sub{color:#8a6d4b;margin:0 0 12px;font-size:14px;}
+        .dict-search{display:flex;gap:8px;margin-bottom:16px;box-sizing:border-box;}
+        .dict-search input{flex:1;min-width:0;box-sizing:border-box;padding:10px 12px;font-size:16px;font-weight:400;border:1px solid #d8c4a6;border-radius:8px;outline:none;}
         .dict-search input:focus{border-color:#9a6b3f;}
-        .dict-search button{padding:0 20px;font-size:16px;background:#5a3921;color:#fffdf8;border:none;border-radius:8px;cursor:pointer;}
+        .dict-search button{flex:0 0 auto;box-sizing:border-box;padding:0 18px;font-size:16px;background:#5a3921;color:#fffdf8;border:none;border-radius:8px;cursor:pointer;}
+.dict-search input::placeholder{font-weight:400;}
+@media (max-width:600px){
+    .collection-header h1{font-size:17px;margin:4px 0 2px;}
+    .dict-sub{font-size:13px;margin:0 0 8px;}
+    .dict-page{padding:8px 14px 40px;}
+    .dict-search{margin-bottom:12px;gap:6px;}
+    .dict-search input{flex:0 0 auto;width:6.5em;padding:9px 10px;font-size:16px;}
+    .dict-search button{padding:0 14px;font-size:15px;}
+    .collection-header{padding-top:2px;padding-bottom:2px;}
+}
         .dict-result{min-height:80px;background:#fffdf8;border:1px solid #e6d8c2;border-radius:10px;padding:16px 18px;font-size:16px;line-height:1.8;color:#3a2a18;word-break:break-word;max-height:70vh;overflow-y:auto;}
         .dx-word{font-size:20px;font-weight:700;color:#5a3921;margin-bottom:6px;}
         .dx-py{font-size:14px;font-weight:400;color:#8a6d4b;margin-left:8px;}
@@ -37,7 +47,7 @@
         <div class="dict-page">
             <p class="dict-sub">划词查字 · 单字 / 词语 / 成语</p>
             <div class="dict-search">
-                <input id="dict-input" type="text" maxlength="12" placeholder="输入字词，如：道 / 巢父 / 画地为牢" autocomplete="off">
+                <input id="dict-input" type="text" maxlength="12" placeholder="输入字词" autocomplete="off">
                 <button id="dict-go" type="button">查询</button>
             </div>
             <div id="dict-result" class="dict-result"></div>
