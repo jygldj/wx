@@ -10,6 +10,8 @@
     <style>
         .dict-page{max-width:680px;margin:0 auto;padding:24px 18px 60px;}
         .collection-header h1{font-size:20px;color:#5a3921;margin:6px 0 4px;}
+        .collection-header.dict-header{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+        .collection-header.dict-header h1{margin:0;}
         .dict-sub{color:#8a6d4b;margin:0 0 12px;font-size:14px;}
         .dict-search{display:flex;gap:8px;margin-bottom:16px;box-sizing:border-box;}
         .dict-search input{flex:1;min-width:0;box-sizing:border-box;padding:10px 12px;font-size:16px;font-weight:400;border:1px solid #d8c4a6;border-radius:8px;outline:none;}
@@ -37,11 +39,9 @@
 </head>
 <body>
     <main class="content" style="margin-left:0;">
-        <header class="collection-header">
+        <header class="collection-header dict-header">
             <h1 lang="zh">新华字典</h1>
-            <nav class="page-navigation" id="mainNav">
-                <a href="index1.html" class="page-link">返回文集</a>
-            </nav>
+            <a href="index1.html" class="page-link">返回文集</a>
         </header>
 
         <div class="dict-page">
