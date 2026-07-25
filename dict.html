@@ -35,16 +35,18 @@
         .dx-miss{color:#a08a72;}
         .dx-loading{color:#a08a72;}
         .dict-tip{margin-top:18px;font-size:13px;color:#a08a72;}
+        @media (min-width:601px){
+            .dx-exp{font-size:18px;}
+        }
     </style>
 </head>
 <body>
     <main class="content" style="margin-left:0;">
-        <header class="collection-header dict-header">
-            <h1 lang="zh">新华字典</h1>
-            <a href="index1.html" class="page-link">返回文集</a>
-        </header>
-
         <div class="dict-page">
+            <header class="collection-header dict-header">
+                <h1 lang="zh">新华字典</h1>
+                <a href="index1.html" class="page-link">返回文集</a>
+            </header>
             <p class="dict-sub">划词查字 · 单字 / 词语 / 成语</p>
             <div class="dict-search">
                 <input id="dict-input" type="text" maxlength="12" placeholder="输入字词" autocomplete="off">
