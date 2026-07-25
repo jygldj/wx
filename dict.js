@@ -160,7 +160,7 @@
 
     // 移动端：选词后弹“轻量提示”，点链接去字典页看完整释义
     function showMobileHint(word, x, y) {
-        var url = '新华字典.html?word=' + encodeURIComponent(word);
+        var url = 'https://daoxuanwenji.pages.dev/dict.html?word=' + encodeURIComponent(word);
         var html = '<div class="dx-dict-word">' + escapeHtml(word) + '</div>' +
             '<div class="dx-dict-exp"><a class="dx-dict-link" href="' + url + '">请到字典页面查看 ›</a></div>';
         showPopup(html, x, y);

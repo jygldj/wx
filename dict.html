@@ -30,10 +30,10 @@
         <header class="collection-header">
             <h1 lang="zh">新华字典</h1>
             <nav class="page-navigation" id="mainNav">
-                <a href="index.html" class="page-link">扉页</a>
+                <a href="index1.html" class="page-link">文集</a>
                 <a href="https://mp.weixin.qq.com/mp/appmsgalbum?__biz=Mzk0ODc1MzcxMg==&action=getalbum&album_id=4070727578921992197#wechat_redirect" class="page-link">微信公众号</a>
                 <a href="search.html" class="page-link">全文搜索</a>
-                <a href="新华字典.html" class="page-link">新华字典</a>
+                <a href="https://daoxuanwenji.pages.dev/dict.html" class="page-link">新华字典</a>
                 <a href="build.html" class="page-link">更新工具</a>
             </nav>
         </header>
@@ -84,7 +84,7 @@
             word = (word || '').trim();
             if (!word) return;
             box.innerHTML = '<div class="dx-loading">查询中…</div>';
-            fetch('/api/dict?word=' + encodeURIComponent(word))
+            fetch('https://daoxuanwenji.pages.dev/api/dict?word=' + encodeURIComponent(word), { mode: 'cors' })
                 .then(function (r) { return r.json(); })
                 .then(function (d) { render(d, word); })
                 .catch(function () {
