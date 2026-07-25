@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="道玄文集 · 新华字典（单字 / 词语 / 成语 查询）">
+    <title>新华字典 · 道玄文集</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' fill='%235a3921'>📜</text></svg>">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .dict-page{max-width:680px;margin:0 auto;padding:24px 18px 60px;}
+        .dict-title{font-size:26px;color:#5a3921;margin:8px 0 2px;}
+        .dict-sub{color:#8a6d4b;margin:0 0 18px;font-size:14px;}
+        .dict-search{display:flex;gap:8px;margin-bottom:18px;}
+        .dict-search input{flex:1;padding:10px 12px;font-size:16px;border:1px solid #d8c4a6;border-radius:8px;outline:none;}
+        .dict-search input:focus{border-color:#9a6b3f;}
+        .dict-search button{padding:0 20px;font-size:16px;background:#5a3921;color:#fffdf8;border:none;border-radius:8px;cursor:pointer;}
+        .dict-result{min-height:80px;background:#fffdf8;border:1px solid #e6d8c2;border-radius:10px;padding:16px 18px;font-size:16px;line-height:1.8;color:#3a2a18;word-break:break-word;max-height:70vh;overflow-y:auto;}
+        .dx-word{font-size:20px;font-weight:700;color:#5a3921;margin-bottom:6px;}
+        .dx-py{font-size:14px;font-weight:400;color:#8a6d4b;margin-left:8px;}
+        .dx-exp{margin-top:4px;white-space:pre-wrap;}
+        .dx-der{margin-top:8px;font-size:14px;color:#7a6450;}
+        .dx-miss{color:#a08a72;}
+        .dx-loading{color:#a08a72;}
+        .dict-tip{margin-top:18px;font-size:13px;color:#a08a72;}
+    </style>
+</head>
+<body>
+    <main class="content" style="margin-left:0;">
+        <header class="collection-header">
+            <h1 lang="zh">新华字典</h1>
+            <nav class="page-navigation" id="mainNav">
+                <a href="index.html" class="page-link">扉页</a>
+                <a href="https://mp.weixin.qq.com/mp/appmsgalbum?__biz=Mzk0ODc1MzcxMg==&action=getalbum&album_id=4070727578921992197#wechat_redirect" class="page-link">微信公众号</a>
+                <a href="search.html" class="page-link">全文搜索</a>
+                <a href="新华字典.html" class="page-link">新华字典</a>
+                <a href="build.html" class="page-link">更新工具</a>
+            </nav>
+        </header>
+
+        <div class="dict-page">
+            <p class="dict-sub">划词查字 · 单字 / 词语 / 成语</p>
+            <div class="dict-search">
+                <input id="dict-input" type="text" maxlength="12" placeholder="输入字词，如：道 / 巢父 / 画地为牢" autocomplete="off">
+                <button id="dict-go" type="button">查询</button>
+            </div>
+            <div id="dict-result" class="dict-result"></div>
+            <p class="dict-tip">提示：在文章页用鼠标 / 手指划中字词，也会弹出查字典入口。</p>
+        </div>
+    </main>
+
+    <script>
+    (function () {
+        'use strict';
+        var input = document.getElementById('dict-input');
+        var btn = document.getElementById('dict-go');
+        var box = document.getElementById('dict-result');
+
+        function esc(s) {
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function render(data, word) {
+            if (data && data.data) {
+                var info = data.data;
+                var h = '<div class="dx-word">' + esc(word) +
+                    (info.pinyin ? ' <span class="dx-py">' + esc(info.pinyin) + '</span>' : '') + '</div>';
+                if (info.explanation) h += '<div class="dx-exp">' + esc(info.explanation) + '</div>';
+                if (info.derivation) h += '<div class="dx-der">出处：' + esc(info.derivation) + '</div>';
+                if (info.radicals) h += '<div class="dx-der">部首：' + esc(info.radicals) + '</div>';
+                if (info.strokes) h += '<div class="dx-der">笔画：' + esc(info.strokes) + '</div>';
+                box.innerHTML = h;
+            } else {
+                box.innerHTML = '<div class="dx-word">' + esc(word) +
+                    '</div><div class="dx-exp dx-miss">未找到“' + esc(word) + '”的释义</div>';
+            }
+        }
+
+        function lookup(word) {
+            word = (word || '').trim();
+            if (!word) return;
+            box.innerHTML = '<div class="dx-loading">查询中…</div>';
+            fetch('/api/dict?word=' + encodeURIComponent(word))
+                .then(function (r) { return r.json(); })
+                .then(function (d) { render(d, word); })
+                .catch(function () {
+                    box.innerHTML = '<div class="dx-exp dx-miss">查询失败，请稍后重试</div>';
+                });
+        }
+
+        btn.addEventListener('click', function () { lookup(input.value); });
+        input.addEventListener('keydown', function (e) { if (e.key === 'Enter') lookup(input.value); });
+
+        // 从 URL ?word= 自动查词（文章页“请到字典页面查看”跳转而来）
+        var params = new URLSearchParams(location.search);
+        var w = params.get('word');
+        if (w) {
+            input.value = w;
+            lookup(w);
+        }
+    })();
+    </script>
+</body>
+</html>

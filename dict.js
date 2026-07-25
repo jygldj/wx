@@ -21,6 +21,10 @@
     var WORKER_URL = 'https://daoxuanwenji.pages.dev/api/dict';
     var MAX_LEN = 4;          // 最多查 4 个字（成语正好 4 字）
     var POPUP_ID = 'dx-dict-popup';
+    // 是否为移动端（触摸设备）：移动端选词不灵敏，改为“选词后延迟 4 秒再弹轻量提示”
+    var IS_MOBILE = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    var MOBILE_DELAY = 4000;  // 移动端选词后等待 4 秒再弹窗
+    var mobileTimer = null;     // 移动端去重定时器
     // ====================================
 
     // 是否处于输入框 / 可编辑区域（这些地方选字不应触发查字典）
@@ -154,6 +158,23 @@
         if (popup) popup.style.display = 'none';
     }
 
+    // 移动端：选词后弹“轻量提示”，点链接去字典页看完整释义
+    function showMobileHint(word, x, y) {
+        var url = '新华字典.html?word=' + encodeURIComponent(word);
+        var html = '<div class="dx-dict-word">' + escapeHtml(word) + '</div>' +
+            '<div class="dx-dict-exp"><a class="dx-dict-link" href="' + url + '">请到字典页面查看 ›</a></div>';
+        showPopup(html, x, y);
+    }
+
+    // 移动端去重：多次选词只弹最后一次（4 秒计时内重置）
+    function scheduleMobileHint(word, x, y) {
+        if (mobileTimer) clearTimeout(mobileTimer);
+        mobileTimer = setTimeout(function () {
+            mobileTimer = null;
+            showMobileHint(word, x, y);
+        }, MOBILE_DELAY);
+    }
+
     // 桌面端：鼠标松开时触发
     document.addEventListener('mouseup', function (e) {
         // 点击关闭按钮时，mouseup 不应触发新的查词
@@ -161,6 +182,8 @@
         // 弹窗内任何位置点击也不应触发新查词（避免点字典内容再划）
         var popup = document.getElementById(POPUP_ID);
         if (popup && popup.contains(e.target)) return;
+        // 移动端走 touchend / selectionchange，不在此处理
+        if (IS_MOBILE) return;
         // 延迟一帧，等浏览器完成选区计算
         setTimeout(function () {
             var text = getSelectedText();
@@ -170,38 +193,43 @@
         }, 0);
     });
 
-    // 移动端：手指抬起时触发
+    // 移动端：手指抬起时触发（选词后延迟 4 秒弹轻量提示）
     document.addEventListener('touchend', function (e) {
         // 弹窗内 touchend 不触发
         var popup = document.getElementById(POPUP_ID);
         if (popup && e.target && popup.contains(e.target)) return;
+        // 桌面端不在此处理
+        if (!IS_MOBILE) return;
         var t = e.changedTouches && e.changedTouches[0];
         if (!t) return;
+        var x = t.clientX, y = t.clientY;
         setTimeout(function () {
             var text = getSelectedText();
             if (text.length > 0 && text.length <= MAX_LEN) {
-                lookup(text, t.clientX, t.clientY);
+                scheduleMobileHint(text, x, y);
             }
-        }, 120);
+        }, 0);
     });
 
-    // 移动端备用：长按选区变化触发（取选区包围盒上方居中位置）
+    // 移动端备用：长按选区变化触发（去重后延迟 4 秒弹轻量提示）
     var lastText = '';
     document.addEventListener('selectionchange', function () {
         // 弹窗内文本选择不应触发查词
         var popup = document.getElementById(POPUP_ID);
         var sel = window.getSelection();
         if (popup && sel && sel.anchorNode && popup.contains(sel.anchorNode)) return;
+        // 桌面端不在此处理
+        if (!IS_MOBILE) return;
         var text = getSelectedText();
         if (text.length > 0 && text.length <= MAX_LEN && text !== lastText) {
-            var sel = window.getSelection();
+            var r = null;
             try {
                 var range = sel.getRangeAt(0);
-                var r = range.getBoundingClientRect();
-                if (r && (r.width || r.height)) {
-                    lookup(text, r.left + r.width / 2, r.top - 8);
-                }
+                r = range.getBoundingClientRect();
             } catch (err) { /* 忽略 */ }
+            var x = (r && (r.width || r.height)) ? r.left + r.width / 2 : Math.round(window.innerWidth / 2);
+            var y = (r && (r.width || r.height)) ? r.top - 8 : 80;
+            scheduleMobileHint(text, x, y);
         }
         lastText = text;
     });
@@ -230,7 +258,9 @@
             'padding:14px 16px 12px 14px;font-size:15px;line-height:1.7;color:#3a2a18;' +
             'word-break:break-word;pointer-events:auto;' +
             'font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;}' +
-            '#' + POPUP_ID + ' .dx-dict-body{}' +
+            '#' + POPUP_ID + ' .dx-dict-body{max-height:70vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}' +
+            '#' + POPUP_ID + ' .dx-dict-link{display:inline-block;margin-top:4px;color:#9a6b3f;font-weight:600;text-decoration:none;border-bottom:1px solid #d8c4a6;}' +
+            '#' + POPUP_ID + ' .dx-dict-link:hover{color:#5a3921;}' +
             '#' + POPUP_ID + ' .dx-dict-close{' +
             'position:absolute;top:4px;right:6px;width:22px;height:22px;' +
             'border:none;background:transparent;color:#a08a72;' +
