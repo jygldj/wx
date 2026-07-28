@@ -2,13 +2,14 @@
 // 道玄文集 · 划词查字典后端（Cloudflare Pages Functions + Workers KV）
 //
 // 部署：此文件位于 wx/functions/api/dict.js，由 Cloudflare Pages 自动构建。
-// 路径：https://daoxuanwenji.pages.dev/api/dict?word=<编码后的词>
+// 路径：https://dxwj.pages.dev/api/dict?word=<编码后的词>
 // 返回：{ "data": { word, pinyin, explanation, derivation } } 或 { "data": null, "message": "..." }
 //
-// ⚠️ 重要：部署后在 Cloudflare 控制台里给 daoxuanwenji 这个 Pages 项目绑定 KV 命名空间 DICT_KV
-//    路径：Pages 项目 daoxuanwenji → Settings → Bindings → KV namespace bindings → Add binding
+// ⚠️ 重要：部署后在 Cloudflare 控制台给 dxwj 这个 Pages 项目绑定 KV 命名空间 DICT_KV
+//    路径：Pages 项目 dxwj → Settings → Bindings → KV namespace bindings → Add binding
 //    Variable name: DICT_KV
 //    KV namespace: 选择已创建的 DICT_KV 命名空间（id: e9e3ca2874cd4affbc778f7b7e26f765）
+//    绑定后需重新部署一次才会生效（Deployments → 最新部署 → Redeploy）。
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
