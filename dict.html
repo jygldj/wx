@@ -93,7 +93,7 @@
             word = (word || '').trim();
             if (!word) return;
             box.innerHTML = '<div class="dx-loading">查询中…</div>';
-            fetch('https://daoxuanwenji.pages.dev/api/dict?word=' + encodeURIComponent(word), { mode: 'cors' })
+            fetch('https://dxwj.pages.dev/api/dict?word=' + encodeURIComponent(word), { mode: 'cors' })
                 .then(function (r) { return r.json(); })
                 .then(function (d) { render(d, word); })
                 .catch(function () {
