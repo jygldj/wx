@@ -1,6 +1,6 @@
 # 道玄文集 · 网站说明（README）
 
-> 最后更新：2026-07-25
+> 最后更新：2026-07-28
 > 维护人：jygldj ｜ 本地工作目录：`F:\github-dx\wx`
 
 ---
@@ -9,7 +9,7 @@
 
 - **性质**：个人文集网站（诗 / 词 / 散文 / 其它），自娱自乐，朋友圈分享。
 - **类型**：纯静态站点，无构建命令（Cloudflare Pages 直接托管）。
-- **线上域名**：https://daoxuanwenji.pages.dev
+- **线上域名**：https://dxwj.pages.dev
 - **源码仓库**：https://github.com/jygldj/wx
 - **部署方式**：推送到 GitHub → Cloudflare Pages **自动部署**（约 1–2 分钟）。
 - **划词查字典**：站点内置「新华字典」功能（Cloudflare Pages Functions + KV）。
@@ -38,7 +38,7 @@
 | `更新网站.bat` | 双击打开 `build.html` 更新工具（Edge 浏览器） |
 | `push-now.bat` | 一键提交并推送到 GitHub（已配 `schannel` 后端，规避代理 SSL 问题） |
 | `改动说明.md` | 历次重要改动记录 |
-| `wsf.jpg` / `wsf.png` / `wsf.webp` | 站点分享卡片配图（OG 图） |
+| `wsf.jpg` / `wsf.png` / `wsf.webp` | 旧版站点配图（OG 分享卡片已移除，未使用） |
 
 ---
 
@@ -54,7 +54,7 @@
 GitHub (jygldj/wx) ──push──> Cloudflare Pages 自动部署
 ```
 
-- **静态托管**：Cloudflare Pages（`daoxuanwenji` 项目）
+- **静态托管**：Cloudflare Pages（`dxwj` 项目）
 - **后端**：Cloudflare Pages Functions（`functions/api/dict.js`）
 - **数据存储**：Cloudflare KV，命名空间 **`DICT_KV`**，id：`e9e3ca2874cd4affbc778f7b7e26f765`
 - **字典数据源**：[chinese-xinhua](https://github.com/pwxcoo/chinese-xinhua)（单字 / 词语 / 成语），约 5.3 万条键（首字分桶压缩后）
@@ -85,7 +85,7 @@ GitHub (jygldj/wx) ──push──> Cloudflare Pages 自动部署
 
 ### 3. 自动部署
 - 推送成功后，Cloudflare Pages 会在 **1–2 分钟**内自动重新部署。
-- 刷新 `https://daoxuanwenji.pages.dev` 即可看到更新（如有缓存，强制刷新 Ctrl/Cmd+Shift+R）。
+- 刷新 `https://dxwj.pages.dev` 即可看到更新（如有缓存，强制刷新 Ctrl/Cmd+Shift+R）。
 
 ---
 
@@ -116,7 +116,7 @@ GitHub (jygldj/wx) ──push──> Cloudflare Pages 自动部署
 - **解决**：用 `push-now.bat`（已配 `schannel` 后端，走 Windows 系统证书）。
 
 ### ② 字典查不到 / 接口 404
-- 登录 Cloudflare 控制台 → `daoxuanwenji` Pages 项目 → **Settings → Bindings** → 确认已绑定 KV 命名空间 **`DICT_KV`**（Variable name 必须为 `DICT_KV`）。
+- 登录 Cloudflare 控制台 → `dxwj` Pages 项目 → **Settings → Bindings** → 确认已绑定 KV 命名空间 **`DICT_KV`**（Variable name 必须为 `DICT_KV`）。
 - 绑定后需**重新部署一次**（Deployments → 重新部署最新提交），绑定才生效。
 
 ### ③ 划词无反应
@@ -147,3 +147,42 @@ GitHub (jygldj/wx) ──push──> Cloudflare Pages 自动部署
 
 - **前端提交新文章**：用 Cloudflare **D1**（SQLite）存文章元数据 + **R2** 存配图，配合 Pages Functions 接收提交，Cloudflare Access 做鉴权。架构可行，但因写作频率低、现有 `更新网站.bat` 流程已够用，暂未做。
 - 详情见开发对话记录。
+
+---
+
+## 十一、修改域名的避坑指南（daoxuanwenji.pages.dev → dxwj.pages.dev）
+
+> 背景：2026-07-28 将站点从 `daoxuanwenji.pages.dev` 迁移到新建的 `dxwj.pages.dev`，踩了以下坑，记录备查。
+
+### 坑 1：新建 Pages 项目不继承旧项目的 KV 绑定
+Cloudflare 的 KV 绑定是**按项目独立配置**的。旧项目 `daoxuanwenji` 绑好的 `DICT_KV`，新建 `dxwj` **不会自动带过来**。
+- 现象：字典接口 `/api/dict` 直接 500 / 1101；网页划词无悬浮窗、字典页查询失败。
+- 解决：在 `dxwj` 项目里**重新添加** KV 绑定（见坑 2/3/4）。
+
+### 坑 2：绑定变量名必须和代码里的 `env.XXX` 一字不差（含大小写）
+代码 `functions/api/dict.js` 里写死的是 `env.DICT_KV`。
+- 坑点：建绑定时把 Variable name 随手填成了项目名 `dxwj` → 运行时 `env.DICT_KV` 是 `undefined` → `.get()` 抛错 → CF 包装成 `1101 worker_threw_exception`。
+- **Cloudflare 的 Variable name 创建后不可修改**（界面上是灰的）。
+- 填错只能：删掉这条绑定 → `+ 添加绑定` → 名称**必须填 `DICT_KV`**（大小写敏感）→ 保存。
+
+### 坑 3：别选成空的同名 namespace
+KV 命名空间列表里可能**有多个同名 `DICT_KV`**（一个绑在已废弃的 `dict-worker` Worker 上，一个是真正存了数据的全局库）。
+- 创建绑定时下拉框会列出所有同名项，**必须选对 id**：`e9e3ca2874cd4affbc778f7b7e26f765`（存了约 5.3 万条键的那个）。
+- ⚠️ 不要选 `dxwj` 项目顺手新建的空 namespace。
+
+### 坑 4：加完绑定必须「重新部署」才生效
+在控制台加好绑定后，**当前线上部署不会自动拿到新 binding**（绑定是在部署时注入的）。
+- 现象：加了绑定，`/api/dict?word=你好` 还是 1101。
+- 解决：Workers & Pages → `dxwj` → **Deployments** → 找到当前生产部署（如 `d83651db`）→ 该行 `...` → **Retry deployment**（约 30 秒~1 分钟生效）。无需改代码、无需推新 commit。
+
+### 坑 5：微信分享卡片在 `*.pages.dev` 上取不到图（已弃用）
+`og:image` 若指向 `*.pages.dev` 上的图片，微信爬虫（`mmbiz`）抓不到，**卡片永远无图**。
+- 站点可以放 `*.pages.dev`，但 OG 图片必须放爬虫友好的主机（如 `*.github.io` 或自定义域名）。
+- 结论：微信链接卡片无实际意义，改为直接发链接；相关 og/twitter 代码已移除（见改动说明.md）。
+
+### 快速诊断表
+| 现象 | 根因 | 解法 |
+|---|---|---|
+| `/api/dict` 返回 500 | 新项目没绑 KV | 加 KV 绑定（坑 1） |
+| 1101 worker_threw_exception | `env.DICT_KV` undefined（变量名错 / 没绑 / 没重部署） | 核对变量名=`DICT_KV`、绑对 namespace、Retry 部署（坑 2/3/4） |
+| 划词无悬浮窗 + 字典查询失败 | 同上（API 返回非 JSON 被静默吞掉） | 同上 |
