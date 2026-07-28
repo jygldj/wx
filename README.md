@@ -46,13 +46,15 @@
 
 ```
 浏览器
-  ├─ 静态资源（HTML/CSS/JS）→ Cloudflare Pages 直接托管
+  ├─ 静态资源（HTML/CSS/JS）→ Cloudflare Pages（项目 `dxwj`）直接托管
   ├─ 划词查字典
   │     └─ fetch → /api/dict?word=某字 → Pages Function
   │                                      └─ 读 Cloudflare KV (DICT_KV)
   └─ dict.html 直查 → 同上接口
-GitHub (jygldj/wx) ──push──> Cloudflare Pages 自动部署
+GitHub (jygldj/wx) ──push──> Cloudflare Pages（`dxwj`）自动部署
 ```
+
+> 终态架构（2026-07-28 清理后）：1 个 Pages 项目 + 1 个 Pages Function + 1 个 KV 命名空间。无独立 Worker、无过渡 Pages 项目。
 
 - **静态托管**：Cloudflare Pages（`dxwj` 项目）
 - **后端**：Cloudflare Pages Functions（`functions/api/dict.js`）
@@ -131,15 +133,22 @@ GitHub (jygldj/wx) ──push──> Cloudflare Pages 自动部署
 
 ---
 
-## 九、清理记录（2026-07-25）
+## 九、清理记录
 
-- **废弃独立 Cloudflare Worker 方案**（`dict-worker`）：因国内运营商封锁 `*.workers.dev` 子域，改为 **Pages Functions 同域部署**（`daoxuanwenji.pages.dev/api/dict`）。
+### 2026-07-25 · 首次归档（Workers → Pages Functions 迁移）
+- **废弃独立 Cloudflare Worker 方案**（`dict-worker`）：因国内运营商封锁 `*.workers.dev` 子域，改为 **Pages Functions 同域部署**（`daoxuanwenji.pages.dev/api/dict`，后改为 `dxwj.pages.dev/api/dict`）。
 - **本地已归档**（保留可恢复）：
   - `F:\WorkBuddy\dict-worker\` → `F:\WorkBuddy\_archive_2026-07-25\dict-worker\`
   - `F:\WorkBuddy\dict-data\` → `F:\WorkBuddy\_archive_2026-07-25\dict-data\`
   - `F:\WorkBuddy\wx2\` → `F:\WorkBuddy\_archive_2026-07-25\wx2\`
 - **日常不再使用的工具**：`wrangler` 命令行（KV 数据已建好，日常维护无需它；如需重建 KV 再装）。
 - **日常只做一件事**：在 `F:\github-dx\wx` 改完 → 推送 GitHub → Cloudflare 自动拉取部署。
+
+### 2026-07-28 · 彻底清理（wx / dict-worker 双删）
+- **删除 Cloudflare Pages 项目 `wx`**（`wx-5i8.pages.dev`）：与正式站点 `dxwj` 共用 GitHub 仓库 `jygldj/wx`，每次 push 触发双部署，删除后节省构建配额。删除前已验证 dxwj 一切正常。
+- **删除 Cloudflare Worker `dict-worker`**（`dict-worker.gswsf.workers.dev`）：保留期间 0 真实流量（国内封锁 + 实际访问全走 Pages Functions）。**删除前先解绑 DICT_KV**（避免误删 KV 数据；KV 命名空间本身保留），反复 Ctrl+F5 刷新 `dxwj.pages.dev` 无异常后再删除 Worker。
+- **架构定型**：✅ 站点 `dxwj.pages.dev` + Pages Function `/api/dict` + KV `DICT_KV` 三件套成为唯一链路。
+- 完整时间线见 `改动说明.md` 第 9、10 节。
 
 ---
 
