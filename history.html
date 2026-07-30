@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>占卜历史 · 增删卜易</title>
+    <style>
+        /* 与主页面风格一致的样式 */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: #3d2e20;
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(140, 100, 65, 0.35) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 50%, rgba(200, 170, 130, 0.2) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 100%, rgba(120, 80, 50, 0.25) 0%, transparent 40%),
+                radial-gradient(ellipse at 50% 0%, rgba(80, 55, 40, 0.2) 0%, transparent 30%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* 太极阴阳鱼背景装饰 */
+        body::before {
+            content: '☯';
+            position: fixed;
+            font-size: 300px;
+            color: rgba(255, 248, 240, 0.04);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            animation: taijiSpin 60s linear infinite;
+        }
+
+        @keyframes taijiSpin {
+            0% { transform: translate(-50%, -50%) rotate(0deg) scale(1.2); }
+            100% { transform: translate(-50%, -50%) rotate(360deg) scale(1.2); }
+        }
+
+        /* 星点闪烁 */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image:
+                radial-gradient(2px 2px at 10% 20%, rgba(255,255,240,0.15), transparent),
+                radial-gradient(2px 2px at 30% 60%, rgba(255,255,240,0.1), transparent),
+                radial-gradient(1px 1px at 50% 10%, rgba(255,255,240,0.2), transparent),
+                radial-gradient(2px 2px at 70% 40%, rgba(255,255,240,0.12), transparent),
+                radial-gradient(1px 1px at 90% 80%, rgba(255,255,240,0.18), transparent),
+                radial-gradient(1px 1px at 15% 85%, rgba(255,255,240,0.08), transparent),
+                radial-gradient(2px 2px at 60% 90%, rgba(255,255,240,0.1), transparent),
+                radial-gradient(1px 1px at 85% 15%, rgba(255,255,240,0.15), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 840px;
+            width: 100%;
+            background: rgba(246, 239, 230, 0.92);
+            backdrop-filter: blur(12px);
+            padding: 30px 30px 40px;
+            border-radius: 48px 48px 32px 32px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 0 1px #6b5a48 inset, 0 0 0 2px #bcab97 inset;
+            border: 1px solid #c9b9a5;
+        }
+        h1 {
+            font-size: 26px;
+            text-align: center;
+            font-weight: normal;
+            letter-spacing: 8px;
+            color: #3f2e1e;
+            border-bottom: 2px solid #cbb8a4;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .nav-bar {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .nav-bar a {
+            color: #6b4f39;
+            text-decoration: none;
+            padding: 6px 18px;
+            border-radius: 30px;
+            background: #ede3d7;
+            border: 1px solid #d5c6b4;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+        .nav-bar a:hover { background: #d5c6b4; }
+        .nav-bar a.active { background: #6b4f39; color: #f5ede4; border-color: #6b4f39; }
+        .nav-bar a.external-link { background: #8b6f4f; color: #f5ede4; border-color: #8b6f4f; }
+        .nav-bar a.external-link:hover { background: #6b4f39; border-color: #6b4f39; }
+        .history-item {
+            background: #fcf8f0;
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            border: 1px solid #d5c6b4;
+            transition: 0.2s;
+        }
+        .history-item:hover { background: #f8f1e8; }
+        .history-item .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            border-bottom: 1px solid #e8ddd0;
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+        }
+        .history-item .time { font-size: 13px; color: #7a6652; }
+        .history-item .gua-name { font-weight: bold; font-size: 18px; color: #3f2e1e; }
+        .history-item .gua-name .arrow { color: #b09a84; margin: 0 8px; }
+        .history-item .question { font-size: 14px; color: #6b5844; font-style: italic; }
+        .history-item .result { font-size: 14px; color: #3c2e22; margin-top: 6px; }
+        .empty-state {
+            text-align: center;
+            color: #9a8876;
+            padding: 50px 0;
+            font-style: italic;
+            letter-spacing: 2px;
+        }
+        .btn-clear {
+            background: #b09a84;
+            border: none;
+            color: #2d241c;
+            padding: 8px 24px;
+            border-radius: 40px;
+            font-size: 14px;
+            cursor: pointer;
+            font-family: inherit;
+            margin-top: 12px;
+            transition: 0.2s;
+        }
+        .btn-clear:hover { background: #c0aa94; }
+        .footer-note {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #a48d78;
+            text-align: center;
+            border-top: 1px solid #e0d3c4;
+            padding-top: 16px;
+            letter-spacing: 1px;
+        }
+
+        @media (max-width: 500px) {
+            .container { padding: 16px; }
+            h1 { font-size: 20px; letter-spacing: 4px; }
+            .nav-bar { gap: 8px; }
+            .nav-bar a { font-size: 12px; padding: 4px 12px; }
+            .history-item { padding: 14px; }
+        }
+
+        @media (max-width: 400px) {
+            .container { padding: 12px; }
+            h1 { font-size: 17px; letter-spacing: 2px; }
+            .nav-bar a { font-size: 11px; padding: 3px 10px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📖 占卜 · 历史</h1>
+    <div class="nav-bar">
+        <a href="liuyao_divine.html">🔮 起卦</a>
+        <a href="jiegu.html">📜 释卦</a>
+        <a href="history.html" class="active">📖 历史</a>
+        <a href="help.html">❓ 指南</a>
+        <a href="nlcx.html" class="external-link" title="农历查询">📅 农历查询</a>
+        <a href="index1.html" target="_blank" class="external-link" title="返回道玄文集">🏠 文集</a>
+    </div>
+    <div id="historyList"></div>
+    <div style="text-align:center;margin-top:12px;">
+        <button class="btn-clear" id="clearHistoryBtn">🗑️ 清空历史</button>
+    </div>
+    <div class="footer-note">📖 以《增删卜易》为宗 · 占卜历史保存在本地</div>
+</div>
+<script>
+    (function() {
+        const historyList = document.getElementById('historyList');
+
+        function loadHistory() {
+            try {
+                return JSON.parse(localStorage.getItem('guaHistory') || '[]');
+            } catch(e) {
+                return [];
+            }
+        }
+
+        function renderHistory() {
+            const history = loadHistory();
+            if (history.length === 0) {
+                historyList.innerHTML = `
+                    <div class="empty-state">
+                        🌿 暂无占卜记录<br>
+                        <span style="font-size:13px;color:#b09a84;">起一卦，开启你的《增删卜易》之旅</span>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            // 倒序显示（最新的在前）
+            for (let i = history.length - 1; i >= 0; i--) {
+                const item = history[i];
+                html += `
+                    <div class="history-item">
+                        <div class="header">
+                            <span class="gua-name">
+                                ${item.benGua} <span class="arrow">→</span> ${item.bianGua}
+                            </span>
+                            <span class="time">${item.time || '未知时间'}</span>
+                        </div>
+                        <div class="question">📌 ${item.question || '未记录问题'}</div>
+                        ${item.result ? `<div class="result">📜 ${item.result.substring(0, 100)}${item.result.length > 100 ? '...' : ''}</div>` : ''}
+                        <div style="font-size:12px;color:#7a6652;margin-top:6px;">
+                            动爻：${item.dongYao && item.dongYao.length > 0 ? item.dongYao.join('、') : '无'}
+                        </div>
+                    </div>
+                `;
+            }
+            historyList.innerHTML = html;
+        }
+
+        // 清空历史
+        document.getElementById('clearHistoryBtn').addEventListener('click', function() {
+            if (confirm('确定要清空所有占卜历史吗？')) {
+                localStorage.removeItem('guaHistory');
+                renderHistory();
+            }
+        });
+
+        renderHistory();
+        console.log('✅ 历史记录页面已加载');
+    })();
+</script>
+</body>
+</html>

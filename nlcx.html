@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>农历查询 · 增删卜易</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: #1a1410;
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(107, 79, 57, 0.2) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 50%, rgba(180, 150, 120, 0.1) 0%, transparent 50%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+        body::before {
+            content: '☯';
+            position: fixed;
+            font-size: 250px;
+            color: rgba(255, 248, 240, 0.03);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            animation: taijiSpin 50s linear infinite;
+        }
+        @keyframes taijiSpin {
+            0% { transform: translate(-50%, -50%) rotate(0deg) scale(1.1); }
+            100% { transform: translate(-50%, -50%) rotate(360deg) scale(1.1); }
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image:
+                radial-gradient(2px 2px at 10% 20%, rgba(255,255,240,0.12), transparent),
+                radial-gradient(1px 1px at 30% 60%, rgba(255,255,240,0.08), transparent),
+                radial-gradient(2px 2px at 50% 10%, rgba(255,255,240,0.15), transparent),
+                radial-gradient(1px 1px at 70% 40%, rgba(255,255,240,0.10), transparent),
+                radial-gradient(2px 2px at 90% 80%, rgba(255,255,240,0.12), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 780px;
+            width: 100%;
+            background: rgba(246, 239, 230, 0.92);
+            backdrop-filter: blur(12px);
+            padding: 30px 30px 40px;
+            border-radius: 48px 48px 32px 32px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 0 1px #6b5a48 inset, 0 0 0 2px #bcab97 inset;
+            border: 1px solid #c9b9a5;
+            align-self: center;
+        }
+        h1 {
+            font-size: 26px;
+            text-align: center;
+            font-weight: normal;
+            letter-spacing: 8px;
+            color: #3f2e1e;
+            text-shadow: 1px 1px 0 #d6c8b8;
+            border-bottom: 2px solid #cbb8a4;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .nav-bar {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .nav-bar a {
+            color: #6b4f39;
+            text-decoration: none;
+            padding: 6px 16px;
+            border-radius: 30px;
+            background: #ede3d7;
+            border: 1px solid #d5c6b4;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+        .nav-bar a:hover { background: #d5c6b4; }
+        .nav-bar a.active {
+            background: #6b4f39;
+            color: #f5ede4;
+            border-color: #6b4f39;
+        }
+        .search-area {
+            background: rgba(255, 248, 240, 0.6);
+            border-radius: 20px;
+            padding: 20px 24px;
+            border: 1px solid #d5c6b4;
+            margin-bottom: 20px;
+        }
+        .search-area .title {
+            font-size: 14px;
+            color: #7a6652;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        .search-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+        .search-row input[type="date"] {
+            padding: 10px 16px;
+            font-size: 16px;
+            border-radius: 12px;
+            border: 1px solid #cbb8a4;
+            background: #fcf8f0;
+            font-family: inherit;
+            color: #3c2e22;
+            flex: 1;
+            min-width: 180px;
+        }
+        .search-row input[type="date"]:focus {
+            outline: none;
+            border-color: #8a765d;
+            box-shadow: 0 0 0 3px rgba(107, 79, 57, 0.12);
+        }
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            background: #b09a84;
+            border: none;
+            color: #2d241c;
+            padding: 10px 24px;
+            border-radius: 30px;
+            font-size: 15px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: 0.2s;
+            border: 1px solid #c9b49e;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        }
+        .btn:hover {
+            background: #c0aa94;
+            transform: translateY(-1px);
+        }
+        .btn-primary {
+            background: #6b4f39;
+            color: #f5ede4;
+            border-color: #8f745b;
+            box-shadow: 0 3px 0 #3d2d1f;
+        }
+        .btn-primary:hover {
+            background: #7d5d43;
+            transform: translateY(-1px);
+        }
+        .btn-primary:active {
+            transform: translateY(3px);
+            box-shadow: 0 0px 0 #3d2d1f;
+        }
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+        .result-area {
+            background: #fcf8f0;
+            border-radius: 20px;
+            padding: 20px 24px;
+            border: 1px solid #d5c6b4;
+            min-height: 200px;
+        }
+        .result-placeholder {
+            color: #9a8876;
+            text-align: center;
+            padding: 30px 0;
+            font-style: italic;
+            letter-spacing: 2px;
+        }
+        .result-placeholder .icon {
+            font-size: 40px;
+            display: block;
+            margin-bottom: 12px;
+        }
+        .result-content {
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(8px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .result-card {
+            background: #f6efe6;
+            border-radius: 14px;
+            padding: 14px 18px;
+            border: 1px solid #e0d3c4;
+            transition: 0.2s;
+        }
+        .result-card:hover {
+            background: #f0e8dd;
+        }
+        .result-card .label {
+            font-size: 12px;
+            color: #7a6652;
+            letter-spacing: 2px;
+            margin-bottom: 4px;
+        }
+        .result-card .value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #3f2e1e;
+        }
+        .result-card .value.small {
+            font-size: 16px;
+        }
+        .result-card .value .highlight {
+            color: #6b4f39;
+        }
+        .result-card.full {
+            grid-column: 1 / -1;
+        }
+        .result-card .sub {
+            font-size: 13px;
+            color: #6b5844;
+            margin-top: 2px;
+        }
+        .result-card .tag {
+            display: inline-block;
+            background: #ede3d7;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #6b5844;
+            margin-right: 6px;
+            margin-top: 4px;
+        }
+        .footer-note {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #a48d78;
+            text-align: center;
+            border-top: 1px solid #e0d3c4;
+            padding-top: 16px;
+            letter-spacing: 1px;
+        }
+        .gushi-text {
+            text-align: center;
+            font-size: 13px;
+            color: #7a6652;
+            font-style: italic;
+            margin-top: 6px;
+            border-top: 1px solid #e8ddd0;
+            padding-top: 12px;
+        }
+        .gushi-text .quote {
+            color: #6b4f39;
+        }
+        .error-msg {
+            color: #b33;
+            text-align: center;
+            padding: 20px 0;
+        }
+        @media (max-width: 500px) {
+            .container { padding: 16px; }
+            h1 { font-size: 20px; letter-spacing: 4px; }
+            .nav-bar a { font-size: 12px; padding: 4px 12px; }
+            .search-area { padding: 14px 16px; }
+            .search-row { flex-direction: column; }
+            .search-row input[type="date"] { min-width: 100%; }
+            .btn-group { width: 100%; justify-content: center; }
+            .btn { padding: 10px 18px; font-size: 14px; }
+            .result-grid { grid-template-columns: 1fr; gap: 8px; }
+            .result-card .value { font-size: 17px; }
+            .result-card { padding: 12px 14px; }
+        }
+        @media (max-width: 400px) {
+            .container { padding: 12px; }
+            h1 { font-size: 17px; letter-spacing: 2px; }
+            .btn { padding: 8px 14px; font-size: 13px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📅 农历 · 查询</h1>
+
+    <div class="nav-bar">
+        <a href="liuyao_divine.html">🔮 起卦</a>
+        <a href="jiegu.html">📜 释卦</a>
+        <a href="history.html">📖 历史</a>
+        <a href="help.html">❓ 指南</a>
+        <a href="nlcx.html" class="active">📅 农历</a>
+    </div>
+
+    <div class="search-area">
+        <div class="title">📆 选择公历日期，查询对应的农历信息</div>
+        <div class="search-row">
+            <input type="date" id="dateInput">
+            <div class="btn-group">
+                <button class="btn btn-primary" id="queryBtn">🔍 查询</button>
+                <button class="btn btn-small" id="todayBtn">📌 今日</button>
+                <button class="btn btn-small" id="prevBtn">◀</button>
+                <button class="btn btn-small" id="nextBtn">▶</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="result-area" id="resultArea">
+        <div class="result-placeholder">
+            <span class="icon">🌿</span>
+            请选择日期，查询农历信息
+        </div>
+    </div>
+
+    <div class="footer-note">📖 以《增删卜易》为宗 · 干支纪年 · 节气时令</div>
+</div>
+
+<script src="lunar.js"></script>
+<script>
+    (function() {
+        const dateInput = document.getElementById('dateInput');
+        const queryBtn = document.getElementById('queryBtn');
+        const todayBtn = document.getElementById('todayBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const resultArea = document.getElementById('resultArea');
+
+        // ============================================================
+        // 1. 设置默认日期为今天
+        // ============================================================
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        dateInput.value = `${year}-${month}-${day}`;
+
+        // ============================================================
+        // 2. 查询函数
+        // ============================================================
+        function queryLunar(dateStr) {
+            if (!dateStr) {
+                resultArea.innerHTML = `
+                    <div class="result-placeholder">
+                        <span class="icon">⚠️</span>
+                        请选择日期
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                const parts = dateStr.split('-').map(Number);
+                const solar = Solar.fromYmd(parts[0], parts[1], parts[2]);
+                if (!solar) {
+                    throw new Error('无效日期');
+                }
+
+                const lunar = solar.getLunar();
+
+                // ============================================================
+                // 修复点：solar.getConstellation → lunar.getXingZuo()
+                // ============================================================
+                const data = {
+                    solarYear: solar.getYear(),
+                    solarMonth: solar.getMonth(),
+                    solarDay: solar.getDay(),
+                    week: ['日', '一', '二', '三', '四', '五', '六'][solar.getWeek()],
+                    lunarYear: lunar.getYear(),
+                    lunarYearChinese: lunar.getYearInChinese(),
+                    lunarMonth: lunar.getMonth(),
+                    lunarMonthChinese: lunar.getMonthInChinese(),
+                    lunarDay: lunar.getDay(),
+                    lunarDayChinese: lunar.getDayInChinese(),
+                    animal: lunar.getAnimal(),
+                    yearGanZhi: lunar.getYearInGanZhi(),
+                    monthGanZhi: lunar.getMonthInGanZhi(),
+                    dayGanZhi: lunar.getDayInGanZhi(),
+                    jieQi: lunar.getJieQi ? lunar.getJieQi() : '—',
+                    festivals: lunar.getFestivals ? lunar.getFestivals() : [],
+                    isLeap: lunar.isLeapMonth ? lunar.isLeapMonth() : false,
+                    // ✅ 修复：星座从 lunar 获取
+                    constellation: lunar.getXingZuo ? lunar.getXingZuo() : '—'
+                };
+
+                renderResult(data);
+
+            } catch(e) {
+                resultArea.innerHTML = `
+                    <div class="error-msg">
+                        ⚠️ 查询失败：${e.message || '请检查日期是否正确'}
+                    </div>
+                `;
+                console.error('查询错误:', e);
+            }
+        }
+
+        // ============================================================
+        // 3. 渲染结果
+        // ============================================================
+        function renderResult(data) {
+            const leapLabel = data.isLeap ? '（闰月）' : '';
+
+            let festivalsHtml = '';
+            if (data.festivals && data.festivals.length > 0) {
+                festivalsHtml = data.festivals.map(f => `<span class="tag">${f}</span>`).join(' ');
+            } else {
+                festivalsHtml = '<span style="color:#b09a84;font-size:13px;">—</span>';
+            }
+
+            const poems = [
+                '月有阴晴圆缺，人有旦夕祸福。',
+                '春有百花秋有月，夏有凉风冬有雪。',
+                '天行健，君子以自强不息。',
+                '地势坤，君子以厚德载物。',
+                '一阴一阳之谓道。',
+                '天地交而万物通。',
+                '日月运行，一寒一暑。',
+                '观乎天文，以察时变。'
+            ];
+            const randomPoem = poems[Math.floor(Math.random() * poems.length)];
+
+            const html = `
+                <div class="result-content">
+                    <div class="result-grid">
+                        <div class="result-card">
+                            <div class="label">📅 公历</div>
+                            <div class="value">
+                                ${data.solarYear}年${data.solarMonth}月${data.solarDay}日
+                                <span style="font-size:16px;color:#7a6652;font-weight:normal;">
+                                    星期${data.week}
+                                </span>
+                            </div>
+                            <div class="sub">星座：${data.constellation || '—'}</div>
+                        </div>
+
+                        <div class="result-card">
+                            <div class="label">🌙 农历</div>
+                            <div class="value">
+                                ${data.lunarYearChinese}年
+                                ${data.lunarMonthChinese}月
+                                ${data.lunarDayChinese}
+                            </div>
+                            <div class="sub">
+                                   ${leapLabel}
+                                  （对应公历：${data.solarYear}年${data.solarMonth}月${data.solarDay}日）
+                              </div>
+                        </div>
+
+                        <div class="result-card">
+                            <div class="label">🐾 生肖</div>
+                            <div class="value">${data.animal}</div>
+                            <div class="sub">${data.yearGanZhi}年</div>
+                        </div>
+
+                        <div class="result-card">
+                            <div class="label">🧮 干支纪日</div>
+                            <div class="value small">
+                                ${data.yearGanZhi} · ${data.monthGanZhi} · ${data.dayGanZhi}
+                            </div>
+                            <div class="sub">年柱 · 月柱 · 日柱</div>
+                        </div>
+
+                        <div class="result-card full">
+                            <div class="label">🌿 节气</div>
+                            <div class="value small">${data.jieQi}</div>
+                            <div class="sub">当日节气</div>
+                        </div>
+
+                        <div class="result-card full">
+                            <div class="label">🎉 节日</div>
+                            <div>${festivalsHtml}</div>
+                            <div class="sub" style="margin-top:4px;">传统节日 · 纪念日</div>
+                        </div>
+                    </div>
+                    <div class="gushi-text">
+                        <span class="quote">「${randomPoem}」</span>
+                    </div>
+                </div>
+            `;
+            resultArea.innerHTML = html;
+        }
+
+        // ============================================================
+        // 4. 事件绑定
+        // ============================================================
+        queryBtn.addEventListener('click', function() {
+            queryLunar(dateInput.value);
+        });
+
+        todayBtn.addEventListener('click', function() {
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const d = String(now.getDate()).padStart(2, '0');
+            dateInput.value = `${y}-${m}-${d}`;
+            queryLunar(dateInput.value);
+        });
+
+        prevBtn.addEventListener('click', function() {
+            const current = new Date(dateInput.value + 'T00:00:00');
+            if (isNaN(current.getTime())) {
+                todayBtn.click();
+                return;
+            }
+            current.setDate(current.getDate() - 1);
+            const y = current.getFullYear();
+            const m = String(current.getMonth() + 1).padStart(2, '0');
+            const d = String(current.getDate()).padStart(2, '0');
+            dateInput.value = `${y}-${m}-${d}`;
+            queryLunar(dateInput.value);
+        });
+
+        nextBtn.addEventListener('click', function() {
+            const current = new Date(dateInput.value + 'T00:00:00');
+            if (isNaN(current.getTime())) {
+                todayBtn.click();
+                return;
+            }
+            current.setDate(current.getDate() + 1);
+            const y = current.getFullYear();
+            const m = String(current.getMonth() + 1).padStart(2, '0');
+            const d = String(current.getDate()).padStart(2, '0');
+            dateInput.value = `${y}-${m}-${d}`;
+            queryLunar(dateInput.value);
+        });
+
+        dateInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                queryLunar(dateInput.value);
+            }
+        });
+
+        setTimeout(function() {
+            queryLunar(dateInput.value);
+        }, 100);
+
+        console.log('✅ 农历查询页面已加载');
+    })();
+</script>
+</body>
+</html>
