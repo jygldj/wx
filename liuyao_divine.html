@@ -359,20 +359,23 @@
         .nav-bar a.external-link { background: #ede3d7; color: #6b4f39; border-color: #d5c6b4; }
         .nav-bar a.external-link:hover { background: #d5c6b4; color: #3f2e1e; border-color: #c2b39c; }
         @media (max-width: 500px) {
-            .container { padding: 8px; }
+            /* 页面边框：body padding 由 20px 缩到 4px，最大化利用屏幕宽度 */
+            body { padding: 4px; }
+            .container { padding: 8px; border-radius: 24px 24px 16px 16px; }
             .coin { width: 56px; height: 56px; font-size: 24px; }
             .primary-btn { padding: 10px 24px; font-size: 16px; }
 
-            /* 用户信息区：移动端并排+自然换行；姓名≈4字、性别≈2字、出生≈11字，所问之事独占一行；左右边距最小化 */
-            .user-info-area { padding: 10px 10px; }
+            /* 用户信息区：姓名6字+性别2字一行；出生时辰单独一行，与所问之事同宽；左右边距最小化 */
+            .user-info-area { padding: 10px 8px; }
+            .user-info-title { font-size: 14px; margin-bottom: 8px; }
             .user-info-fields {
                 flex-direction: row;
                 flex-wrap: wrap;
-                gap: 6px 8px;
+                gap: 6px 6px;
             }
-            .field-group.fixed-name { flex: 0 0 4.5em; }
-            .field-group.fixed-gender { flex: 0 0 3em; }
-            .field-group.fixed-birth { flex: 0 0 11em; }
+            .field-group.fixed-name { flex: 0 0 6.5em; }
+            .field-group.fixed-gender { flex: 0 0 4.5em; }
+            .field-group.fixed-birth { flex: 0 0 100%; }
             .field-group.fluid { flex: 1 1 100%; min-width: 0; }
             .field-group { min-width: 0; }
             .field-group input,
@@ -464,6 +467,7 @@
 
         /* 小屏手机（< 400px）进一步优化 */
         @media (max-width: 400px) {
+            body { padding: 2px; }
             .container { padding: 6px; }
             .coin { width: 46px; height: 46px; font-size: 20px; }
             .coin-area { gap: 8px; padding: 12px 0; min-height: 80px; }
@@ -474,6 +478,9 @@
                 font-size: 15px;
                 padding: 12px 16px;
             }
+            .user-info-area { padding: 8px 6px; }
+            .field-group.fixed-name { flex: 0 0 5.5em; }
+            .field-group.fixed-gender { flex: 0 0 4em; }
         }
     </style>
 </head>
