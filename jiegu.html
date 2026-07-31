@@ -291,11 +291,28 @@
         .result-content .body {
             font-size: 15px;
             color: #3c2e22;
-            white-space: pre-wrap;
+            line-height: 1.75;
         }
-        .result-content .body .guaci {
-            color: #6b4f39;
-            font-weight: bold;
+        .result-content .body .md-p { margin: 6px 0; }
+        .result-content .body .md-h2 {
+            color: #5a4632; font-size: 18px; margin: 18px 0 8px;
+            border-bottom: 2px solid #d5c6b4; padding-bottom: 4px;
+        }
+        .result-content .body .md-h3 {
+            color: #6b4f39; font-size: 16px; margin: 14px 0 6px;
+        }
+        .result-content .body .md-h4 {
+            color: #6b4f39; font-size: 15px; margin: 12px 0 6px; font-weight: bold;
+        }
+        .result-content .body .md-ul { margin: 6px 0; }
+        .result-content .body .md-li {
+            padding: 2px 0 2px 8px; color: #3c2e22;
+        }
+        .result-content .body strong { color: #8b6f4f; }
+        .result-content .body em { font-style: italic; color: #7a5c3a; }
+        .result-content .body .md-code {
+            background: #efe6d8; padding: 1px 5px; border-radius: 4px;
+            font-family: Consolas, monospace; font-size: 13px; color: #6b4f39;
         }
         .loading-text {
             text-align: center;
@@ -517,6 +534,66 @@
         }
 
         // ============================================================
+        // 1.5 轻量 Markdown 解析（支持标题/粗体/斜体/列表/行内代码，无外部依赖）
+        // ============================================================
+        function mdInline(text) {
+            const esc = text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+            return esc
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                .replace(/`(.+?)`/g, '<code class="md-code">$1</code>');
+        }
+        function mdToHtml(md) {
+            if (!md) return '';
+            const lines = md.replace(/\r\n/g, '\n').split('\n');
+            let html = '';
+            let inList = false;
+            const closeList = () => { if (inList) { html += '</div>'; inList = false; } };
+            for (let raw of lines) {
+                const line = raw.replace(/\s+$/, '');
+                let m;
+                if ((m = line.match(/^###\s+(.+)$/))) {
+                    closeList();
+                    html += `<h4 class="md-h4">${mdInline(m[1])}</h4>`;
+                } else if ((m = line.match(/^##\s+(.+)$/))) {
+                    closeList();
+                    html += `<h3 class="md-h3">${mdInline(m[1])}</h3>`;
+                } else if ((m = line.match(/^#\s+(.+)$/))) {
+                    closeList();
+                    html += `<h2 class="md-h2">${mdInline(m[1])}</h2>`;
+                } else if ((m = line.match(/^[-*]\s+(.+)$/))) {
+                    if (!inList) { html += '<div class="md-ul">'; inList = true; }
+                    html += `<div class="md-li">· ${mdInline(m[1])}</div>`;
+                } else if (line.trim() === '') {
+                    closeList();
+                } else {
+                    closeList();
+                    html += `<p class="md-p">${mdInline(line)}</p>`;
+                }
+            }
+            closeList();
+            return html;
+        }
+        // 复制/保存用的纯文本：去除 Markdown 符号，保留标题/加粗语义
+        function mdToPlain(md) {
+            if (!md) return '';
+            return md
+                .replace(/\r\n/g, '\n')
+                // 标题：去掉前导 # 号，保留文字
+                .replace(/^#{1,6}\s+/gm, '')
+                // 加粗/斜体：去掉 * 号，保留内部文字
+                .replace(/\*\*(.+?)\*\*/g, '$1')
+                .replace(/\*(.+?)\*/g, '$1')
+                // 行内代码：去掉反引号
+                .replace(/`(.+?)`/g, '$1')
+                // 列表：将 - / * 前缀转为 · ，保留层级感
+                .replace(/^[-*]\s+/gm, '· ');
+        }
+
+        // ============================================================
         // 2. 从 localStorage 读取当前卦象
         // ============================================================
         function loadGuaData() {
@@ -572,12 +649,6 @@
         // ============================================================
         const resultArea = document.getElementById('resultArea');
         const jieGuaBtn = document.getElementById('jieGuaBtn');
-        const backBtn = document.getElementById('backBtn');
-
-        // 返回起卦页面
-        backBtn.addEventListener('click', function() {
-            window.location.href = 'liuyao_divine.html';
-        });
 
         jieGuaBtn.addEventListener('click', async function() {
             const guaData = loadGuaData();
@@ -680,7 +751,7 @@
                                 <span>❓ 所问：${questionText}</span>
                             </div>
                         </div>
-                        <div class="body">${result}</div>
+                        <div class="body">${mdToHtml(result)}</div>
                         <div style="margin-top:14px;font-size:12px;color:#9a8876;border-top:1px solid #e0d3c4;padding-top:12px;">
                             🤖 AI 解读（${modelName}）· 仅供娱乐参考 · 决策还需理性判断
                         </div>
@@ -694,7 +765,7 @@
 月建：${timeInfo.yueJian || '未知'}月　日辰：${timeInfo.riChen || '未知'}日　旬空：${timeInfo.xunKong || '—'}
 所问之事：${questionText}
 
-${result}
+${mdToPlain(result)}
 
 ---
 模型：${modelName}　时间：${new Date().toLocaleString('zh-CN')}

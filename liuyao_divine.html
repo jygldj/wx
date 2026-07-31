@@ -295,11 +295,19 @@
             display: flex;
             flex-wrap: wrap;
             gap: 12px;
+            align-items: flex-end;
         }
         .field-group {
-            flex: 1;
-            min-width: 140px;
+            min-width: 0;
         }
+        /* 姓名：4 颗汉字 */
+        .field-group.fixed-name { flex: 0 0 90px; }
+        /* 性别：2 颗汉字（含下拉箭头） */
+        .field-group.fixed-gender { flex: 0 0 64px; }
+        /* 出生时辰：12 颗汉字 */
+        .field-group.fixed-birth { flex: 0 0 230px; }
+        /* 所问之事：占满剩余空间 */
+        .field-group.fluid { flex: 1; min-width: 200px; }
         .field-group label {
             display: block;
             font-size: 12px;
@@ -360,8 +368,13 @@
                 flex-direction: column;
                 gap: 10px;
             }
-            .field-group {
-                min-width: 100%;
+            .field-group,
+            .field-group.fixed-name,
+            .field-group.fixed-gender,
+            .field-group.fixed-birth,
+            .field-group.fluid {
+                flex: 0 0 100%;
+                min-width: 0;
             }
             .field-group input,
             .field-group select {
@@ -483,22 +496,22 @@
     <div class="user-info-area" id="userInfoArea">
         <div class="user-info-title">🧘 求卦者信息</div>
         <div class="user-info-fields">
-            <div class="field-group">
+            <div class="field-group fixed-name">
                 <label for="userName">姓名</label>
                 <input type="text" id="userName" placeholder="请填写您的姓名">
             </div>
-            <div class="field-group">
+            <div class="field-group fixed-gender">
                 <label for="userGender">性别</label>
                 <select id="userGender">
                     <option value="男">男</option>
                     <option value="女">女</option>
                 </select>
             </div>
-            <div class="field-group">
+            <div class="field-group fixed-birth">
                 <label for="userBirth">出生时辰</label>
                 <input type="text" id="userBirth" placeholder="如：癸卯年辛酉月癸酉日庚申时">
             </div>
-            <div class="field-group" style="flex:2;">
+            <div class="field-group fluid">
                 <label for="userQuestion">所问之事</label>
                 <input type="text" id="userQuestion" placeholder="请简要描述您所问之事">
             </div>
@@ -875,9 +888,9 @@
                         <span>📜 卦象 ${benSymbol} → ${bianSymbol}</span>
                         <span class="gua-sub">${hasDong ? '⚡ 动爻 · 事有变数' : '🌿 静爻 · 卦象不移'}</span>
                     </div>
-                    <div style="text-align:center;font-size:12px;color:#6b5844;margin-bottom:10px;">
-                        <span class="mapping-status">✅ 本卦: ${benPattern} → ${benGua.卦名}（${benGua.宫}）</span>
-                        <span class="mapping-status" style="margin-left:10px;">✅ 变卦: ${bianPattern} → ${bianGua.卦名}（${bianGua.宫}）</span>
+                    <div style="text-align:center;font-size:13px;color:#5a4632;margin-bottom:12px;letter-spacing:2px;">
+                        <span class="mapping-status">✅ 本卦：${benGua.卦名}（${benGua.宫}）</span>
+                        <span class="mapping-status" style="margin-left:14px;">✅ 变卦：${bianGua.卦名}（${bianGua.宫}）</span>
                     </div>
                     <div class="flex-row">
                         <div class="gua-box">${benHtml}</div>
