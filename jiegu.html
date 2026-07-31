@@ -401,7 +401,7 @@
         <a href="jiegu.html" class="active">📜 释卦</a>
         <a href="history.html">📖 历史</a>
         <a href="help.html">❓ 指南</a>
-        <a href="nlcx.html" class="external-link" title="农历查询">📅 农历查询</a>
+        <a href="nlcx.html" class="external-link" title="农历">📅 农历</a>
         <a href="index1.html" target="_blank" class="external-link" title="返回道玄文集">🏠 文集</a>
     </div>
 
@@ -419,7 +419,7 @@
 
     <!-- 起卦时间信息 -->
     <div class="time-info-display" id="timeInfoDisplay">
-        <span><span class="label">🕐 起卦时间：</span><span id="displaySolarTime">—</span></span>
+        <span><span class="label">🕐 时间：</span><span id="displaySolarTime">—</span></span>
         <span><span class="label">📅 农历：</span><span id="displayLunarTime">—</span></span>
         <span><span class="label">🌙 月建：</span><span id="displayYueJian">—</span></span>
         <span><span class="label">☀️ 日辰：</span><span id="displayRiChen">—</span></span>
@@ -429,7 +429,6 @@
     <!-- 操作按钮 -->
     <div class="action-row">
         <button class="btn-primary" id="jieGuaBtn">📜 释 卦</button>
-        <button class="btn-secondary" id="backBtn">🔙 返回起卦</button>
     </div>
 
     <!-- 模型选择 -->
@@ -440,7 +439,7 @@
 
     <!-- 结果展示 -->
     <div id="resultArea">
-        <div class="result-placeholder">点击「释卦」按钮，AI将为您解读卦象</div>
+        <div class="result-placeholder">点击「释卦」按钮，为您解读卦象</div>
     </div>
 
     <div class="footer-note">📖 以《增删卜易》为宗 · AI智能解卦 · 仅供参考</div>
@@ -609,7 +608,7 @@
             resultArea.innerHTML = `
                 <div class="loading-text">
                     <div class="spinner">☯</div>
-                    <div style="margin-top:10px;">AI 正在以《增删卜易》之法解读卦象...</div>
+                    <div style="margin-top:10px;">正在拨通野鹤老人电话，请他为你解卦，大约需要一分钟...</div>
                     <div style="font-size:13px;color:#9a8876;margin-top:4px;">模型：${model === 'qwen' ? '千问 3.7' : 'GLM-5（智谱）'}</div>
                 </div>
             `;

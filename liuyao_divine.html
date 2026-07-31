@@ -467,7 +467,7 @@
 </head>
 <body>
 <div class="container">
-    <h1>⚘ 增删 · 铜钱占</h1>
+    <h1>⚘ 增删卜易 · 铜钱占</h1>
 
     <!-- 求卦者信息 -->
     <div class="user-info-area" id="userInfoArea">
@@ -486,7 +486,7 @@
             </div>
             <div class="field-group">
                 <label for="userBirth">出生时辰</label>
-                <input type="text" id="userBirth" placeholder="如：甲子年 寅时">
+                <input type="text" id="userBirth" placeholder="如：癸卯年辛酉月癸酉日庚申时">
             </div>
             <div class="field-group" style="flex:2;">
                 <label for="userQuestion">所问之事</label>
@@ -501,7 +501,7 @@
         <a href="jiegu.html">📜 释卦</a>
         <a href="history.html">📖 历史</a>
         <a href="help.html">❓ 指南</a>
-        <a href="nlcx.html" class="external-link" title="农历查询">📅 农历查询</a>
+        <a href="nlcx.html" class="external-link" title="农历查询">📅 农历</a>
         <a href="index1.html" target="_blank" class="external-link" title="返回道玄文集">🏠 文集</a>
     </div>
 
@@ -794,7 +794,7 @@
             if (currentStep >= 6) {
                 shakeBtn.disabled = true;
                 completeBtn.disabled = false;
-                progressText.textContent = '✅ 六爻已备 · 可成卦';
+                progressText.textContent = '✅ 六爻具备';
                 isShaking = false;
                 return;
             }
@@ -872,7 +872,7 @@
             let html = `
                 <div class="gua-result">
                     <div class="gua-title">
-                        <span>📜 卦象呈现 ${benSymbol} → ${bianSymbol}</span>
+                        <span>📜 卦象 ${benSymbol} → ${bianSymbol}</span>
                         <span class="gua-sub">${hasDong ? '⚡ 动爻 · 事有变数' : '🌿 静爻 · 卦象不移'}</span>
                     </div>
                     <div style="text-align:center;font-size:12px;color:#6b5844;margin-bottom:10px;">
