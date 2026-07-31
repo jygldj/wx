@@ -288,11 +288,19 @@
                 font-size: 12px;
                 padding: 6px 4px;
             }
-            .search-area { padding: 14px 16px; }
-            .search-row { flex-direction: column; }
+            .search-area { padding: 14px 12px; }
+            .search-row { flex-direction: column; gap: 8px; }
             .search-row input[type="date"] { min-width: 100%; }
-            .btn-group { width: 100%; justify-content: center; }
-            .btn { padding: 10px 18px; font-size: 14px; }
+            /* 四个按钮（查询/今日/◀/▶）挤在一行：取消换行、缩小 padding、缩小间距 */
+            .btn-group {
+                width: 100%;
+                justify-content: center;
+                gap: 6px;
+                flex-wrap: nowrap;
+            }
+            .btn { padding: 8px 14px; font-size: 13px; }
+            .btn-primary { padding: 7px 14px; font-size: 13px; }
+            .btn-small { padding: 6px 10px; font-size: 13px; }
             .result-grid { grid-template-columns: 1fr; gap: 8px; }
             .result-card .value { font-size: 17px; }
             .result-card { padding: 12px 14px; }
@@ -302,7 +310,10 @@
             .container { padding: 6px; }
             h1 { font-size: 17px; letter-spacing: 2px; }
             .nav-bar a { font-size: 11px; padding: 5px 3px; }
-            .btn { padding: 8px 14px; font-size: 13px; }
+            .btn { padding: 7px 10px; font-size: 12px; }
+            .btn-primary { padding: 6px 10px; font-size: 12px; }
+            .btn-small { padding: 5px 8px; font-size: 12px; }
+            .btn-group { gap: 4px; }
         }
     </style>
 </head>

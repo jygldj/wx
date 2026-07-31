@@ -181,6 +181,26 @@
             font-style: italic;
             padding: 8px 0;
         }
+        .history-item .btn-delete-item {
+            background: transparent;
+            border: 1px solid #d5c6b4;
+            color: #b09a84;
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            line-height: 22px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 4px;
+            padding: 0;
+            transition: 0.2s;
+        }
+        .history-item .btn-delete-item:hover {
+            background: #b33;
+            color: #fff;
+            border-color: #b33;
+        }
         .empty-state {
             text-align: center;
             color: #9a8876;
@@ -289,21 +309,22 @@
                             <span class="gua-name">
                                 ${item.benGua} <span class="arrow">→</span> ${item.bianGua}
                             </span>
-                            <span style="display:flex;align-items:center;gap:8px;">
+                            <span style="display:flex;align-items:center;gap:6px;">
                                 <span class="time">${item.time || '未知时间'}</span>
+                                <button class="btn-delete-item" title="删除此条记录" aria-label="删除">🗑️</button>
                                 <span class="expand-icon">▶</span>
                             </span>
                         </div>
-                        <div class="question">📌 ${item.question || '未记录问题'}</div>
+                        <div class="question">📌 ${item.question || '未输入个人资料'}</div>
                         <div class="detail">
                             <div class="user-block">
                                 <div class="user-title">🧘 求卦者资料</div>
                                 <div class="user-line">👤 姓名：${userInfo.name || '匿名'}　性别：${userInfo.gender || '未知'}</div>
-                                <div class="user-line">⏰ 出生时辰：${userInfo.birth || '未记录'}</div>
+                                <div class="user-line">⏰ 出生时辰：${userInfo.birth || '未输入个人资料'}</div>
                                 <div class="user-line">📅 起卦时间：${timeInfo.solarTime || item.time || '—'}（公历）${timeInfo.lunarTime || '—'}（农历）</div>
                                 <div class="user-line">🌙 月建：${timeInfo.yueJian || '—'}月　☀️ 日辰：${timeInfo.riChen || '—'}日　🌀 旬空：${timeInfo.xunKong || '—'}</div>
                                 <div class="user-line">⚡ 动爻：${item.dongYao && item.dongYao.length > 0 ? item.dongYao.join('、') : '无动爻（静卦）'}</div>
-                                <div class="user-line">❓ 所问：${userInfo.question || item.question || '未记录'}</div>
+                                <div class="user-line">❓ 所问：${userInfo.question || item.question || '未输入个人资料'}</div>
                             </div>
                             ${hasResult
                                 ? `<div class="result-body">${escapeHtml(item.result)}</div>
@@ -333,6 +354,27 @@
                 localStorage.removeItem('guaHistory');
                 renderHistory();
             }
+        });
+
+        // 删除单条历史（事件委托，避免与 header 展开冲突）
+        historyList.addEventListener('click', function(e) {
+            const delBtn = e.target.closest('.btn-delete-item');
+            if (!delBtn) return;
+            e.stopPropagation();
+            const itemEl = delBtn.closest('.history-item');
+            if (!itemEl) return;
+            const idx = parseInt(itemEl.dataset.idx, 10);
+            if (isNaN(idx)) return;
+            if (!confirm('确定要删除这条占卜记录吗？')) return;
+            const history = loadHistory();
+            if (idx < 0 || idx >= history.length) {
+                alert('记录已不存在');
+                renderHistory();
+                return;
+            }
+            history.splice(idx, 1);
+            localStorage.setItem('guaHistory', JSON.stringify(history));
+            renderHistory();
         });
 
         renderHistory();
