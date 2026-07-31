@@ -9,12 +9,12 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Georgia', 'Times New Roman', serif;
-            background: #3d2e20;
+            background: #e8f1f2;
             background-image:
-                radial-gradient(ellipse at 20% 50%, rgba(140, 100, 65, 0.35) 0%, transparent 60%),
-                radial-gradient(ellipse at 80% 50%, rgba(200, 170, 130, 0.2) 0%, transparent 50%),
-                radial-gradient(ellipse at 50% 100%, rgba(120, 80, 50, 0.25) 0%, transparent 40%),
-                radial-gradient(ellipse at 50% 0%, rgba(80, 55, 40, 0.2) 0%, transparent 30%);
+                radial-gradient(ellipse at 20% 50%, rgba(205, 224, 228, 0.5) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 50%, rgba(212, 228, 232, 0.4) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 100%, rgba(195, 216, 220, 0.45) 0%, transparent 40%),
+                radial-gradient(ellipse at 50% 0%, rgba(210, 226, 230, 0.35) 0%, transparent 30%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -111,6 +111,8 @@
             color: #f5ede4;
             border-color: #6b4f39;
         }
+        .nav-bar a.external-link { background: #ede3d7; color: #6b4f39; border-color: #d5c6b4; }
+        .nav-bar a.external-link:hover { background: #d5c6b4; color: #3f2e1e; border-color: #c2b39c; }
         .info-area {
             background: #fcf8f0;
             border-radius: 20px;
@@ -519,9 +521,13 @@
         // ============================================================
         function loadGuaData() {
             try {
-                const raw = localStorage.getItem('currentGua');
-                if (!raw) return null;
-                return JSON.parse(raw);
+                // 优先从 sessionStorage 读取（起卦页跳转时已写入，跨页可靠）
+                const sessionData = sessionStorage.getItem('currentGua');
+                if (sessionData) return JSON.parse(sessionData);
+                // 兜底：再尝试 localStorage
+                const localData = localStorage.getItem('currentGua');
+                if (localData) return JSON.parse(localData);
+                return null;
             } catch(e) {
                 return null;
             }
@@ -608,7 +614,7 @@
             resultArea.innerHTML = `
                 <div class="loading-text">
                     <div class="spinner">☯</div>
-                    <div style="margin-top:10px;">正在拨通野鹤老人电话，请他为你解卦，大约需要一分钟...</div>
+                    <div style="margin-top:10px;">正在与野鹤老人沟通，大约需要一分钟...</div>
                     <div style="font-size:13px;color:#9a8876;margin-top:4px;">模型：${model === 'qwen' ? '千问 3.7' : 'GLM-5（智谱）'}</div>
                 </div>
             `;
@@ -797,6 +803,7 @@ ${result}
             try {
                 const data = JSON.parse(decodeURIComponent(encodedData));
                 localStorage.setItem('currentGua', JSON.stringify(data));
+                try { sessionStorage.setItem('currentGua', JSON.stringify(data)); } catch(e) {}
                 displayGuaInfo(data);
             } catch(e) {}
         }
