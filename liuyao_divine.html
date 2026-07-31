@@ -359,27 +359,26 @@
         .nav-bar a.external-link { background: #ede3d7; color: #6b4f39; border-color: #d5c6b4; }
         .nav-bar a.external-link:hover { background: #d5c6b4; color: #3f2e1e; border-color: #c2b39c; }
         @media (max-width: 500px) {
-            .container { padding: 16px; }
+            .container { padding: 8px; }
             .coin { width: 56px; height: 56px; font-size: 24px; }
             .primary-btn { padding: 10px 24px; font-size: 16px; }
 
-            /* 用户信息区纵向排列 */
+            /* 用户信息区：移动端并排+自然换行；姓名≈4字、性别≈2字、出生≈11字，所问之事独占一行；左右边距最小化 */
+            .user-info-area { padding: 10px 10px; }
             .user-info-fields {
-                flex-direction: column;
-                gap: 10px;
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 6px 8px;
             }
-            .field-group,
-            .field-group.fixed-name,
-            .field-group.fixed-gender,
-            .field-group.fixed-birth,
-            .field-group.fluid {
-                flex: 0 0 100%;
-                min-width: 0;
-            }
+            .field-group.fixed-name { flex: 0 0 4.5em; }
+            .field-group.fixed-gender { flex: 0 0 3em; }
+            .field-group.fixed-birth { flex: 0 0 11em; }
+            .field-group.fluid { flex: 1 1 100%; min-width: 0; }
+            .field-group { min-width: 0; }
             .field-group input,
             .field-group select {
-                padding: 10px 12px;
-                font-size: 16px;
+                padding: 7px 8px;
+                font-size: 15px;
             }
 
             /* 按钮纵向排列 */
@@ -465,7 +464,7 @@
 
         /* 小屏手机（< 400px）进一步优化 */
         @media (max-width: 400px) {
-            .container { padding: 12px; }
+            .container { padding: 6px; }
             .coin { width: 46px; height: 46px; font-size: 20px; }
             .coin-area { gap: 8px; padding: 12px 0; min-height: 80px; }
             h1 { font-size: 17px; letter-spacing: 2px; }
