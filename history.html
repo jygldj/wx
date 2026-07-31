@@ -109,6 +109,7 @@
             border: 1px solid #d5c6b4;
             transition: 0.2s;
             overflow: hidden;
+            position: relative;
         }
         .history-item:hover { background: #f8f1e8; }
         .history-item .header {
@@ -182,25 +183,29 @@
             padding: 8px 0;
         }
         .history-item .btn-delete-item {
+            position: absolute;
+            top: 12px;
+            right: 14px;
             background: transparent;
             border: 1px solid #d5c6b4;
             color: #b09a84;
             border-radius: 50%;
-            width: 26px;
-            height: 26px;
-            line-height: 22px;
+            width: 28px;
+            height: 28px;
+            line-height: 24px;
             text-align: center;
             cursor: pointer;
             font-size: 14px;
-            margin-left: 4px;
             padding: 0;
             transition: 0.2s;
+            z-index: 2;
         }
         .history-item .btn-delete-item:hover {
             background: #b33;
             color: #fff;
             border-color: #b33;
         }
+        .history-item .header { padding-right: 50px; }
         .empty-state {
             text-align: center;
             color: #9a8876;
@@ -305,13 +310,13 @@
                 const hasResult = item.result && item.result.length > 0;
                 html += `
                     <div class="history-item" data-idx="${i}">
+                        <button class="btn-delete-item" title="删除此条记录" aria-label="删除">🗑️</button>
                         <div class="header" onclick="toggleHistoryDetail(this)">
                             <span class="gua-name">
                                 ${item.benGua} <span class="arrow">→</span> ${item.bianGua}
                             </span>
                             <span style="display:flex;align-items:center;gap:6px;">
                                 <span class="time">${item.time || '未知时间'}</span>
-                                <button class="btn-delete-item" title="删除此条记录" aria-label="删除">🗑️</button>
                                 <span class="expand-icon">▶</span>
                             </span>
                         </div>
