@@ -104,10 +104,11 @@
         .history-item {
             background: #fcf8f0;
             border-radius: 16px;
-            padding: 16px 20px;
+            padding: 0;
             margin-bottom: 12px;
             border: 1px solid #d5c6b4;
             transition: 0.2s;
+            overflow: hidden;
         }
         .history-item:hover { background: #f8f1e8; }
         .history-item .header {
@@ -116,15 +117,70 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 8px;
-            border-bottom: 1px solid #e8ddd0;
-            padding-bottom: 8px;
-            margin-bottom: 8px;
+            padding: 14px 18px;
+            cursor: pointer;
+            user-select: none;
         }
+        .history-item .header:hover { background: #f0e7d7; }
         .history-item .time { font-size: 13px; color: #7a6652; }
-        .history-item .gua-name { font-weight: bold; font-size: 18px; color: #3f2e1e; }
+        .history-item .gua-name { font-weight: bold; font-size: 17px; color: #3f2e1e; }
         .history-item .gua-name .arrow { color: #b09a84; margin: 0 8px; }
-        .history-item .question { font-size: 14px; color: #6b5844; font-style: italic; }
-        .history-item .result { font-size: 14px; color: #3c2e22; margin-top: 6px; }
+        .history-item .question { font-size: 14px; color: #6b5844; font-style: italic; padding: 0 18px 12px; }
+        .history-item .expand-icon {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            line-height: 18px;
+            text-align: center;
+            color: #6b4f39;
+            transition: transform 0.2s;
+            font-size: 12px;
+        }
+        .history-item.open .expand-icon { transform: rotate(90deg); }
+        .history-item .detail {
+            display: none;
+            padding: 0 18px 16px;
+            border-top: 1px dashed #d5c6b4;
+        }
+        .history-item.open .detail { display: block; }
+        .history-item .detail .user-block {
+            background: linear-gradient(135deg, rgba(107, 79, 57, 0.08) 0%, rgba(180, 150, 120, 0.05) 100%);
+            border-left: 3px solid #8b6f4f;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin: 12px 0 10px;
+            font-size: 13px;
+            line-height: 1.9;
+            color: #5a4632;
+        }
+        .history-item .detail .user-block .user-title {
+            font-weight: bold;
+            color: #3f2e1e;
+            margin-bottom: 4px;
+        }
+        .history-item .detail .user-block .user-line {
+            margin: 2px 0;
+        }
+        .history-item .detail .result-body {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #3c2e22;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .history-item .detail .model-tag {
+            font-size: 12px;
+            color: #9a8876;
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid #e0d3c4;
+        }
+        .history-item .detail .no-result {
+            font-size: 13px;
+            color: #b09a84;
+            font-style: italic;
+            padding: 8px 0;
+        }
         .empty-state {
             text-align: center;
             color: #9a8876;
@@ -224,24 +280,52 @@
             // 倒序显示（最新的在前）
             for (let i = history.length - 1; i >= 0; i--) {
                 const item = history[i];
+                const userInfo = item.userInfo || {};
+                const timeInfo = item.timeInfo || {};
+                const hasResult = item.result && item.result.length > 0;
                 html += `
-                    <div class="history-item">
-                        <div class="header">
+                    <div class="history-item" data-idx="${i}">
+                        <div class="header" onclick="toggleHistoryDetail(this)">
                             <span class="gua-name">
                                 ${item.benGua} <span class="arrow">→</span> ${item.bianGua}
                             </span>
-                            <span class="time">${item.time || '未知时间'}</span>
+                            <span style="display:flex;align-items:center;gap:8px;">
+                                <span class="time">${item.time || '未知时间'}</span>
+                                <span class="expand-icon">▶</span>
+                            </span>
                         </div>
                         <div class="question">📌 ${item.question || '未记录问题'}</div>
-                        ${item.result ? `<div class="result">📜 ${item.result.substring(0, 100)}${item.result.length > 100 ? '...' : ''}</div>` : ''}
-                        <div style="font-size:12px;color:#7a6652;margin-top:6px;">
-                            动爻：${item.dongYao && item.dongYao.length > 0 ? item.dongYao.join('、') : '无'}
+                        <div class="detail">
+                            <div class="user-block">
+                                <div class="user-title">🧘 求卦者资料</div>
+                                <div class="user-line">👤 姓名：${userInfo.name || '匿名'}　性别：${userInfo.gender || '未知'}</div>
+                                <div class="user-line">⏰ 出生时辰：${userInfo.birth || '未记录'}</div>
+                                <div class="user-line">📅 起卦时间：${timeInfo.solarTime || item.time || '—'}（公历）${timeInfo.lunarTime || '—'}（农历）</div>
+                                <div class="user-line">🌙 月建：${timeInfo.yueJian || '—'}月　☀️ 日辰：${timeInfo.riChen || '—'}日　🌀 旬空：${timeInfo.xunKong || '—'}</div>
+                                <div class="user-line">⚡ 动爻：${item.dongYao && item.dongYao.length > 0 ? item.dongYao.join('、') : '无动爻（静卦）'}</div>
+                                <div class="user-line">❓ 所问：${userInfo.question || item.question || '未记录'}</div>
+                            </div>
+                            ${hasResult
+                                ? `<div class="result-body">${escapeHtml(item.result)}</div>
+                                   <div class="model-tag">🤖 AI 解读（${item.modelName || '千问/GLM'}） · 仅供娱乐参考</div>`
+                                : '<div class="no-result">📜 尚未释卦（可点击本条回起卦页排盘后回到「释卦」页生成 AI 解读）</div>'}
                         </div>
                     </div>
                 `;
             }
             historyList.innerHTML = html;
         }
+
+        // HTML 转义
+        function escapeHtml(s) {
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        // 切换历史详情折叠/展开
+        window.toggleHistoryDetail = function(headerEl) {
+            const item = headerEl.parentElement;
+            item.classList.toggle('open');
+        };
 
         // 清空历史
         document.getElementById('clearHistoryBtn').addEventListener('click', function() {

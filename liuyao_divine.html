@@ -415,20 +415,19 @@
                 font-size: 18px;
             }
 
-            /* 本卦/变卦并排改为纵向 */
-            .flex-row {
+            /* 卦象标题与静爻/动爻提示分两行；本卦/变卦各占一行 */
+            .gua-title {
                 flex-direction: column;
-                gap: 16px;
+                align-items: flex-start;
+                gap: 8px;
             }
-            .flex-row .gua-box {
-                min-width: 100%;
+            .gua-title .gua-sub {
+                font-size: 12px;
             }
-
-            /* 阴阳鱼背景缩小 */
-            body::before {
-                font-size: 150px;
-                opacity: 0.3;
-                animation-duration: 40s;
+            .gua-title + div .mapping-status {
+                display: block;
+                margin: 4px auto;
+                width: fit-content;
             }
 
             /* 标题缩小 */
@@ -973,7 +972,10 @@
                     dongYao: guaData.dongYao,
                     question: (userInfo.name && userInfo.name !== '匿名' ? '【' + userInfo.name + '】' : '') + userInfo.question,
                     time: guaData.time,
-                    result: ''
+                    userInfo: { name: userInfo.name, gender: userInfo.gender, birth: userInfo.birth, question: userInfo.question },
+                    timeInfo: null,
+                    result: '',
+                    modelName: ''
                 });
                 localStorage.setItem('guaHistory', JSON.stringify(history));
                 console.log('✅ 历史记录已追加到 guaHistory');

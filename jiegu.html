@@ -427,7 +427,8 @@
             .result-content .title .action-btns { width: 100%; }
             .result-content .title .action-btn { flex: 1; }
             .result-content .user-block { padding: 10px 12px; font-size: 12px; }
-            .result-content .user-block .user-row { gap: 8px; }
+            .result-content .user-block .user-row { gap: 6px; flex-direction: column; align-items: flex-start; }
+            .result-content .user-block .user-row span { white-space: normal; word-break: break-all; }
         }
 
         @media (max-width: 400px) {
@@ -802,6 +803,23 @@ ${mdToPlain(result)}
 ---
 模型：${modelName}　时间：${new Date().toLocaleString('zh-CN')}
 本解读仅供参考，决策需理性判断。`;
+
+                // 回写最新一条历史记录的 result（按本卦/变卦/起卦时间匹配）
+                try {
+                    const history = JSON.parse(localStorage.getItem('guaHistory') || '[]');
+                    for (let i = history.length - 1; i >= 0; i--) {
+                        const h = history[i];
+                        if (h.benGua === guaData.benGuaName && h.bianGua === guaData.bianGuaName
+                            && h.time === guaData.time && (!h.result || h.result.length === 0)) {
+                            h.result = result;
+                            h.modelName = modelName;
+                            h.userInfo = { name: userInfo.name, gender: userInfo.gender, birth: userInfo.birth, question: userInfo.question };
+                            h.timeInfo = { solarTime: timeInfo.solarTime, lunarTime: timeInfo.lunarTime, yueJian: timeInfo.yueJian, riChen: timeInfo.riChen, xunKong: timeInfo.xunKong };
+                            break;
+                        }
+                    }
+                    localStorage.setItem('guaHistory', JSON.stringify(history));
+                } catch(e) { console.warn('回写历史解读失败:', e); }
 
             } catch(error) {
                 resultArea.innerHTML = `
