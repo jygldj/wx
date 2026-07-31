@@ -127,17 +127,21 @@
         .history-item .gua-name { font-weight: bold; font-size: 17px; color: #3f2e1e; }
         .history-item .gua-name .arrow { color: #b09a84; margin: 0 8px; }
         .history-item .question { font-size: 14px; color: #6b5844; font-style: italic; padding: 0 18px 12px; }
-        .history-item .expand-icon {
-            display: inline-block;
-            width: 18px;
-            height: 18px;
-            line-height: 18px;
-            text-align: center;
+        .history-item .toggle-btn {
+            border: 1px solid #8b6f4f;
+            background: #ede3d7;
             color: #6b4f39;
-            transition: transform 0.2s;
+            border-radius: 14px;
+            padding: 2px 12px;
             font-size: 12px;
+            font-family: inherit;
+            line-height: 1.6;
+            cursor: pointer;
+            transition: 0.2s;
+            white-space: nowrap;
         }
-        .history-item.open .expand-icon { transform: rotate(90deg); }
+        .history-item .toggle-btn:hover { background: #d5c6b4; color: #3f2e1e; }
+        .history-item.open .toggle-btn { background: #6b4f39; color: #f5ede4; border-color: #6b4f39; }
         .history-item .detail {
             display: none;
             padding: 0 18px 16px;
@@ -305,6 +309,9 @@
             // 倒序显示（最新的在前）
             for (let i = history.length - 1; i >= 0; i--) {
                 const item = history[i];
+                // 兼容旧数据：将起卦页遗留的占位文案「未记录」统一归一化为「未输入个人资料」
+                if (item.question === '未记录') item.question = '未输入个人资料';
+                if (item.userInfo && item.userInfo.question === '未记录') item.userInfo.question = '未输入个人资料';
                 const userInfo = item.userInfo || {};
                 const timeInfo = item.timeInfo || {};
                 const hasResult = item.result && item.result.length > 0;
@@ -317,7 +324,7 @@
                             </span>
                             <span style="display:flex;align-items:center;gap:6px;">
                                 <span class="time">${item.time || '未知时间'}</span>
-                                <span class="expand-icon">▶</span>
+                                <button type="button" class="toggle-btn">查看</button>
                             </span>
                         </div>
                         <div class="question">📌 ${item.question || '未输入个人资料'}</div>
@@ -347,10 +354,12 @@
             return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         }
 
-        // 切换历史详情折叠/展开
+        // 切换历史详情折叠/展开，并同步按钮文字
         window.toggleHistoryDetail = function(headerEl) {
             const item = headerEl.parentElement;
-            item.classList.toggle('open');
+            const isOpen = item.classList.toggle('open');
+            const btn = item.querySelector('.toggle-btn');
+            if (btn) btn.textContent = isOpen ? '隐藏' : '查看';
         };
 
         // 清空历史
