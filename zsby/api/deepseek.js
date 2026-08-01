@@ -1,10 +1,11 @@
 // ============================================================
-// GLM-5（智谱AI）API 调用模块（含月建日辰时间信息）
+// DeepSeek-V4-Pro API 调用模块（替换原智谱 GLM）
+// 提示词与千问（qwen.js）完全一致，仅配置与函数名不同
 // ============================================================
 
-async function callGLM(guaInfo) {
-    const config = CONFIG.glm;
-    
+async function callDeepseek(guaInfo) {
+    const config = CONFIG.deepseek;
+
     // 从 guaInfo 提取用户信息（改进五：提示词中增加用户信息变量）
     const userInfo = {
         name: guaInfo.userName || '匿名',
@@ -68,7 +69,7 @@ async function callGLM(guaInfo) {
 应爻：${guaInfo.yingYao || '未知'}
 
 六爻排列（从下往上）：
-${(guaInfo.yaoDetail || []).map((y, i) => 
+${(guaInfo.yaoDetail || []).map((y, i) =>
     `第${i+1}爻：${y.dizhi} ${y.liuqin}${y.isDong ? '（动化' + y.bianDizhi + y.bianLiuqin + '）' : ''}`
 ).join('\n')}
 
@@ -114,7 +115,7 @@ ${(guaInfo.yaoDetail || []).map((y, i) =>
         return data.choices[0].message.content;
 
     } catch(error) {
-        console.error('GLM API 调用失败:', error);
+        console.error('DeepSeek API 调用失败:', error);
         throw error;
     }
 }
