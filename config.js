@@ -14,14 +14,13 @@ const CONFIG = {
     },
     
     // ============================================================
-    // DeepSeek-V4-Pro 配置 — 替换了原来的智谱 GLM
+    // 千问备选（qwen3.7-flash）配置 — 替换了原来的 DeepSeek-V4
+    // 主力千问 qwen3.7-flash-2026-07-15 在上方 qwen 键，此处为备选模型
     // ============================================================
-    deepseek: {
-        apiKey: 'sk-ws-H.ELDIXRR.mS3S.MEUCIQCGx4qWCPtx4SgA8ZIQcqliRJU7JSpNrN2NKjPFjpzivgIgEz16QP2UMpsMQVqvfVYP6PGs87HbnVh7SqoI8hgyC9k', // 使用同一个API Key
-        model: 'deepseek-v4-pro', // 您指定的模型
-        // 注意：这里沿用了千问的 baseUrl，因为通常聚合平台使用统一网关
-        // 如果报错，请检查平台文档是否需要更换地址
-        baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1'
+    qwen2: {
+        apiKey: 'sk-ws-H.ELDIXRR.mS3S.MEUCIQCGx4qWCPtx4SgA8ZIQcqliRJU7JSpNrN2NKjPFjpzivgIgEz16QP2UMpsMQVqvfVYP6PGs87HbnVh7SqoI8hgyC9k',  // 使用同一个API Key
+        model: 'qwen3.7-flash',              // 备选模型（与主力 qwen3.7-flash-2026-07-15 同源不同版本）
+        baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1'  // 阿里云百炼平台统一网关
     }
 };
 

@@ -376,6 +376,86 @@
         .nav-bar a.active { background: #6b4f39; color: #f5ede4; border-color: #6b4f39; }
         .nav-bar a.external-link { background: #ede3d7; color: #6b4f39; border-color: #d5c6b4; }
         .nav-bar a.external-link:hover { background: #d5c6b4; color: #3f2e1e; border-color: #c2b39c; }
+
+        /* ====== 模式切换栏 ====== */
+        .mode-switch-bar {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .mode-btn {
+            background: #ede3d7;
+            border: 1px solid #d5c6b4;
+            color: #6b4f39;
+            padding: 8px 26px;
+            border-radius: 40px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+            letter-spacing: 2px;
+        }
+        .mode-btn:hover { background: #d5c6b4; color: #3f2e1e; }
+        .mode-btn.active {
+            background: #6b4f39;
+            color: #f5ede4;
+            border-color: #6b4f39;
+            box-shadow: 0 3px 8px rgba(107,79,57,0.3);
+        }
+
+        /* ====== 手动输卦面板 ====== */
+        .input-panel-title {
+            text-align: center;
+            font-size: 15px;
+            color: #5a4632;
+            font-weight: bold;
+            letter-spacing: 3px;
+            margin-bottom: 12px;
+        }
+        .yao-input-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f2ebe1;
+            padding: 8px 14px;
+            border-radius: 10px;
+            margin-bottom: 6px;
+            border-left: 5px solid #b09a84;
+        }
+        .yao-input-row .yao-input-label {
+            min-width: 56px;
+            font-weight: bold;
+            color: #7a6652;
+            font-size: 14px;
+        }
+        .yao-input-row select {
+            flex: 1;
+            padding: 7px 10px;
+            font-size: 14px;
+            border-radius: 8px;
+            border: 1px solid #d5c6b4;
+            background: rgba(255, 248, 240, 0.6);
+            font-family: inherit;
+            color: #3c2e22;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            padding-right: 28px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%236b4f39' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 12px;
+        }
+        .yao-input-row .yao-preview {
+            min-width: 44px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            color: #3f2e1e;
+            line-height: 1;
+        }
         @media (max-width: 500px) {
             /* 页面边框：body padding 由 20px 缩到 4px，最大化利用屏幕宽度 */
             body { padding: 4px; }
@@ -520,6 +600,12 @@
         <a href="../index1.html" target="_blank" class="external-link" title="返回道玄文集">🏠 文集</a>
     </div>
 
+    <!-- 模式切换 -->
+    <div class="mode-switch-bar">
+        <button class="mode-btn active" id="modeCoinBtn">🪙 铜钱摇卦</button>
+        <button class="mode-btn" id="modeInputBtn">✍️ 手动输卦</button>
+    </div>
+
     <!-- 求卦者信息 -->
     <div class="user-info-area" id="userInfoArea">
         <div class="user-info-title">🧘 求卦者信息</div>
@@ -554,6 +640,14 @@
         <div class="coin" id="coin1">⚊</div>
         <div class="coin" id="coin2">⚊</div>
         <div class="coin" id="coin3">⚊</div>
+    </div>
+    <!-- 手动输卦面板（默认隐藏） -->
+    <div id="inputArea" style="display: none; background: #e6dbce; border-radius: 80px; padding: 20px 16px; margin-bottom: 20px; border: 1px solid #bfae99; box-shadow: inset 0 4px 12px rgba(0,0,0,0.08);">
+        <div class="input-panel-title">✍️ 手动输入六爻（初爻在下，上爻在上）</div>
+        <div id="yaoInputContainer"></div>
+        <div style="text-align:center; margin-top:14px;">
+            <button class="primary-btn" id="confirmInputBtn">确认排盘</button>
+        </div>
     </div>
     <div class="action-area">
         <button class="primary-btn" id="shakeBtn">摇 卦</button>
@@ -1078,6 +1172,93 @@
         }
 
         // ============================================================
+        // 9.5 手动输卦模式（在现有排盘逻辑之上增加的输入层，不改动任何排盘核心）
+        // ============================================================
+        // 爻象四象定义（值遵循传统：6老阴 7少阳 8少阴 9老阳）
+        const YAO_OPTIONS = [
+            { value: '6', text: '老阴（动）', symbol: '× × ×', yin: true,  dong: true  },
+            { value: '7', text: '少阳（静）', symbol: '⚊',     yin: false, dong: false },
+            { value: '8', text: '少阴（静）', symbol: '⚋',     yin: true,  dong: false },
+            { value: '9', text: '老阳（动）', symbol: '○ ○ ○', yin: false, dong: true  }
+        ];
+
+        // 获取新增 DOM 引用
+        const coinArea = document.getElementById('coinArea');
+        const modeCoinBtn = document.getElementById('modeCoinBtn');
+        const modeInputBtn = document.getElementById('modeInputBtn');
+        const inputArea = document.getElementById('inputArea');
+        const yaoInputContainer = document.getElementById('yaoInputContainer');
+        const confirmInputBtn = document.getElementById('confirmInputBtn');
+
+        // 动态生成 6 个输入行（从上爻到初爻排列，初爻在下）
+        function createYaoInputs() {
+            yaoInputContainer.innerHTML = '';
+            for (let i = 6; i >= 1; i--) {
+                const row = document.createElement('div');
+                row.className = 'yao-input-row';
+                row.innerHTML =
+                    '<span class="yao-input-label">第' + i + '爻</span>' +
+                    '<select data-yao="' + i + '">' +
+                        YAO_OPTIONS.map(function(o){ return '<option value="' + o.value + '">' + o.text + '</option>'; }).join('') +
+                    '</select>' +
+                    '<span class="yao-preview" data-preview="' + i + '">' + YAO_OPTIONS[1].symbol + '</span>';
+                yaoInputContainer.appendChild(row);
+            }
+            // 绑定 change 事件：实时更新预览符号
+            yaoInputContainer.querySelectorAll('select').forEach(function(sel) {
+                sel.addEventListener('change', function() {
+                    var yaoIdx = this.getAttribute('data-yao');
+                    var opt = YAO_OPTIONS.find(function(o){ return o.value === this.value; }, this);
+                    var preview = yaoInputContainer.querySelector('[data-preview="' + yaoIdx + '"]');
+                    if (preview && opt) preview.textContent = opt.symbol;
+                });
+            });
+        }
+
+        // 模式切换：true=铜钱摇卦，false=手动输卦
+        function switchMode(isCoinMode) {
+            if (isCoinMode) {
+                coinArea.style.display = '';
+                inputArea.style.display = 'none';
+                modeCoinBtn.classList.add('active');
+                modeInputBtn.classList.remove('active');
+                // 恢复摇卦相关按钮状态（依据 currentStep）
+                shakeBtn.disabled = (currentStep >= 6);
+                completeBtn.disabled = !(currentStep >= 6);
+                interpretBtn.disabled = !(currentStep >= 6);
+                confirmInputBtn.disabled = true;
+            } else {
+                coinArea.style.display = 'none';
+                inputArea.style.display = '';
+                modeCoinBtn.classList.remove('active');
+                modeInputBtn.classList.add('active');
+                // 禁用摇卦相关按钮，启用确认排盘
+                shakeBtn.disabled = true;
+                completeBtn.disabled = true;
+                interpretBtn.disabled = true;
+                confirmInputBtn.disabled = false;
+            }
+        }
+
+        // 确认排盘：读取 6 个下拉框，生成与摇卦完全一致的 yaoResults / dongStatus，复用 completeAndDisplay
+        function confirmInput() {
+            yaoResults = [];
+            dongStatus = [];
+            for (var i = 1; i <= 6; i++) {
+                var sel = yaoInputContainer.querySelector('select[data-yao="' + i + '"]');
+                var opt = YAO_OPTIONS.find(function(o){ return o.value === sel.value; });
+                if (!opt) { alert('第' + i + '爻选择有误，请重新选择'); return; }
+                // yaoResults: 1为阳, 0为阴（与摇卦一致）
+                yaoResults.push(opt.yin ? 0 : 1);
+                dongStatus.push(opt.dong);
+            }
+            currentStep = 6;
+            progressText.textContent = '✅ 六爻具备';
+            // 复用现有排盘逻辑，零侵入
+            completeAndDisplay();
+        }
+
+        // ============================================================
         // 10. 事件绑定
         // ============================================================
         shakeBtn.addEventListener('click', shakeOnce);
@@ -1096,7 +1277,13 @@
         });
         resetBtn.addEventListener('click', resetAll);
 
+        // 手动输卦模式事件绑定
+        modeCoinBtn.addEventListener('click', function(){ switchMode(true); });
+        modeInputBtn.addEventListener('click', function(){ switchMode(false); });
+        confirmInputBtn.addEventListener('click', confirmInput);
+
         resetAll();
+        createYaoInputs();
 
         console.log('✅ 《增删卜易》铜钱摇卦系统已加载 (修复版)！');
         console.log(`📊 共 ${ALL_GUA.length} 个卦，${Object.keys(patternToGua).length} 种唯一模式。`);

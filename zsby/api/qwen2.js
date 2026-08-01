@@ -1,10 +1,12 @@
 // ============================================================
-// DeepSeek-V4-Pro API 调用模块（替换原智谱 GLM）
-// 提示词与千问（qwen.js）完全一致，仅配置与函数名不同
+// 千问备选（qwen3.7-flash）API 调用模块
+// 提示词与主力千问（qwen.js）完全一致，仅配置键与函数名不同
+// 主力：qwen3.7-flash-2026-07-15（默认）
+// 备选：qwen3.7-flash（本模块）
 // ============================================================
 
-async function callDeepseek(guaInfo) {
-    const config = CONFIG.deepseek;
+async function callQwen2(guaInfo) {
+    const config = CONFIG.qwen2;
 
     // 从 guaInfo 提取用户信息（改进五：提示词中增加用户信息变量）
     const userInfo = {
@@ -17,7 +19,7 @@ async function callDeepseek(guaInfo) {
     const qiGuaTime = guaInfo.qiGuaTime || '未知'; // 时间信息（已计算，请直接使用）
     const timeInfo = guaInfo.timeInfo || {};
 
-    // 构建系统提示词（野鹤老人口吻 + 数据使用规则，与千问保持一致）
+    // 构建系统提示词（野鹤老人口吻 + 数据使用规则，与主力千问保持一致）
     const systemPrompt = `你是一位精通《增删卜易》的六爻占卜专家，以野鹤老人的口吻解读卦象。你的断语必须严谨、客观，深得古法精髓。
 
 【核心断卦原则】
@@ -49,11 +51,11 @@ async function callDeepseek(guaInfo) {
 【📜 野鹤断卦铁律（必须严格遵守）】
 这是你进行吉凶判断的最高准则，必须逐条理解并执行：
 
-1. 旺衰总纲：用神旺相则断吉，休囚则断凶。但“旺衰”非只看日月生扶，更重“生克冲合”之妙。
+1. 旺衰总纲：用神旺相则断吉，休囚则断凶。但"旺衰"非只看日月生扶，更重"生克冲合"之妙。
 
 2. 合起为旺（重中之重）：
-   - 若用神被月建或日辰“合住”（如午火用神，逢未月或未日），此为“合起”，乃大旺之象！
-   - 严禁将此情况断为“泄气”或“衰弱”。合则气聚，根基稳固，纵有小凶亦不为害。
+   - 若用神被月建或日辰"合住"（如午火用神，逢未月或未日），此为"合起"，乃大旺之象！
+   - 严禁将此情况断为"泄气"或"衰弱"。合则气聚，根基稳固，纵有小凶亦不为害。
 
 3. 动爻虚实：
    - 分析动爻（尤其是忌神）时，必须先审视其自身在月、日的旺衰。
@@ -68,8 +70,8 @@ async function callDeepseek(guaInfo) {
 
 5. 结论导向：
    - 总体把握，勿以局部之凶而废全局之吉。
-   - 若用神得日月之合，又有他爻来生，纵有忌神发动，亦断为“有惊无险，前程可期”。
-   - 若用神休囚无气，又受动爻克制，且无生扶，方断为“凶”。`;
+   - 若用神得日月之合，又有他爻来生，纵有忌神发动，亦断为"有惊无险，前程可期"。
+   - 若用神休囚无气，又受动爻克制，且无生扶，方断为"凶"。`;
 
     // 构建用户提示词（结构化传入排盘数据）
     const userPrompt = `请为以下求卦者解读卦象：
@@ -116,7 +118,7 @@ ${(guaInfo.yaoDetail || []).map((y, i) => `第${i+1}爻：${y.dizhi} ${y.liuqin}
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: userPrompt }
                 ],
-                temperature: 0.3,
+                temperature: 0.7,
                 max_tokens: 2048
             })
         });
@@ -130,7 +132,7 @@ ${(guaInfo.yaoDetail || []).map((y, i) => `第${i+1}爻：${y.dizhi} ${y.liuqin}
         return data.choices[0].message.content;
 
     } catch(error) {
-        console.error('DeepSeek API 调用失败:', error);
+        console.error('千问备选 API 调用失败:', error);
         throw error;
     }
 }

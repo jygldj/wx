@@ -486,7 +486,7 @@
     <!-- 模型选择 -->
     <div class="model-selector">
         <label><input type="radio" name="model" value="qwen" checked> 千问 3.7</label>
-        <label><input type="radio" name="model" value="deepseek"> 小D（deepseek-v4-pro）</label>
+        <label><input type="radio" name="model" value="qwen2"> 千问备选</label>
     </div>
 
     <!-- 结果展示 -->
@@ -500,7 +500,7 @@
 <!-- ========== 引入 lunar-javascript 库 ========== -->
 <script src="../lunar.js"></script>
 <script src="../config.js"></script>
-<script src="api/deepseek.js"></script>
+<script src="api/qwen2.js"></script>
 <script src="api/qwen.js"></script>
 
 <script>
@@ -719,7 +719,7 @@
                 <div class="loading-text">
                     <div class="spinner">☯</div>
                     <div style="margin-top:10px;">正在与野鹤老人沟通，大约需要一分钟...</div>
-                    <div style="font-size:13px;color:#9a8876;margin-top:4px;">模型：${model === 'qwen' ? '千问 3.7' : '小D'}</div>
+                    <div style="font-size:13px;color:#9a8876;margin-top:4px;">模型：${model === 'qwen' ? '千问 3.7' : '千问备选'}</div>
                 </div>
             `;
             jieGuaBtn.disabled = true;
@@ -780,15 +780,15 @@
                       let result = '';
                       if (model === 'qwen') {
                            result = await callQwen(guaInfo);
-                       } else if (model === 'deepseek') {
-                           result = await callDeepseek(guaInfo);
+                       } else if (model === 'qwen2') {
+                           result = await callQwen2(guaInfo);
                        }
 
                 // 显示结果
                 const timeText = `${timeInfo.solarTime || ''}（公历）${timeInfo.lunarTime || ''}（农历）`;
                 const userText = `姓名：${userInfo.name || '匿名'}　性别：${userInfo.gender || '未知'}　出生时辰：${userInfo.birth || '未知'}`;
                 const questionText = userInfo.question || '未提供具体问题，请综合解读';
-                const modelName = model === 'qwen' ? '千问 3.7' : '小D';
+                const modelName = model === 'qwen' ? '千问 3.7' : '千问备选';
 
                 resultArea.innerHTML = `
                     <div class="result-content" id="resultContent">
