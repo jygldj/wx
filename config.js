@@ -13,11 +13,15 @@ const CONFIG = {
         baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1'  // 兼容OpenAI格式
     },
     
-    // GLM-5（智谱AI）配置
-    glm: {
-        apiKey: '7704533505ed49fdbb232085795240d8.ccSSOcN6eQSqXgAx',  // 从 https://open.bigmodel.cn/ 获取
-        model: 'glm-4-flash',
-        baseUrl: 'https://open.bigmodel.cn/api/paas/v4'
+    // ============================================================
+    // DeepSeek-V4-Pro 配置 — 替换了原来的智谱 GLM
+    // ============================================================
+    deepseek: {
+        apiKey: 'sk-ws-H.ELDIXRR.mS3S.MEUCIQCGx4qWCPtx4SgA8ZIQcqliRJU7JSpNrN2NKjPFjpzivgIgEz16QP2UMpsMQVqvfVYP6PGs87HbnVh7SqoI8hgyC9k', // 使用同一个API Key
+        model: 'deepseek-v4-pro', // 您指定的模型
+        // 注意：这里沿用了千问的 baseUrl，因为通常聚合平台使用统一网关
+        // 如果报错，请检查平台文档是否需要更换地址
+        baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1'
     }
 };
 
