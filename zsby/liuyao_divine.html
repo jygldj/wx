@@ -645,13 +645,11 @@
     <div id="inputArea" style="display: none; background: #e6dbce; border-radius: 80px; padding: 20px 16px; margin-bottom: 20px; border: 1px solid #bfae99; box-shadow: inset 0 4px 12px rgba(0,0,0,0.08);">
         <div class="input-panel-title">✍️ 手动输入六爻（初爻在下，上爻在上）</div>
         <div id="yaoInputContainer"></div>
-        <div style="text-align:center; margin-top:14px;">
-            <button class="primary-btn" id="confirmInputBtn">确认排盘</button>
-        </div>
+        <div style="text-align:center; margin-top:12px; font-size:12px; color:#7a6a55;">选好六爻后，点下方「排盘」即可</div>
     </div>
     <div class="action-area">
         <button class="primary-btn" id="shakeBtn">摇 卦</button>
-        <button class="secondary-btn" id="completeBtn" disabled>卦 象</button>
+        <button class="secondary-btn" id="completeBtn" disabled>排 盘</button>
         <button class="secondary-btn" id="interpretBtn" disabled>释 卦</button>
     </div>
     <div id="resultArea">
@@ -1165,7 +1163,8 @@
 
             progressText.textContent = '第 0 / 6 爻';
             shakeBtn.disabled = false;
-            completeBtn.disabled = true;
+            // 铜钱模式未摇满6次时「排盘」禁用；手动模式始终可用
+            completeBtn.disabled = isCoinMode ? (currentStep < 6) : false;
             interpretBtn.disabled = true;
 
             resultArea.innerHTML = '<div class="result-placeholder">静心凝神，摇动铜钱，以决疑事</div>';
@@ -1188,7 +1187,6 @@
         const modeInputBtn = document.getElementById('modeInputBtn');
         const inputArea = document.getElementById('inputArea');
         const yaoInputContainer = document.getElementById('yaoInputContainer');
-        const confirmInputBtn = document.getElementById('confirmInputBtn');
 
         // 动态生成 6 个输入行（从上爻到初爻排列，初爻在下）
         function createYaoInputs() {
@@ -1215,28 +1213,43 @@
             });
         }
 
-        // 模式切换：true=铜钱摇卦，false=手动输卦
-        function switchMode(isCoinMode) {
+        // 当前模式标记：true=铜钱摇卦，false=手动输卦
+        let isCoinMode = true;
+
+        // 统一「排盘」入口：铜钱模式直接排盘（需先摇满 6 次），手动模式先读取六爻再排盘
+        function doPaiPan() {
+            if (isCoinMode) {
+                if (currentStep < 6) {
+                    alert('请先摇动铜钱 6 次，再点击「排盘」');
+                    return;
+                }
+                completeAndDisplay();
+            } else {
+                confirmInput();
+                // 手动模式允许改爻象后再次排盘，保持「排盘」按钮可用
+                completeBtn.disabled = false;
+            }
+        }
+
+        // 模式切换：isCoin=true 铜钱摇卦，isCoin=false 手动输卦
+        function switchMode(isCoin) {
+            isCoinMode = isCoin;
             if (isCoinMode) {
                 coinArea.style.display = '';
                 inputArea.style.display = 'none';
                 modeCoinBtn.classList.add('active');
                 modeInputBtn.classList.remove('active');
-                // 恢复摇卦相关按钮状态（依据 currentStep）
-                shakeBtn.disabled = (currentStep >= 6);
-                completeBtn.disabled = !(currentStep >= 6);
-                interpretBtn.disabled = !(currentStep >= 6);
-                confirmInputBtn.disabled = true;
+                // 进入铜钱模式：重置为干净状态，从第一爻重新摇
+                resetAll();
             } else {
                 coinArea.style.display = 'none';
                 inputArea.style.display = '';
                 modeCoinBtn.classList.remove('active');
                 modeInputBtn.classList.add('active');
-                // 禁用摇卦相关按钮，启用确认排盘
+                // 禁用摇卦相关按钮，启用「排盘」
                 shakeBtn.disabled = true;
-                completeBtn.disabled = true;
+                completeBtn.disabled = false;
                 interpretBtn.disabled = true;
-                confirmInputBtn.disabled = false;
             }
         }
 
@@ -1262,11 +1275,11 @@
         // 10. 事件绑定
         // ============================================================
         shakeBtn.addEventListener('click', shakeOnce);
-        completeBtn.addEventListener('click', completeAndDisplay);
+        completeBtn.addEventListener('click', doPaiPan);
         interpretBtn.addEventListener('click', function() {
             const guaDataRaw = localStorage.getItem('currentGua');
             if (!guaDataRaw) {
-                alert('请先完成摇卦并点击「卦象」排盘！');
+                alert('请先排盘后再点击「释卦」！');
                 return;
             }
             // 双保险：sessionStorage + URL 参数
@@ -1280,7 +1293,6 @@
         // 手动输卦模式事件绑定
         modeCoinBtn.addEventListener('click', function(){ switchMode(true); });
         modeInputBtn.addEventListener('click', function(){ switchMode(false); });
-        confirmInputBtn.addEventListener('click', confirmInput);
 
         resetAll();
         createYaoInputs();
