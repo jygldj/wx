@@ -291,8 +291,8 @@
             }
             .search-area { padding: 14px 10px; }
             .search-row { flex-direction: column; gap: 10px; }
-            /* 手机端：增高增宽输入框，方便手动输入 */
-            .search-row input[type="date"], .search-row input[type="text"] {
+            /* 手机端：增高增宽原生日期输入框，方便手动输入与点击 */
+            .search-row input[type="date"] {
                 min-width: 100%;
                 padding: 14px 18px;
                 font-size: 18px;
@@ -354,7 +354,7 @@
     <div class="result-area" id="resultArea">
         <div class="result-placeholder">
             <span class="icon">🌿</span>
-            请选择日期，查询农历信息
+            请输入日期，查询农历信息
         </div>
     </div>
 
@@ -372,18 +372,10 @@
         const resultArea = document.getElementById('resultArea');
 
         // ============================================================
-        // 0. 手机端日期输入处理
-        // 桌面端继续使用原生 type="date"（可输入可点选，体验最完整）；
-        // 手机端改为 type="text" + 灰色占位符提示，避开原生选择器
-        // "无法输入、按钮标签/配色与系统绑死"的两个痛点。
+        // 0. 日期输入处理（桌面/手机端一致）
+        // 一律使用原生 type="date"（可手动输入、可点选日历，体验最完整）。
+        // 手机端不再改为 type="text"，避免「无法正确输入」的问题。
         // ============================================================
-        const isMobile = window.matchMedia('(max-width: 500px)').matches;
-        if (isMobile) {
-            dateInput.type = 'text';
-            dateInput.inputMode = 'numeric';          // 手机端唤起数字键盘，更顺手
-            dateInput.placeholder = '1963-09-27';     // 固定占位符，提示 YYYY-MM-DD 格式
-            dateInput.setAttribute('pattern', '\\d{4}-\\d{2}-\\d{2}');
-        }
 
         // ============================================================
         // 1. 设置默认日期为今天
@@ -402,7 +394,7 @@
                 resultArea.innerHTML = `
                     <div class="result-placeholder">
                         <span class="icon">⚠️</span>
-                        请选择日期
+                        请输入日期
                     </div>
                 `;
                 return;
@@ -431,7 +423,8 @@
                     lunarMonthChinese: lunar.getMonthInChinese(),
                     lunarDay: lunar.getDay(),
                     lunarDayChinese: lunar.getDayInChinese(),
-                    animal: lunar.getAnimal(),
+                    // ✅ 修复：生肖须用 getYearShengXiao()（getAnimal() 返回的是二十八宿星宿动物，如狼/蝠/乌）
+                    animal: lunar.getYearShengXiao(),
                     yearGanZhi: lunar.getYearInGanZhi(),
                     monthGanZhi: lunar.getMonthInGanZhi(),
                     dayGanZhi: lunar.getDayInGanZhi(),
@@ -686,8 +679,8 @@
             }
         });
 
-        // 手机端：保留原生 textarea 行为（可手动输入、唤起键盘），
-        // 不再有自定义选择器悬浮。
+        // 桌面/手机端统一使用原生 type="date"（可手动输入、可点选日历），
+        // 不再有自定义选择器，也不再将输入框改为 text。
 
         setTimeout(function() {
             queryLunar(dateInput.value);
