@@ -102,6 +102,7 @@
             padding: 20px 24px;
             border: 1px solid #d5c6b4;
             margin-bottom: 20px;
+            position: relative;   /* 作为自定义日期选择器的定位容器 */
         }
         .search-area .title {
             font-size: 14px;
@@ -275,6 +276,55 @@
             text-align: center;
             padding: 20px 0;
         }
+        /* ============================================================
+           // 新增：手机端自定义日期选择器（与页面主题一致）
+           // 仅在手机端（isMobile）显示，桌面端仍用原生 date 输入
+           ============================================================ */
+        .date-picker {
+            display: none;
+            position: absolute;
+            left: 12px; right: 12px; top: calc(100% + 6px);
+            background: #fcf8f0;
+            border: 1px solid #cbb8a4;
+            border-radius: 16px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+            padding: 12px 14px 14px;
+            z-index: 20;
+        }
+        .date-picker .dp-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 6px;
+        }
+        .date-picker .dp-title { font-size: 15px; color: #3f2e1e; font-weight: bold; }
+        .date-picker .dp-nav {
+            background: #ede3d7; border: 1px solid #d5c6b4; color: #6b4f39;
+            border-radius: 50%; width: 30px; height: 30px; font-size: 15px; cursor: pointer;
+            line-height: 1; font-family: inherit;
+        }
+        .date-picker .dp-nav:hover { background: #d5c6b4; }
+        .date-picker .dp-week, .date-picker .dp-grid {
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+        }
+        .date-picker .dp-week span {
+            text-align: center; font-size: 12px; color: #7a6652; padding: 4px 0;
+        }
+        .date-picker .dp-day {
+            text-align: center; font-size: 14px; color: #3f2e1e;
+            padding: 8px 0; border-radius: 8px; cursor: pointer; background: #f6efe6;
+            border: 1px solid transparent;
+        }
+        .date-picker .dp-day:hover { background: #f0e8dd; }
+        .date-picker .dp-day.dp-today { border-color: #8a765d; }
+        .date-picker .dp-day.dp-selected { background: #6b4f39; color: #f5ede4; }
+        .date-picker .dp-footer {
+            display: flex; gap: 10px; margin-top: 10px;
+        }
+        .date-picker .dp-btn {
+            flex: 1; padding: 9px 0; border-radius: 20px; font-size: 14px; cursor: pointer;
+            font-family: inherit; border: 1px solid #c9b49e;
+        }
+        .date-picker .dp-ok { background: #6b4f39; color: #f5ede4; border-color: #8f745b; }
+        .date-picker .dp-clear { background: #ede3d7; color: #6b4f39; }
         @media (max-width: 500px) {
             body { padding: 4px; }
             .container { padding: 8px; border-radius: 24px 24px 16px 16px; }
@@ -341,6 +391,8 @@
                 <button class="btn btn-small" id="nextBtn">▶</button>
             </div>
         </div>
+        <!-- 手机端自定义日期选择器（桌面端隐藏，由 JS 控制显示） -->
+        <div class="date-picker" id="datePicker"></div>
     </div>
 
     <div class="result-area" id="resultArea">
@@ -362,6 +414,19 @@
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
         const resultArea = document.getElementById('resultArea');
+
+        // ============================================================
+        // 0. 手机端日期输入改造
+        // 桌面端保留原生 type="date"（可输入可点选）；
+        // 手机端改为 type="text" + 自定义主题选择器（解决原生选择器
+        // 无法输入、且按钮文案/配色与系统不协调的问题）。
+        // ============================================================
+        const isMobile = window.matchMedia('(max-width: 500px)').matches;
+        const datePicker = document.getElementById('datePicker');
+        if (isMobile) {
+            dateInput.type = 'text';
+            dateInput.placeholder = 'YYYY-MM-DD（可输入或点选）';
+        }
 
         // ============================================================
         // 1. 设置默认日期为今天
@@ -420,6 +485,14 @@
                     constellation: lunar.getXingZuo ? lunar.getXingZuo() : '—'
                 };
 
+                // ============================================================
+                // 新增：计算旬空与月破（六爻断卦核心要素）
+                // 注意：必须在 data 对象构建完成后赋值，不能在对象字面量内
+                // 引用尚未定义的 data 本身
+                // ============================================================
+                data.xunKong = getXunKong(data.dayGanZhi);          // 旬空：依日柱干支推算
+                data.yuePo = getYuePo(data.monthGanZhi.charAt(1));  // 月破：依月柱地支相冲推算
+
                 renderResult(data);
 
             } catch(e) {
@@ -430,6 +503,46 @@
                 `;
                 console.error('查询错误:', e);
             }
+        }
+
+        // ============================================================
+        // 2.5 新增：六爻专用计算函数（旬空 / 月破）
+        // ============================================================
+
+        // 1. 计算旬空（根据日柱干支）
+        //    原理：干支纪日每 10 日为一旬，旬首必为「甲×」；
+        //    该旬未轮到的两个地支即为旬空。
+        function getXunKong(dayGanZhi) {
+            const gan = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+            const zhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+
+            const dayGan = dayGanZhi.charAt(0);
+            const dayZhi = dayGanZhi.charAt(1);
+
+            const ganIndex = gan.indexOf(dayGan);
+            const zhiIndex = zhi.indexOf(dayZhi);
+
+            // 计算旬首（甲子、甲戌等）。旬首天干恒为「甲」，故 xunShouIndex 恒为 0
+            const xunShouIndex = ganIndex - (ganIndex % 10 === 0 ? 0 : (ganIndex % 10));
+            // 旬首对应的地支索引
+            const xunShouZhiIndex = zhiIndex - (ganIndex % 10);
+
+            // 旬空的地支索引（旬末之后两位）
+            const kong1Index = (xunShouZhiIndex + 10) % 12;
+            const kong2Index = (xunShouZhiIndex + 11) % 12;
+
+            return zhi[kong1Index] + zhi[kong2Index];
+        }
+
+        // 2. 计算月破（根据地支六冲关系）
+        //    原理：月建（月柱地支）所冲之地支即为月破。
+        function getYuePo(monthZhi) {
+            const chongMap = {
+                '子': '午', '丑': '未', '寅': '申', '卯': '酉',
+                '辰': '戌', '巳': '亥', '午': '子', '未': '丑',
+                '申': '寅', '酉': '卯', '戌': '辰', '亥': '巳'
+            };
+            return chongMap[monthZhi] || '—';
         }
 
         // ============================================================
@@ -499,6 +612,14 @@
                         </div>
 
                         <div class="result-card full">
+                            <div class="label">🕳️ 旬空 & 月破</div>
+                            <div class="value small">
+                                旬空：<span class="highlight">${data.xunKong}</span> &nbsp;|&nbsp; 月破：<span class="highlight">${data.yuePo}</span>
+                            </div>
+                            <div class="sub">六爻断卦核心要素 · 旬空为日辰所缺，月破为月建相冲</div>
+                        </div>
+
+                        <div class="result-card full">
                             <div class="label">🌿 节气</div>
                             <div class="value small">${data.jieQi}</div>
                             <div class="sub">当日节气</div>
@@ -517,6 +638,101 @@
             `;
             resultArea.innerHTML = html;
         }
+
+        // ============================================================
+        // 3.5 手机端自定义日期选择器逻辑
+        // ============================================================
+        let pickerYear, pickerMonth, pickerSelectedDay;
+
+        // 解析输入框中的 YYYY-MM-DD；失败则用今天
+        function parseInput() {
+            const m = dateInput.value && dateInput.value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (m) return { year: +m[1], month: +m[2], day: +m[3] };
+            const t = new Date();
+            return { year: t.getFullYear(), month: t.getMonth() + 1, day: t.getDate() };
+        }
+
+        function fmtDate(y, mo, d) {
+            return `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        }
+
+        function changeMonth(delta) {
+            pickerMonth += delta;
+            if (pickerMonth < 1) { pickerMonth = 12; pickerYear--; }
+            if (pickerMonth > 12) { pickerMonth = 1; pickerYear++; }
+            renderPicker();
+        }
+
+        function renderPicker() {
+            const today = new Date();
+            const firstWeekday = new Date(pickerYear, pickerMonth - 1, 1).getDay(); // 0=日
+            const daysInMonth = new Date(pickerYear, pickerMonth, 0).getDate();
+            let cells = '';
+            for (let i = 0; i < firstWeekday; i++) cells += '<span></span>';
+            for (let d = 1; d <= daysInMonth; d++) {
+                let cls = 'dp-day';
+                if (d === today.getDate() && pickerMonth === today.getMonth() + 1 && pickerYear === today.getFullYear()) cls += ' dp-today';
+                if (d === pickerSelectedDay) cls += ' dp-selected';
+                cells += `<span class="${cls}" data-day="${d}">${d}</span>`;
+            }
+            datePicker.innerHTML = `
+                <div class="dp-header">
+                    <button type="button" class="dp-nav" data-nav="prevYear">«</button>
+                    <span class="dp-title">${pickerYear}年</span>
+                    <button type="button" class="dp-nav" data-nav="nextYear">»</button>
+                </div>
+                <div class="dp-header">
+                    <button type="button" class="dp-nav" data-nav="prevMonth">‹</button>
+                    <span class="dp-title">${String(pickerMonth).padStart(2, '0')}月</span>
+                    <button type="button" class="dp-nav" data-nav="nextMonth">›</button>
+                </div>
+                <div class="dp-week"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
+                <div class="dp-grid">${cells}</div>
+                <div class="dp-footer">
+                    <button type="button" class="dp-btn dp-clear" id="dpClear">清除</button>
+                    <button type="button" class="dp-btn dp-ok" id="dpOk">确定</button>
+                </div>
+            `;
+        }
+
+        function openPicker() {
+            if (!isMobile) return;
+            const cur = parseInput();
+            pickerYear = cur.year; pickerMonth = cur.month; pickerSelectedDay = cur.day;
+            renderPicker();
+            datePicker.style.display = 'block';
+        }
+
+        function closePicker() {
+            datePicker.style.display = 'none';
+        }
+
+        // 事件委托：导航 / 选日 / 确定 / 清除
+        datePicker.addEventListener('click', function(e) {
+            const nav = e.target.dataset.nav;
+            if (nav === 'prevYear') { pickerYear--; renderPicker(); return; }
+            if (nav === 'nextYear') { pickerYear++; renderPicker(); return; }
+            if (nav === 'prevMonth') { changeMonth(-1); return; }
+            if (nav === 'nextMonth') { changeMonth(1); return; }
+            if (e.target.classList.contains('dp-day') && e.target.dataset.day) {
+                pickerSelectedDay = +e.target.dataset.day;
+                renderPicker();
+                return;
+            }
+            if (e.target.id === 'dpOk') {
+                if (pickerSelectedDay) {
+                    dateInput.value = fmtDate(pickerYear, pickerMonth, pickerSelectedDay);
+                    queryLunar(dateInput.value);
+                }
+                closePicker();
+                return;
+            }
+            if (e.target.id === 'dpClear') {
+                dateInput.value = '';   // 清除选择（仅保留一个按钮，无"取消"）
+                closePicker();
+                return;
+            }
+        });
 
         // ============================================================
         // 4. 事件绑定
@@ -567,6 +783,18 @@
                 queryLunar(dateInput.value);
             }
         });
+
+        // 手机端：聚焦输入框即弹出自定义选择器（同时仍可手动输入）
+        if (isMobile) {
+            dateInput.addEventListener('focus', openPicker);
+            // 点击页面其它区域时收起选择器
+            document.addEventListener('click', function(e) {
+                if (datePicker.style.display === 'block' &&
+                    !datePicker.contains(e.target) && e.target !== dateInput) {
+                    closePicker();
+                }
+            });
+        }
 
         setTimeout(function() {
             queryLunar(dateInput.value);
