@@ -454,7 +454,7 @@
         <a href="history.html">📖 历史</a>
         <a href="help.html">❓ 指南</a>
         <a href="nlcx.html" class="external-link" title="农历">📅 农历</a>
-        <a href="index1.html" target="_blank" class="external-link" title="返回道玄文集">🏠 文集</a>
+        <a href="../index1.html" target="_blank" class="external-link" title="返回道玄文集">🏠 文集</a>
     </div>
 
     <!-- 当前卦象信息 -->
@@ -498,8 +498,8 @@
 </div>
 
 <!-- ========== 引入 lunar-javascript 库 ========== -->
-<script src="lunar.js"></script>
-<script src="config.js"></script>
+<script src="../lunar.js"></script>
+<script src="../config.js"></script>
 <script src="api/glm.js"></script>
 <script src="api/qwen.js"></script>
 
@@ -725,20 +725,55 @@
             jieGuaBtn.disabled = true;
 
             try {
-                // 构建卦象数据（包含时间信息和求卦者资料）
+                // 构建详细的卦象数据（供 AI 直接使用，世应/动变已排定）
                 const guaInfo = {
+                    // 基础信息
                     benGua: guaData.benGuaName,
                     benPalace: guaData.benPalace,
                     bianGua: guaData.bianGuaName,
                     bianPalace: guaData.bianPalace,
-                    dongYao: guaData.dongYao,
-                    yaoResults: guaData.yaoResults,
-                    dongStatus: guaData.dongStatus,
+                    dongYao: guaData.dongYao || [],
+                    yaoResults: guaData.yaoResults || [],
+                    dongStatus: guaData.dongStatus || [],
                     benYao: guaData.benYao || [],
                     bianYao: guaData.bianYao || [],
+
+                    // ⭐ 用户信息（供提示词使用）
+                    userName: userInfo.name || '匿名',
+                    userGender: userInfo.gender || '男',
+                    userBirth: userInfo.birth || '未知',
+                    userQuestion: userInfo.question || '未记录',
+                    qiGuaTime: guaData.time || '未知',
+
+                    // ⭐ 世应位置（直接从排盘结果读取，文本化）
+                    shiYao: guaData.shiYao ? `第${guaData.shiYao}爻` + (guaData.benYao[guaData.shiYao - 1] ?
+                        ` ${guaData.benYao[guaData.shiYao - 1].地支}${guaData.benYao[guaData.shiYao - 1].六亲}` : '') : '未知',
+                    yingYao: guaData.yingYao ? `第${guaData.yingYao}爻` + (guaData.benYao[guaData.yingYao - 1] ?
+                        ` ${guaData.benYao[guaData.yingYao - 1].地支}${guaData.benYao[guaData.yingYao - 1].六亲}` : '') : '未知',
+
+                    // ⭐ 详细六爻数据（含动变详情）
+                    yaoDetail: (guaData.benYao || []).map((yao, idx) => {
+                        const isDong = guaData.dongStatus && guaData.dongStatus[idx];
+                        const r = {
+                            dizhi: yao.地支,
+                            liuqin: yao.六亲,
+                            isDong: isDong || false
+                        };
+                        if (isDong && guaData.bianYao && guaData.bianYao[idx]) {
+                            r.bianDizhi = guaData.bianYao[idx].地支;
+                            r.bianLiuqin = guaData.bianYao[idx].六亲;
+                        }
+                        return r;
+                    }),
+
+                    // 用户问题
                     question: question,
+
+                    // 时间信息
                     timeInfo: timeInfo,
-                    userInfo: userInfo   // 求卦者完整资料（姓名、性别、出生时辰、所问之事）
+
+                    // 保留原始 userInfo（兼容旧逻辑）
+                    userInfo: userInfo
                 };
 
                 // 调用对应模型的API

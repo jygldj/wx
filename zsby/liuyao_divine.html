@@ -517,7 +517,7 @@
         <a href="history.html">📖 历史</a>
         <a href="help.html">❓ 指南</a>
         <a href="nlcx.html" class="external-link" title="农历查询">📅 农历</a>
-        <a href="index1.html" target="_blank" class="external-link" title="返回道玄文集">🏠 文集</a>
+        <a href="../index1.html" target="_blank" class="external-link" title="返回道玄文集">🏠 文集</a>
     </div>
 
     <!-- 求卦者信息 -->
@@ -933,6 +933,7 @@
 
             // 保存卦象数据到 localStorage，供解卦页面使用
             const guaData = {
+                // 基础信息
                 benGuaName: benGua.卦名,
                 benPalace: benGua.宫,
                 bianGuaName: bianGua.卦名,
@@ -942,11 +943,32 @@
                 dongStatus: dongStatus,
                 benYao: benGua.爻位 || [],
                 bianYao: bianGua.爻位 || [],
+
+                // ⭐ 新增：世应位置（直接从排盘结果读取）
+                shiYao: benGua.世爻,
+                yingYao: benGua.应爻,
+
+                // ⭐ 新增：动爻详情（包含变化后的地支和六亲）
+                dongDetail: (benGua.爻位 || []).map((yao, idx) => {
+                    if (dongStatus[idx]) {
+                        const bianYaoInfo = (bianGua.爻位 || [])[idx];
+                        return {
+                            yaoIndex: idx + 1,
+                            dizhi: yao.地支,
+                            liuqin: yao.六亲,
+                            bianDizhi: bianYaoInfo ? bianYaoInfo.地支 : '',
+                            bianLiuqin: bianYaoInfo ? bianYaoInfo.六亲 : ''
+                        };
+                    }
+                    return null;
+                }).filter(d => d !== null),
+
+                // 时间信息
                 time: new Date().toLocaleString()
             };
             try {
                 localStorage.setItem('currentGua', JSON.stringify(guaData));
-                console.log('✅ 卦象数据已保存到 localStorage');
+                console.log('✅ 卦象数据已保存到 localStorage（含世应、动变详情）');
             } catch(e) {
                 console.warn('保存卦象数据失败:', e);
             }

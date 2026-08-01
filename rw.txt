@@ -1,5 +1,0 @@
-任务：
-
-1、统一liuyao_divine.html，jiegu.html，history.html，help.html，nlcx.html页面导航栏位置，显示风格。统一更换上述5个页面背景为e8f1f2
-
-2、修复liuyao_divine.html“释卦”按钮，不能把卦象数据传输到释卦页，“释卦”页面显示“尚未起卦“，不要修改其他代码。
