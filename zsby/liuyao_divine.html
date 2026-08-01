@@ -389,6 +389,14 @@
             border: 1px solid #d5c6b4;
             color: #6b4f39;
             padding: 8px 26px;
+            border-radius: 20px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;        /* 防止「铜钱摇卦」「手动输卦」在窄屏被换行 */
+            flex-shrink: 0;
+        }
             border-radius: 40px;
             font-size: 15px;
             cursor: pointer;
@@ -462,6 +470,14 @@
             .container { padding: 8px; border-radius: 24px 24px 16px 16px; }
             .coin { width: 56px; height: 56px; font-size: 24px; }
             .primary-btn { padding: 10px 24px; font-size: 16px; }
+
+            /* 模式切换按钮：缩小内边距与字体，让「铜钱摇卦」「手动输卦」单行显示 */
+            .mode-switch-bar { gap: 8px; }
+            .mode-btn {
+                padding: 7px 18px;
+                font-size: 13px;
+                font-weight: 500;
+            }
 
             /* 用户信息区：姓名6字+性别2字一行；出生时辰单独一行，与所问之事同宽；左右边距最小化 */
             .user-info-area { padding: 10px 8px; }
@@ -583,6 +599,11 @@
             .nav-bar a { font-size: 11px; padding: 5px 3px; }
             .field-group.fixed-name { flex: 1 1 0; min-width: 3.5em; }
             .field-group.fixed-gender { flex: 0 0 4em; }
+            /* 极窄屏进一步收紧模式按钮 */
+            .mode-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
         }
     </style>
 </head>
