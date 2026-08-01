@@ -821,7 +821,7 @@
                         </div>
                         <div class="body">${mdToHtml(result)}</div>
                         <div style="margin-top:14px;font-size:12px;color:#9a8876;border-top:1px solid #e0d3c4;padding-top:12px;">
-                            🤖 AI 解读（${modelName}）· 仅供娱乐参考 · 决策还需理性判断
+                            🗨️ 野鹤老人的时空对话　${new Date().toLocaleString('zh-CN')}
                         </div>
                     </div>
                 `;
@@ -836,8 +836,7 @@
 ${mdToPlain(result)}
 
 ---
-模型：${modelName}　时间：${new Date().toLocaleString('zh-CN')}
-本解读仅供参考，决策需理性判断。`;
+野鹤老人的时空对话　${new Date().toLocaleString('zh-CN')}`;
 
                 // 回写最新一条历史记录的 result（按本卦/变卦/起卦时间匹配）
                 try {
