@@ -116,7 +116,7 @@ ${(guaInfo.yaoDetail || []).map((y, i) => `第${i+1}爻：${y.dizhi} ${y.liuqin}
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: userPrompt }
                 ],
-                temperature: 0.7,
+                temperature: 0.3,
                 max_tokens: 2048
             })
         });
