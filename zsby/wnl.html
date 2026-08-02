@@ -558,9 +558,10 @@
 
         function onSuccess(lng, name, type){
             state.lng = lng;
-            state.placeName = name + (type==='gps'?'（GPS）':'（IP）');
+            state.placeName = name ? (name + (type==='gps'?'（GPS）':'（IP）')) : ('经度 '+lng.toFixed(2));
             state.locationType = type;
-            locMsg.textContent = '✅ 定位成功　经度 '+lng.toFixed(2)+'°E　真太阳时已重新计算';
+            var placeText = name ? name : ('经度 '+lng.toFixed(2)+'°E');
+            locMsg.textContent = '✅ 定位成功　' + placeText + '　经度 ' + lng.toFixed(2) + '°E　真太阳时已重新计算';
             locMsg.className = 'loc-status success';
             render();
         }
@@ -601,13 +602,27 @@
                 return tryIp(0);
             }
             navigator.geolocation.getCurrentPosition(function(pos){
-                var name = '当前位置';
-                if(pos.address && pos.address.city) name = pos.address.city;
-                onSuccess(pos.coords.longitude, name, 'gps');
+                var lat = pos.coords.latitude, lng = pos.coords.longitude;
+                // GPS 只给经纬度，再逆地理编码一次拿到城市名
+                reverseGeocode(lat, lng, function(city){
+                    onSuccess(lng, city, 'gps');
+                });
             }, function(){
                 locMsg.textContent = 'GPS 不可用，改用 IP 定位…';
                 tryIp(0);
             }, { enableHighAccuracy:false, timeout:6000, maximumAge:600000 });
+        }
+        // 逆地理编码：经纬度 -> 城市名（免 key，浏览器友好）
+        function reverseGeocode(lat, lng, cb){
+            var url = 'https://api.bigdatacloud.net/data/reverse-geocode-client?latitude='
+                + lat + '&longitude=' + lng + '&localityLanguage=zh';
+            fetch(url, {method:'GET', cache:'no-store', mode:'cors'})
+                .then(function(r){ return r.json(); })
+                .then(function(j){
+                    var city = j.city || j.locality || j.principalSubdivision || null;
+                    cb(city);
+                })
+                .catch(function(){ cb(null); });
         }
         tryGps();
     });
