@@ -1040,7 +1040,7 @@
         function renderFinalResult(benGua, bianGua, yaoResults, dongStatus) {
             // 日干（六神依日辰而定，取起卦当日日柱天干）
             const now = new Date();
-            const dayGan = Lunar.fromYmd(now.getFullYear(), now.getMonth() + 1, now.getDate()).getLunar().getDayInGanZhi().charAt(0);
+            const dayGan = Solar.fromYmd(now.getFullYear(), now.getMonth() + 1, now.getDate()).getLunar().getDayInGanZhi().charAt(0);
 
             const benHtml = buildGuaHtml(benGua, yaoResults, dongStatus, '本卦', false, benGua.五行, dayGan);
             const bianHtml = buildGuaHtml(bianGua, null, null, '变卦', true, benGua.五行, dayGan);
