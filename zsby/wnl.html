@@ -217,7 +217,32 @@
         .result-card .value { font-size: 18px; font-weight: bold; color: #3f2e1e; }
         .result-card .value.small { font-size: 15px; }
         .result-card .value .hl { color: #6b4f39; }
+        .result-card .value .yuejian { color: #b33; font-weight: bold; }
+        .result-card .value .richen { color: #3366aa; font-weight: bold; }
+        .result-card .value .xunkong { color: #999; }
+        .result-card .value .yuepo { color: #b33; font-weight: bold; }
+        .result-card .value .richong { color: #e67e22; font-weight: bold; }
         .result-card.full { grid-column: 1 / -1; }
+        /* 断卦参数行布局 */
+        .info-row { display: flex; align-items: baseline; gap: 8px; padding: 3px 0; }
+        .info-label { font-size: 13px; color: #7a6652; white-space: nowrap; min-width: 72px; }
+        .info-value { font-size: 16px; font-weight: bold; color: #3f2e1e; }
+        .pillar-row { display: flex; align-items: baseline; gap: 8px; padding: 3px 0; }
+        .pillar-label { font-size: 13px; color: #7a6652; white-space: nowrap; min-width: 58px; }
+        .pillar-gz { font-size: 18px; font-weight: bold; color: #3f2e1e; }
+        .na-yin { font-size: 13px; color: #7a6652; margin-left: 4px; }
+        .card-divider { border-top: 1px dashed #e0d3c4; margin: 6px 0; }
+        .liu-section { margin-top: 6px; }
+        .liu-title { font-size: 13px; color: #7a6652; margin-bottom: 3px; }
+        .liu-shen-list { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 15px; font-weight: bold; color: #3f2e1e; line-height: 1.7; }
+        .liu-qin-list { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 14px; color: #3f2e1e; line-height: 1.7; }
+        .liu-qin-list .lq-label { color: #7a6652; font-size: 12px; }
+        /* 地点区域单行 */
+        .loc-card {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+        }
+        .loc-card .loc-title { font-size: 14px; font-weight: bold; color: #3f2e1e; white-space: nowrap; }
+        .loc-card .loc-hint { font-size: 12px; color: #7a6652; white-space: nowrap; }
         .json-box {
             margin-top: 12px; background: #2d241c; color: #d6c8b8; border-radius: 10px;
             padding: 10px 12px; font-size: 12px; font-family: 'Consolas', monospace;
@@ -238,6 +263,15 @@
             .date-sep { font-size: 22px; }
             .result-grid { grid-template-columns: 1fr; }
             .time-row select { width: 56px; }
+            .loc-card { gap: 6px; }
+            .loc-card .loc-title { font-size: 13px; }
+            .loc-card .loc-hint { font-size: 11px; }
+            .info-row { padding: 2px 0; }
+            .pillar-row { padding: 2px 0; }
+            .info-value { font-size: 14px; }
+            .pillar-gz { font-size: 16px; }
+            .liu-shen-list { font-size: 14px; gap: 4px 10px; }
+            .liu-qin-list { font-size: 13px; gap: 4px 10px; }
         }
     </style>
 </head>
@@ -277,12 +311,11 @@
         </div>
     </div>
 
-    <div class="row-card">
-        <div class="rtitle">📍 占卜地点（自动获取，经度用于真太阳时校正）</div>
-        <div class="loc-row">
-            <button class="btn btn-primary" id="btnLoc">🎯 自动定位</button>
-            <span class="loc-status" id="locMsg"></span>
-        </div>
+    <div class="row-card loc-card">
+        <span class="loc-title">📍 占卜地点</span>
+        <span class="loc-hint">用于真太阳时校正</span>
+        <button class="btn btn-primary" id="btnLoc">🎯 自动定位</button>
+        <span class="loc-status" id="locMsg"></span>
     </div>
 
     <div class="result-area" id="resultArea">—</div>
@@ -468,6 +501,75 @@
         return GAN[ganIdx] + ZHI[zhiIdx];
     }
 
+    // ============ 断卦参数函数（7项） ============
+    // 1. 旬空：依日柱干支推算（算法版，与 nlcx.html 一致，已验证正确）
+    function getXunKong(dayGanZhi) {
+        var ganIdx = GAN.indexOf(dayGanZhi.charAt(0));
+        var zhiIdx = ZHI.indexOf(dayGanZhi.charAt(1));
+        var xunShouZhiIdx = zhiIdx - (ganIdx % 10);
+        xunShouZhiIdx = ((xunShouZhiIdx % 12) + 12) % 12;
+        var k1 = (xunShouZhiIdx + 10) % 12;
+        var k2 = (xunShouZhiIdx + 11) % 12;
+        return ZHI[k1] + ZHI[k2];
+    }
+    // 2. 月破：月建（月柱地支）所冲之地支
+    var CHONG_MAP = {'寅':'申','卯':'酉','辰':'戌','巳':'亥','午':'子','未':'丑',
+                     '申':'寅','酉':'卯','戌':'辰','亥':'巳','子':'午','丑':'未'};
+    function getYuePo(yueZhi) { return CHONG_MAP[yueZhi] || '—'; }
+    // 3. 日冲：日辰（日柱地支）所冲之地支
+    function getRiChong(riZhi) { return CHONG_MAP[riZhi] || '—'; }
+    // 4. 驿马：依年支（或日支）推算
+    function getYiMa(nianZhi) {
+        var map = {'申':'寅','子':'寅','辰':'寅','寅':'申','午':'申','戌':'申',
+                   '巳':'亥','酉':'亥','丑':'亥','亥':'巳','卯':'巳','未':'巳'};
+        return map[nianZhi] || '—';
+    }
+    // 5. 六神：依日干起神，返回长度6数组（初爻→上爻）
+    function getLiuShen(dayGan) {
+        var liushen = ['青龙','朱雀','勾陈','螣蛇','白虎','玄武'];
+        var dayGanMap = {'甲':0,'乙':0,'丙':1,'丁':1,'戊':2,'己':3,'庚':4,'辛':4,'壬':5,'癸':5};
+        var start = dayGanMap[dayGan];
+        if(start === undefined) return ['—','—','—','—','—','—'];
+        var result = [];
+        for(var i=0; i<6; i++) result.push(liushen[(start+i)%6]);
+        return result;
+    }
+    // 6. 六亲：以日干为"我"，返回日干与 otherGan 的六亲关系
+    function getLiuQin(dayGan, otherGan) {
+        var wuxing = {'甲':'木','乙':'木','丙':'火','丁':'火','戊':'土','己':'土','庚':'金','辛':'金','壬':'水','癸':'水'};
+        var me = wuxing[dayGan], other = wuxing[otherGan];
+        if(!me || !other) return '—';
+        var relation = {
+            '木': {'木':'兄弟','火':'子孙','土':'妻财','金':'官鬼','水':'父母'},
+            '火': {'火':'兄弟','土':'子孙','金':'妻财','水':'官鬼','木':'父母'},
+            '土': {'土':'兄弟','金':'子孙','水':'妻财','木':'官鬼','火':'父母'},
+            '金': {'金':'兄弟','水':'子孙','木':'妻财','火':'官鬼','土':'父母'},
+            '水': {'水':'兄弟','木':'子孙','火':'妻财','土':'官鬼','金':'父母'}
+        };
+        return relation[me][other] || '—';
+    }
+    // 7. 纳音：六十甲子纳音表
+    function getNaYin(ganZhi) {
+        var map = {
+            '甲子':'海中金','乙丑':'海中金','丙寅':'炉中火','丁卯':'炉中火',
+            '戊辰':'大林木','己巳':'大林木','庚午':'路旁土','辛未':'路旁土',
+            '壬申':'剑锋金','癸酉':'剑锋金','甲戌':'山头火','乙亥':'山头火',
+            '丙子':'涧下水','丁丑':'涧下水','戊寅':'城头土','己卯':'城头土',
+            '庚辰':'白蜡金','辛巳':'白蜡金','壬午':'杨柳木','癸未':'杨柳木',
+            '甲申':'泉中水','乙酉':'泉中水','丙戌':'屋上土','丁亥':'屋上土',
+            '戊子':'霹雳火','己丑':'霹雳火','庚寅':'松柏木','辛卯':'松柏木',
+            '壬辰':'长流水','癸巳':'长流水','甲午':'沙中金','乙未':'沙中金',
+            '丙申':'山下火','丁酉':'山下火','戊戌':'平地木','己亥':'平地木',
+            '庚子':'壁上土','辛丑':'壁上土','壬寅':'金箔金','癸卯':'金箔金',
+            '甲辰':'覆灯火','乙巳':'覆灯火','丙午':'天河水','丁未':'天河水',
+            '戊申':'大驿土','己酉':'大驿土','庚戌':'钗钏金','辛亥':'钗钏金',
+            '壬子':'桑柘木','癸丑':'桑柘木','甲寅':'大溪水','乙卯':'大溪水',
+            '丙辰':'沙中土','丁巳':'沙中土','戊午':'天上火','己未':'天上火',
+            '庚申':'石榴木','辛酉':'石榴木','壬戌':'大海水','癸亥':'大海水'
+        };
+        return map[ganZhi] || '—';
+    }
+
     function render(){
         var y=state.y, m=state.m, d=state.d, h=state.h, mi=state.mi, lng=state.lng;
         // 真太阳时
@@ -477,20 +579,50 @@
         var dayLunar = lunarOf(y,m,d);
         var dayGZ = dayLunar.getDayInGanZhi();
 
-        // 年柱（立春精确）、月柱（节气精确）：用真太阳时构造，交节按时刻判断
+        // 年柱（立春精确）、月柱（节气精确）：用真太阳时构造
         var timeSolar = Solar.fromYmdHms(y,m,d, zt.h, zt.mi, zt.s);
         var timeLunar = timeSolar.getLunar();
         var yearGZ = timeLunar.getYearInGanZhiExact();
         var monthGZ = timeLunar.getMonthInGanZhiExact();
 
-        // 时辰干支（基于日柱日干，保证与日柱一致）
+        // 时柱（五鼠遁，基于日柱日干）
         var hourGZ = hourGanZhi(dayGZ, zt.h);
 
-        // 生肖
+        // 生肖（由年柱地支映射）
         var zodiac = zodiacOfYearGanZhi(yearGZ);
 
-        // 农历（getMonthInChinese 对闰月已含"闰"字，如"闰六"，故无需手动再加）
+        // 农历
         var lunarStr = dayLunar.getMonthInChinese()+'月'+dayLunar.getDayInChinese();
+
+        // 星期
+        var weekDay = ['日','一','二','三','四','五','六'][new Date(y, m-1, d).getDay()];
+
+        // 时辰名
+        var zhiIdx = Math.floor(((zt.h+1)%24)/2);
+        var shichenName = ZHI[zhiIdx] + '时';
+
+        // ===== 断卦参数 =====
+        var xunKong = getXunKong(dayGZ);
+        var yueZhi = monthGZ.charAt(1);
+        var riZhi = dayGZ.charAt(1);
+        var nianZhi = yearGZ.charAt(1);
+        var yuePo = getYuePo(yueZhi);
+        var riChong = getRiChong(riZhi);
+        var yiMa = getYiMa(nianZhi);
+        var liuShen = getLiuShen(dayGZ.charAt(0)); // 数组6元
+
+        // 六亲：各柱天干与日干的关系
+        var dayGan = dayGZ.charAt(0);
+        var lqNian = getLiuQin(dayGan, yearGZ.charAt(0));
+        var lqYue  = getLiuQin(dayGan, monthGZ.charAt(0));
+        var lqRi   = '兄弟';
+        var lqShi  = getLiuQin(dayGan, hourGZ.charAt(0));
+
+        // 纳音
+        var nyNian = getNaYin(yearGZ);
+        var nyYue  = getNaYin(monthGZ);
+        var nyRi   = getNaYin(dayGZ);
+        var nyShi  = getNaYin(hourGZ);
 
         // 节气信息
         var curJq = timeLunar.getPrevJieQi(false);
@@ -504,32 +636,74 @@
         if(nextJq){
             var ns = nextJq.getSolar();
             var nextDate = new Date(ns.getYear(), ns.getMonth()-1, ns.getDay(), ns.getHour(), ns.getMinute(), ns.getSecond());
-            var curDate = new Date(y, m-1, d, h, mi, 0);  // 距算用北京时间，与节气时刻同基准
+            var curDate = new Date(y, m-1, d, h, mi, 0);
             var diff = arrDiffDaysHours(curDate, nextDate);
             jqText += '<span class="jq-sub">　距下个节气 '+nextJq.getName()+' 还有 '+diff.days+'天'+diff.hours+'小时'+diff.mins+'分</span>';
         }
         jieqiBar.innerHTML = jqText;
 
-        // JSON
+        // JSON 输出
         var result = {
             solar_date: y+'-'+p2(m)+'-'+p2(d)+' '+p2(h)+':'+p2(mi)+':00',
             lunar_date: lunarStr,
-            ganzhi: { year: yearGZ+'年', month: monthGZ+'月', day: dayGZ+'日', hour: hourGZ+'时' },
+            week: '星期'+weekDay,
+            shichen: shichenName,
+            ganzhi: { year: yearGZ, month: monthGZ, day: dayGZ, hour: hourGZ },
+            nayin: { year: nyNian, month: nyYue, day: nyRi, hour: nyShi },
             zodiac: zodiac,
-            jieqi_status: '当前节气：'+(curJq?curJq.getName():'—'),
+            xunkong: xunKong,
+            yuepo: yuePo,
+            richong: riChong,
+            yima: yiMa,
+            liushen: liuShen,
+            liuqin: { year: lqNian, month: lqYue, day: lqRi, hour: lqShi },
+            jieqi: curJq ? curJq.getName() : '—',
             zhen_sun_time: zt.text,
             place: state.placeName,
             longitude: lng
         };
 
-        // 渲染卡片
+        // ===== 左栏：公历 / 农历 / 真太阳时 / 时辰 + 四柱含纳音 =====
+        var leftHtml =
+            '<div class="info-row"><span class="info-label">📅 公历</span><span class="info-value">'+y+'年'+m+'月'+d+'日 星期'+weekDay+'</span></div>'+
+            '<div class="info-row"><span class="info-label">🌙 农历</span><span class="info-value">'+lunarStr+'</span></div>'+
+            '<div class="info-row"><span class="info-label">⏰ 真太阳时</span><span class="info-value">'+zt.text+'</span></div>'+
+            '<div class="info-row"><span class="info-label">🕐 时辰</span><span class="info-value">'+shichenName+'</span></div>'+
+            '<div class="card-divider"></div>'+
+            '<div class="pillar-row"><span class="pillar-label">🌳 年柱</span><span class="pillar-gz">'+yearGZ+'</span><span class="na-yin">'+nyNian+'</span></div>'+
+            '<div class="pillar-row"><span class="pillar-label">🌿 月柱</span><span class="pillar-gz"><span class="yuejian">'+monthGZ+'</span></span><span class="na-yin">'+nyYue+'</span></div>'+
+            '<div class="pillar-row"><span class="pillar-label">☀️ 日柱</span><span class="pillar-gz"><span class="richen">'+dayGZ+'</span></span><span class="na-yin">'+nyRi+'</span></div>'+
+            '<div class="pillar-row"><span class="pillar-label">⏰ 时柱</span><span class="pillar-gz">'+hourGZ+'</span><span class="na-yin">'+nyShi+'</span></div>';
+
+        // ===== 右栏：旬空 / 月破 / 日冲 / 驿马 + 六神 + 六亲 =====
+        var rightHtml =
+            '<div class="info-row"><span class="info-label">🔮 旬空</span><span class="info-value xunkong">'+xunKong+'</span></div>'+
+            '<div class="info-row"><span class="info-label">💥 月破</span><span class="info-value yuepo">'+yuePo+'</span></div>'+
+            '<div class="info-row"><span class="info-label">⚡ 日冲</span><span class="info-value richong">'+riChong+'</span></div>'+
+            '<div class="info-row"><span class="info-label">🐎 驿马</span><span class="info-value">'+yiMa+'</span></div>'+
+            '<div class="card-divider"></div>'+
+            '<div class="liu-section">'+
+                '<div class="liu-title">六神（初爻→上爻）</div>'+
+                '<div class="liu-shen-list">'+liuShen.join('　')+'</div>'+
+            '</div>'+
+            '<div class="liu-section">'+
+                '<div class="liu-title">六亲（以日干为我）</div>'+
+                '<div class="liu-qin-list">'+
+                    '<span><span class="lq-label">年</span> '+lqNian+'</span>　'+
+                    '<span><span class="lq-label">月</span> '+lqYue+'</span>　'+
+                    '<span><span class="lq-label">日</span> '+lqRi+'</span>　'+
+                    '<span><span class="lq-label">时</span> '+lqShi+'</span>'+
+                '</div>'+
+            '</div>';
+
+        // 生肖标签（放在左栏顶部或独立显示）
+        var zodiacHtml = '<div class="info-row"><span class="info-label">🐾 生肖</span><span class="info-value">'+zodiac+'（'+yearGZ+'年）</span></div>';
+
         var html = '<div class="result-grid">'+
-            '<div class="result-card"><div class="label">📅 公历</div><div class="value small">'+y+'-'+p2(m)+'-'+p2(d)+' '+p2(h)+':'+p2(mi)+'</div><div class="sub" style="font-size:12px;color:#7a6652;">真太阳时 '+zt.text+'</div></div>'+
-            '<div class="result-card"><div class="label">🌙 农历</div><div class="value small">'+lunarStr+'</div><div class="sub" style="font-size:12px;color:#7a6652;">'+(dayLunar.getMonth()<0?'闰月':'平月')+'</div></div>'+
-            '<div class="result-card"><div class="label">🎲 干支</div><div class="value small"><span class="hl">'+yearGZ+'</span>年 · <span class="hl">'+monthGZ+'</span>月 · <span class="hl">'+dayGZ+'</span>日 · <span class="hl">'+hourGZ+'</span>时</div><div class="sub" style="font-size:12px;color:#7a6652;">年柱(立春精确) · 月柱(节气精确) · 日柱 · 时柱</div></div>'+
-            '<div class="result-card"><div class="label">🐾 生肖</div><div class="value">'+zodiac+'</div><div class="sub" style="font-size:12px;color:#7a6652;">由年柱地支映射</div></div>'+
-            '<div class="result-card full"><div class="label">📜 节气</div><div class="value small">'+(curJq?curJq.getName():'—')+'</div><div class="sub" style="font-size:12px;color:#7a6652;">'+(nextJq?('下个：'+nextJq.getName()):'')+'</div></div>'+
-            '<div class="result-card full"><div class="label">📡 数据输出</div><div class="json-box">'+escapeHtml(JSON.stringify(result,null,2))+'</div></div>'+
+            '<div class="result-card">'+leftHtml+'</div>'+
+            '<div class="result-card">'+rightHtml+'</div>'+
+            '<div class="result-card full">'+zodiacHtml+'</div>'+
+            '<div class="result-card full"><div class="label">📡 数据输出（JSON）</div><div class="json-box">'+escapeHtml(JSON.stringify(result,null,2))+'</div></div>'+
             '</div>';
         resultArea.innerHTML = html;
 
