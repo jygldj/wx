@@ -16,7 +16,7 @@ F:\github-dx\wx\
     ├── jiegu.html           # 释卦页面（AI 解读）
     ├── history.html         # 占卜历史（本地存储，目录折叠式）
     ├── help.html            # 使用指南
-    ├── nlcx.html            # 农历查询
+    ├── wnl.html             # 万年历排盘（含农历查询、真太阳时、断卦参数）
     ├── api/
     │   ├── qwen.js          # 通义千问（主力）API 调用模块
     │   └── qwen2.js         # 通义千问（备选）API 调用模块
@@ -70,7 +70,7 @@ F:\github-dx\wx\
 ### 追加任务：文件移入 zsby 子目录
 - 5 个页面 + `api/` 文件夹移入 `zsby/`
 - 各页导航栏"文集"按钮指向 `../index1.html`
-- `jiegu.html`、`nlcx.html` 的 `lunar.js`、`config.js` 通过 `../` 引用父目录
+- `jiegu.html`、`wnl.html` 的 `lunar.js`、`config.js` 通过 `../` 引用父目录
 - `index1.html` 的"增删卜易"按钮指向 `zsby/liuyao_divine.html`
 
 ### 模型替换历史

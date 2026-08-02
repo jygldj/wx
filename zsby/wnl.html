@@ -284,7 +284,6 @@
         <a href="jiegu.html">📜 释卦</a>
         <a href="history.html">📖 历史</a>
         <a href="help.html">❓ 指南</a>
-        <a href="nlcx.html">📅 农历</a>
         <a href="wnl.html" class="active">🗓️ 万年历</a>
         <a href="../index1.html" target="_blank" class="external-link">🏠 文集</a>
     </div>
@@ -502,7 +501,7 @@
     }
 
     // ============ 断卦参数函数（7项） ============
-    // 1. 旬空：依日柱干支推算（算法版，与 nlcx.html 一致，已验证正确）
+    // 1. 旬空：依日柱干支推算（算法版，按旬首地支推算，已验证正确）
     function getXunKong(dayGanZhi) {
         var ganIdx = GAN.indexOf(dayGanZhi.charAt(0));
         var zhiIdx = ZHI.indexOf(dayGanZhi.charAt(1));
