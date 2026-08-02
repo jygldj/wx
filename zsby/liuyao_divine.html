@@ -238,7 +238,7 @@
         .yao-grid { display: flex; flex-direction: column-reverse; gap: 5px; margin: 8px 0; }
         .yao-row {
             display: grid;
-            grid-template-columns: 50px 26px 56px 54px 46px 36px 28px;
+            grid-template-columns: 50px 56px 54px 46px 36px 28px;
             align-items: center;
             gap: 4px;
             background: #f2ebe1;
@@ -250,8 +250,7 @@
         }
         .yao-row.dong { border-left-color: #b33; background: #f7e8e0; }
         .yao-liushen { color: #4a6a5a; font-size: 12px; }
-        .yao-label { color: #7a6652; font-weight: bold; text-align: center; }
-        .yao-yaoxiang { font-size: 16px; letter-spacing: -1px; color: #3f2e1e; }
+        .yao-yaoxiang { font-size: 16px; font-family: 'Courier New', Consolas, monospace; letter-spacing: 0; white-space: nowrap; display: inline-block; width: 100%; text-align: center; color: #3f2e1e; }
         .yao-najia { font-weight: bold; font-size: 15px; color: #3f2e1e; }
         .yao-liuqin { color: #6b5844; }
         .yao-shiying { color: #6b4f39; background: #d5c6b4; padding: 0 8px; border-radius: 20px; font-size: 12px; justify-self: start; }
@@ -587,7 +586,7 @@
 
             /* 卦爻行：七列压缩，防止错位 */
             .yao-row {
-                grid-template-columns: 44px 22px 48px 48px 42px 32px 26px;
+                grid-template-columns: 44px 48px 48px 42px 32px 26px;
                 gap: 3px;
                 padding: 6px 5px;
                 font-size: 13px;
@@ -622,7 +621,7 @@
             }
             /* 卦爻行：极窄屏进一步压缩 */
             .yao-row {
-                grid-template-columns: 40px 20px 44px 44px 40px 30px 24px;
+                grid-template-columns: 40px 44px 44px 40px 30px 24px;
                 font-size: 12px;
                 padding: 5px 4px;
             }
@@ -1149,8 +1148,7 @@
             }
         }
 
-        // ============ 爻位命名（初→上）与地支五行 ============
-        const YAO_NAME = ['初', '二', '三', '四', '五', '上'];
+        // ============ 地支五行 ============
         const DIZHI_WUXING = {
             '子': '水', '亥': '水',
             '寅': '木', '卯': '木',
@@ -1232,7 +1230,6 @@
                 yaoHtml += `
                     <div class="yao-row ${dongClass}">
                         <span class="yao-liushen">${liuShen}</span>
-                        <span class="yao-label">${YAO_NAME[i]}</span>
                         <span class="yao-yaoxiang">${yaoSymbol}</span>
                         <span class="yao-najia">${najia}</span>
                         <span class="yao-liuqin">${liuqin}</span>
