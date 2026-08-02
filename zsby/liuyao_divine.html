@@ -237,21 +237,25 @@
         .gua-sub { font-size: 14px; font-weight: normal; color: #7d6b58; background: #e6dbce; padding: 4px 16px; border-radius: 30px; }
         .yao-grid { display: flex; flex-direction: column-reverse; gap: 5px; margin: 8px 0; }
         .yao-row {
-            display: flex;
+            display: grid;
+            grid-template-columns: 50px 26px 56px 54px 46px 36px 28px;
             align-items: center;
+            gap: 4px;
             background: #f2ebe1;
-            padding: 8px 14px;
+            padding: 7px 8px;
             border-radius: 10px;
-            gap: 12px;
             border-left: 5px solid #b09a84;
-            font-size: 15px;
+            font-size: 14px;
+            white-space: nowrap;
         }
         .yao-row.dong { border-left-color: #b33; background: #f7e8e0; }
-        .yao-row.dong .yao-dizhi { color: #b33; }
-        .yao-row .yao-label { min-width: 24px; color: #7a6652; font-weight: bold; }
-        .yao-row .yao-dizhi { min-width: 32px; font-weight: bold; font-size: 18px; }
-        .yao-row .yao-liuqin { min-width: 48px; color: #6b5844; }
-        .yao-row .yao-dong-mark { margin-left: auto; font-weight: bold; color: #b33; font-size: 18px; }
+        .yao-liushen { color: #4a6a5a; font-size: 12px; }
+        .yao-label { color: #7a6652; font-weight: bold; text-align: center; }
+        .yao-yaoxiang { font-size: 16px; letter-spacing: -1px; color: #3f2e1e; }
+        .yao-najia { font-weight: bold; font-size: 15px; color: #3f2e1e; }
+        .yao-liuqin { color: #6b5844; }
+        .yao-shiying { color: #6b4f39; background: #d5c6b4; padding: 0 8px; border-radius: 20px; font-size: 12px; justify-self: start; }
+        .yao-dong-mark { justify-self: end; font-weight: bold; color: #b33; font-size: 18px; }
         .flex-row { display: flex; gap: 20px; flex-wrap: wrap; }
         .flex-row .gua-box { flex: 1; min-width: 200px; }
         .footer-note {
@@ -580,6 +584,18 @@
             .model-selector label {
                 font-size: 13px;
             }
+
+            /* 卦爻行：七列压缩，防止错位 */
+            .yao-row {
+                grid-template-columns: 44px 22px 48px 48px 42px 32px 26px;
+                gap: 3px;
+                padding: 6px 5px;
+                font-size: 13px;
+            }
+            .yao-liushen { font-size: 11px; }
+            .yao-yaoxiang { font-size: 14px; }
+            .yao-najia { font-size: 13px; }
+            .yao-dong-mark { font-size: 16px; }
         }
 
         /* 小屏手机（< 400px）进一步优化 */
@@ -604,8 +620,18 @@
                 padding: 6px 12px;
                 font-size: 12px;
             }
+            /* 卦爻行：极窄屏进一步压缩 */
+            .yao-row {
+                grid-template-columns: 40px 20px 44px 44px 40px 30px 24px;
+                font-size: 12px;
+                padding: 5px 4px;
+            }
+            .yao-liushen { font-size: 10px; }
+            .yao-yaoxiang { font-size: 13px; }
+            .yao-najia { font-size: 12px; }
         }
     </style>
+    <script src="../lunar.js"></script>
 </head>
 <body>
 <div class="container">
@@ -1012,8 +1038,12 @@
         // 8. 渲染最终结果
         // ============================================================
         function renderFinalResult(benGua, bianGua, yaoResults, dongStatus) {
-            const benHtml = buildGuaHtml(benGua, yaoResults, dongStatus, '本卦');
-            const bianHtml = buildGuaHtml(bianGua, null, null, '变卦', true, benGua.五行);
+            // 日干（六神依日辰而定，取起卦当日日柱天干）
+            const now = new Date();
+            const dayGan = Lunar.fromYmd(now.getFullYear(), now.getMonth() + 1, now.getDate()).getLunar().getDayInGanZhi().charAt(0);
+
+            const benHtml = buildGuaHtml(benGua, yaoResults, dongStatus, '本卦', false, benGua.五行, dayGan);
+            const bianHtml = buildGuaHtml(bianGua, null, null, '变卦', true, benGua.五行, dayGan);
             const hasDong = dongStatus.some(d => d === true);
 
             const benPattern = yaoResults.join('');
@@ -1119,9 +1149,45 @@
             }
         }
 
-        function buildGuaHtml(gua, yaoResults, dongStatus, label, isBian = false, benWuXing = null) {
+        // ============ 爻位命名（初→上）与地支五行 ============
+        const YAO_NAME = ['初', '二', '三', '四', '五', '上'];
+        const DIZHI_WUXING = {
+            '子': '水', '亥': '水',
+            '寅': '木', '卯': '木',
+            '巳': '火', '午': '火',
+            '申': '金', '酉': '金',
+            '辰': '土', '戌': '土', '丑': '土', '未': '土'
+        };
+        // 六神名（与万年历一致）
+        const LIU_SHEN = ['青龙', '朱雀', '勾陈', '螣蛇', '白虎', '玄武'];
+        // 由日干推初爻六神起点：甲乙→青龙(0) 丙丁→朱雀(1) 戊→勾陈(2) 己→螣蛇(3) 庚辛→白虎(4) 壬癸→玄武(5)
+        function getLiuShenStart(dayGan) {
+            if (dayGan === '甲' || dayGan === '乙') return 0;
+            if (dayGan === '丙' || dayGan === '丁') return 1;
+            if (dayGan === '戊') return 2;
+            if (dayGan === '己') return 3;
+            if (dayGan === '庚' || dayGan === '辛') return 4;
+            if (dayGan === '壬' || dayGan === '癸') return 5;
+            return 0;
+        }
+        // 返回初→上爻 6 元六神数组
+        function getLiuShenSeq(dayGan) {
+            const start = getLiuShenStart(dayGan);
+            const arr = [];
+            for (let i = 0; i < 6; i++) arr.push(LIU_SHEN[(start + i) % 6]);
+            return arr;
+        }
+        // 由八卦本象（GUA_XIANG）推某爻阴阳：i=0 初爻 … i=5 上爻；下卦占 0~2，上卦占 3~5
+        function isYaoYin(gua, i) {
+            const xiang = i < 3 ? GUA_XIANG[gua.下卦] : GUA_XIANG[gua.上卦];
+            const pos = i < 3 ? i : (i - 3);
+            return xiang.charAt(pos) === '0';
+        }
+
+        function buildGuaHtml(gua, yaoResults, dongStatus, label, isBian = false, benWuXing = null, dayGan = '甲') {
             const 世爻 = gua.世爻;
             const 应爻 = gua.应爻;
+            const liuShenArr = getLiuShenSeq(dayGan);
 
             let yaoHtml = '';
             for (let i = 0; i < 6; i++) {
@@ -1130,14 +1196,7 @@
                 // 变卦六亲：按本卦宫位五行重新计算（《增删卜易》铁律：变卦六亲以本卦之宫为定）
                 let liuqin = yaoInfo.六亲;
                 if (isBian && benWuXing) {
-                    const dizhiWuXing = {
-                        '子': '水', '亥': '水',
-                        '寅': '木', '卯': '木',
-                        '巳': '火', '午': '火',
-                        '申': '金', '酉': '金',
-                        '辰': '土', '戌': '土', '丑': '土', '未': '土'
-                    };
-                    const wuXing = dizhiWuXing[yaoInfo.地支] || '';
+                    const wuXing = DIZHI_WUXING[yaoInfo.地支] || '';
                     liuqin = getLiuQinByWuXing(benWuXing, wuXing);
                 }
                 const yaoIdx = i;
@@ -1145,10 +1204,24 @@
                 const is世 = (yaoIdx + 1) === 世爻;
                 const is应 = (yaoIdx + 1) === 应爻;
 
+                // 世应标签：变卦（isBian）不显示
                 let tag = '';
-                if (is世) tag = '世';
-                else if (is应) tag = '应';
+                if (!isBian) {
+                    if (is世) tag = '世';
+                    else if (is应) tag = '应';
+                }
 
+                // 爻象符号：阳爻 ━━━，阴爻 ━ ━
+                const yin = isYaoYin(gua, i);
+                const yaoSymbol = yin ? '━ ━' : '━━━';
+
+                // 纳甲（地支 + 五行）
+                const najia = yaoInfo.地支 + (DIZHI_WUXING[yaoInfo.地支] || '');
+
+                // 六神（初→上，由日干推算）
+                const liuShen = liuShenArr[i];
+
+                // 动变标记：本卦在行末独立列显示 ○/×，变卦不留标记
                 let dongMark = '';
                 if (!isBian && dongStatus && dongStatus[yaoIdx]) {
                     dongMark = yaoResults[yaoIdx] === 1 ? '○' : '×';
@@ -1158,11 +1231,13 @@
 
                 yaoHtml += `
                     <div class="yao-row ${dongClass}">
-                        <span class="yao-label">${yaoIdx+1}</span>
-                        <span class="yao-dizhi">${yaoInfo.地支}</span>
+                        <span class="yao-liushen">${liuShen}</span>
+                        <span class="yao-label">${YAO_NAME[i]}</span>
+                        <span class="yao-yaoxiang">${yaoSymbol}</span>
+                        <span class="yao-najia">${najia}</span>
                         <span class="yao-liuqin">${liuqin}</span>
-                        ${tag ? `<span style="font-size:12px;color:#6b4f39;background:#d5c6b4;padding:0 12px;border-radius:20px;">${tag}</span>` : ''}
-                        ${dongMark ? `<span class="yao-dong-mark">${dongMark}</span>` : ''}
+                        <span class="yao-shiying">${tag}</span>
+                        <span class="yao-dong-mark">${dongMark}</span>
                     </div>
                 `;
             }
