@@ -98,89 +98,47 @@
         .jieqi-bar .jq-name { color: #b33a2a; font-weight: bold; }
         .jieqi-bar .jq-sub { color: #8a765d; font-size: 12px; }
 
-        /* ===== 滚轮选择器 ===== */
-        .picker-wrapper {
-            position: relative;
+        /* ===== 日期输入框 ===== */
+        .date-input-wrapper {
             background: #fcf8f0;
             border: 1px solid #d5c6b4;
             border-radius: 18px;
-            padding: 6px 8px;
+            padding: 14px 16px;
             margin-bottom: 16px;
         }
-        .picker {
-            display: flex;
-            position: relative;
+        .date-input-wrapper .rtitle {
+            font-size: 12px; color: #7a6652; letter-spacing: 2px; margin-bottom: 8px;
         }
-        .picker-col {
-            flex: 1;
-            height: 220px;
-            overflow-y: auto;
-            overflow-x: hidden;
-            -webkit-overflow-scrolling: touch;
-            scroll-snap-type: y mandatory;
-            scroll-behavior: smooth;
-            scrollbar-width: none;
-            text-align: center;
-            position: relative;
-            touch-action: pan-y;
-        }
-        .picker-col::-webkit-scrollbar { display: none; }
-        /* 上下留白，使首末项能滚到中心（不参与 snap） */
-        .picker-col .pad { height: 88px; }
-        .picker-item {
-            height: 44px;
-            line-height: 44px;
-            scroll-snap-align: center;
-            scroll-snap-stop: always;
-            font-size: 20px;
-            color: #3f2e1e;
+        .date-input-row {
             display: flex;
-            flex-direction: column;
-            justify-content: center;
             align-items: center;
-            transition: opacity 0.12s, transform 0.12s, background-color 0.12s;
-            will-change: opacity, transform;
-            cursor: pointer;            /* PC端鼠标点选、移动端手型提示 */
-            user-select: none;
-            background: transparent;
-            border: none;
-            border-radius: 8px;
-            width: 100%;
-            font-family: inherit;
-            padding: 0;
+            justify-content: center;
+            gap: 6px;
         }
-        .picker-item:hover { background: rgba(192, 170, 148, 0.20); }
-        .picker-item:focus { outline: none; background: rgba(107, 79, 57, 0.18); }
-        .picker-item:active { background: rgba(107, 79, 57, 0.32); }
-        .picker-item .sub {
-            font-size: 11px;
-            line-height: 14px;
-            color: #9a8876;
-            letter-spacing: 0;
-            pointer-events: none;
-        }
-        .picker-item .sub.jieqi { color: #b33a2a; font-weight: bold; }
-        .picker-item.dim { opacity: 0.32; }
-        /* 中间高亮指示线 */
-        .picker-center {
-            position: absolute;
-            left: 8px; right: 8px;
-            top: 50%;
-            height: 44px;
-            transform: translateY(-50%);
-            border-top: 1px solid #cbb8a4;
-            border-bottom: 1px solid #cbb8a4;
-            background: linear-gradient(90deg, rgba(107,79,57,0.04), rgba(107,79,57,0.08), rgba(107,79,57,0.04));
-            pointer-events: none;
-            border-radius: 8px;
-            z-index: 2;
-        }
-        .col-label {
+        .date-input {
             text-align: center;
-            font-size: 12px;
-            color: #7a6652;
-            letter-spacing: 2px;
-            margin-bottom: 4px;
+            font-size: 24px;
+            font-family: 'Georgia', serif;
+            border: 1px solid #cbb8a4;
+            border-radius: 10px;
+            background: #fff;
+            color: #3f2e1e;
+            padding: 10px 6px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .date-input:focus {
+            outline: none;
+            border-color: #6b4f39;
+            box-shadow: 0 0 0 2px rgba(107,79,57,0.15);
+        }
+        .date-input.year { width: 104px; letter-spacing: 2px; }
+        .date-input.md { width: 64px; }
+        .date-sep {
+            font-size: 26px;
+            color: #8a765d;
+            font-weight: bold;
+            user-select: none;
         }
 
         /* ===== 时间 / 地点 ===== */
@@ -197,7 +155,7 @@
         .time-row, .loc-row {
             display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
         }
-        select, input[type="number"], input[type="text"] {
+        select {
             padding: 9px 10px;
             font-size: 16px;
             border-radius: 10px;
@@ -205,26 +163,18 @@
             background: #fcf8f0;
             font-family: inherit;
             color: #3c2e22;
+            -webkit-appearance: none; appearance: none; padding-right: 8px;
         }
-        select { -webkit-appearance: none; appearance: none; padding-right: 8px; }
         .time-row select { width: 64px; text-align-last: center; }
-        .loc-place {
-            display: inline-block;
-            padding: 7px 14px;
-            border-radius: 30px;
-            background: rgba(192, 170, 148, 0.18);
-            color: #3f2e1e;
+        .loc-status {
             font-size: 14px;
-            min-width: 90px;
-            text-align: center;
-            border: 1px solid #d5c6b4;
+            color: #5a4632;
+            flex: 1;
+            min-width: 0;
+            line-height: 1.4;
         }
-        .loc-place.has-data {
-            background: rgba(107, 79, 57, 0.18);
-            color: #2d241c;
-            font-weight: bold;
-        }
-        .loc-place.loading::after {
+        .loc-status.success { color: #2d7a3d; font-weight: bold; }
+        .loc-status.loading::after {
             content: '';
             display: inline-block;
             width: 10px; height: 10px;
@@ -240,11 +190,11 @@
             background: #b09a84; border: 1px solid #c9b49e; color: #2d241c;
             padding: 9px 16px; border-radius: 30px; font-size: 14px; cursor: pointer;
             font-family: inherit; transition: 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            white-space: nowrap;
         }
         .btn:hover { background: #c0aa94; }
         .btn-primary { background: #6b4f39; color: #f5ede4; border-color: #8f745b; box-shadow: 0 3px 0 #3d2d1f; }
         .btn-primary:active { transform: translateY(2px); box-shadow: 0 0 0 #3d2d1f; }
-        .hint { font-size: 11px; color: #a48d78; margin-top: 6px; }
 
         /* ===== 结果区 ===== */
         .result-area {
@@ -274,8 +224,10 @@
             h1 { font-size: 19px; letter-spacing: 4px; }
             .nav-bar { gap: 5px; }
             .nav-bar a { flex: 1 1 calc(25% - 6px); text-align: center; min-width: 0; font-size: 11px; padding: 5px 3px; }
-            .picker-col { height: 220px; }
-            .picker-item { font-size: 19px; }
+            .date-input { font-size: 22px; padding: 12px 6px; }
+            .date-input.year { width: 92px; }
+            .date-input.md { width: 58px; }
+            .date-sep { font-size: 22px; }
             .result-grid { grid-template-columns: 1fr; }
             .time-row select { width: 56px; }
         }
@@ -297,21 +249,14 @@
 
     <div class="jieqi-bar" id="jieqiBar">—</div>
 
-    <div class="picker-wrapper">
-        <div class="picker" id="picker">
-            <div class="picker-center"></div>
-            <div style="flex:1">
-                <div class="col-label">年</div>
-                <div class="picker-col" id="colYear"></div>
-            </div>
-            <div style="flex:1">
-                <div class="col-label">月</div>
-                <div class="picker-col" id="colMonth"></div>
-            </div>
-            <div style="flex:1">
-                <div class="col-label">日</div>
-                <div class="picker-col" id="colDay"></div>
-            </div>
+    <div class="date-input-wrapper">
+        <div class="rtitle">📅 公历日期</div>
+        <div class="date-input-row">
+            <input type="text" id="inpYear" class="date-input year" maxlength="4" inputmode="numeric" placeholder="年">
+            <span class="date-sep">/</span>
+            <input type="text" id="inpMonth" class="date-input md" maxlength="2" inputmode="numeric" placeholder="月">
+            <span class="date-sep">/</span>
+            <input type="text" id="inpDay" class="date-input md" maxlength="2" inputmode="numeric" placeholder="日">
         </div>
     </div>
 
@@ -327,9 +272,8 @@
         <div class="rtitle">📍 占卜地点（自动获取，经度用于真太阳时校正）</div>
         <div class="loc-row">
             <button class="btn btn-primary" id="btnLoc">🎯 自动定位</button>
-            <span class="loc-place" id="locPlace">尚未定位</span>
+            <span class="loc-status" id="locMsg"></span>
         </div>
-        <div class="hint" id="locMsg">点击按钮自动获取经度（手机用 GPS，电脑用 IP 定位）</div>
     </div>
 
     <div class="result-area" id="resultArea">—</div>
@@ -343,47 +287,35 @@
     'use strict';
     // ============ 常量 ============
     var YEAR_MIN = 1900, YEAR_MAX = 2100;
-    var ITEM_H = 44;                // 每项高度
     var GAN  = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
     var ZHI  = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
     // 生肖：由年柱地支映射（保证与年柱一致，避免立春前后偏差）
     var ZHI_ANIMAL = {'子':'鼠','丑':'牛','寅':'虎','卯':'兔','辰':'龙','巳':'蛇',
                       '午':'马','未':'羊','申':'猴','酉':'鸡','戌':'狗','亥':'猪'};
-    // 时辰名（索引0=子时）
-    var ZHI_NAME = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
     var Solar = window.Solar;
 
     // ============ DOM ============
-    var colYear = document.getElementById('colYear');
-    var colMonth = document.getElementById('colMonth');
-    var colDay = document.getElementById('colDay');
-    var selHour = document.getElementById('selHour');
-    var selMin = document.getElementById('selMin');
-    var btnLoc = document.getElementById('btnLoc');
-    var locPlace = document.getElementById('locPlace');
+    var inpYear  = document.getElementById('inpYear');
+    var inpMonth = document.getElementById('inpMonth');
+    var inpDay   = document.getElementById('inpDay');
+    var selHour  = document.getElementById('selHour');
+    var selMin   = document.getElementById('selMin');
+    var btnLoc   = document.getElementById('btnLoc');
     var jieqiBar = document.getElementById('jieqiBar');
     var resultArea = document.getElementById('resultArea');
-    var locMsg = document.getElementById('locMsg');
+    var locMsg   = document.getElementById('locMsg');
 
     // ============ 状态 ============
-    // lng 默认 116.41（北京基准），定位成功后会被覆盖
-    // placeName 定位成功后写入城市名；locationType 标记来源（gps/ip/manual/fallback）
     var state = { y: 0, m: 0, d: 0, h: 0, mi: 0, lng: 116.41, placeName: '北京基准', locationType: 'fallback' };
-    var lock = false; // 防止重建日列时触发死循环
 
     // ============ 工具：真太阳时 ============
-    // 均时差 EoT（分钟），BDR 简化公式，精度约±0.5min
     function equationOfTime(dayOfYear){
         var B = 2 * Math.PI * (dayOfYear - 81) / 365;
         return 9.87 * Math.sin(2*B) - 7.53 * Math.cos(B) - 1.5 * Math.sin(B);
     }
-    // 返回真太阳时 {h, mi, s, text}
     function trueSolarTime(y, m, d, h, mi, lng){
-        // 北京时间总分钟
         var bjMin = h*60 + mi;
-        // 经度校正（每度4分钟，东加西减，相对东经120）
         var lonCorr = (lng - 120) * 4;
-        // 当日序号（粗略，用于 EoT）
         var dim = [31,28,31,30,31,30,31,31,30,31,30,31];
         var isLeap = (y%4===0 && y%100!==0) || (y%400===0);
         if(isLeap) dim[1]=29;
@@ -392,7 +324,6 @@
         doy += d;
         var eot = equationOfTime(doy);
         var ztMin = bjMin + lonCorr + eot;
-        // 归一到 0-1439
         ztMin = ((ztMin % 1440) + 1440) % 1440;
         var ztH = Math.floor(ztMin/60);
         var ztMi = Math.floor(ztMin%60);
@@ -404,146 +335,107 @@
         return { h: ztH, mi: ztMi, s: ztS, text: p2(ztH)+':'+p2(ztMi)+':'+p2(ztS) };
     }
 
-    // ============ 工具：农历/节气标注 ============
+    // ============ 工具：农历 ============
     function lunarOf(y,m,d){
         return Solar.fromYmd(y,m,d).getLunar();
     }
-    // 当日是否节气，返回节气名或 null
-    function dayJieQi(y,m,d){
-        try{
-            var c = lunarOf(y,m,d).getCurrentJieQi();
-            return c ? c.getName() : null;
-        }catch(e){ return null; }
-    }
 
-    // ============ 滚轮构建 ============
-    // 每项是 <button>，可点击直接选中（PC 鼠标点选 + 移动端"邻近数据点选"两兼顾）
-    function buildYears(){
-        var html = '<div class="pad"></div>';
-        for(var y=YEAR_MIN; y<=YEAR_MAX; y++){
-            html += '<button type="button" class="picker-item" data-v="'+y+'">'+y+
-                '<span class="sub">'+lunarOf(y,1,1).getYearInGanZhiExact()+'</span></button>';
-        }
-        html += '<div class="pad"></div>';
-        colYear.innerHTML = html;
-    }
-    function buildMonths(){
-        var html = '<div class="pad"></div>';
-        for(var m=1;m<=12;m++){
-            html += '<button type="button" class="picker-item" data-v="'+m+'">'+m+
-                '<span class="sub">'+lunarOf(state.y,m,1).getMonthInChinese()+'月</span></button>';
-        }
-        html += '<div class="pad"></div>';
-        colMonth.innerHTML = html;
-    }
-    function buildDays(){
+    // ============ 日期输入框逻辑 ============
+    function daysInMonth(y, m){
         var dim = [31,28,31,30,31,30,31,31,30,31,30,31];
-        var isLeap = (state.y%4===0 && state.y%100!==0) || (state.y%400===0);
-        if(isLeap) dim[1]=29;
-        var cnt = dim[state.m-1];
-        var html = '<div class="pad"></div>';
-        for(var d=1; d<=cnt; d++){
-            var ln = lunarOf(state.y, state.m, d);
-            var jq = dayJieQi(state.y, state.m, d);
-            var subHtml;
-            if(jq){
-                subHtml = '<span class="sub jieqi">'+jq+'</span>';
+        var isLeap = (y%4===0 && y%100!==0) || (y%400===0);
+        if(isLeap && m===2) return 29;
+        return dim[m-1];
+    }
+    // 仅保留数字并截断
+    function onlyDigits(v, max){
+        return v.replace(/\D/g, '').slice(0, max);
+    }
+    // 失焦时补零 + 范围修正
+    function padField(input, maxLen){
+        var v = input.value.replace(/\D/g, '');
+        if(v.length === 0) return;
+        var n = parseInt(v, 10);
+        if(isNaN(n)) return;
+        if(input === inpYear){
+            if(n < YEAR_MIN) n = YEAR_MIN;
+            if(n > YEAR_MAX) n = YEAR_MAX;
+        }else if(input === inpMonth){
+            if(n < 1) n = 1;
+            if(n > 12) n = 12;
+        }else if(input === inpDay){
+            var y = parseInt(inpYear.value, 10);
+            var m = parseInt(inpMonth.value, 10);
+            if(!isNaN(y) && !isNaN(m)){
+                var maxD = daysInMonth(y, m);
+                if(n < 1) n = 1;
+                if(n > maxD) n = maxD;
             }else{
-                var mn = ln.getMonthInChinese();
-                subHtml = '<span class="sub">'+mn+'月'+ln.getDayInChinese()+'</span>';
+                if(n < 1) n = 1;
+                if(n > 31) n = 31;
             }
-            html += '<button type="button" class="picker-item" data-v="'+d+'">'+d+subHtml+'</button>';
         }
-        html += '<div class="pad"></div>';
-        colDay.innerHTML = html;
+        var s = String(n);
+        while(s.length < maxLen) s = '0' + s;
+        input.value = s;
+    }
+    // 尝试解析三框并 render（不合法则不更新）
+    function tryUpdateFromInput(){
+        var y = parseInt(inpYear.value, 10);
+        var m = parseInt(inpMonth.value, 10);
+        var d = parseInt(inpDay.value, 10);
+        if(isNaN(y) || y < YEAR_MIN || y > YEAR_MAX) return;
+        if(isNaN(m) || m < 1 || m > 12) return;
+        if(isNaN(d) || d < 1 || d > daysInMonth(y, m)) return;
+        state.y = y; state.m = m; state.d = d;
+        render();
     }
 
-    // ============ Picker 事件：点击 / 键盘 / 滑动 ============
-    // 点击一项直接 snap 到中心、更新状态、刷新结果
-    function bindColClick(col, key){
-        col.addEventListener('click', function(e){
-            var it = e.target.closest && e.target.closest('.picker-item');
-            if(!it || !col.contains(it)) return;
-            var v = parseInt(it.getAttribute('data-v'), 10);
-            if(isNaN(v)) return;
-            // 该列所有项 - 找出该值索引
-            var items = col.querySelectorAll('.picker-item');
-            for(var i=0; i<items.length; i++){
-                if(parseInt(items[i].getAttribute('data-v'),10) === v){
-                    commitSelect(col, key, v, i);
-                    break;
+    // —— 年框：只允许数字，满4位自动跳月 ——
+    inpYear.addEventListener('input', function(){
+        this.value = onlyDigits(this.value, 4);
+        if(this.value.length === 4) inpMonth.focus();
+        tryUpdateFromInput();
+    });
+    // —— 月框：只允许数字，超12截断，满2位自动跳日 ——
+    inpMonth.addEventListener('input', function(){
+        this.value = onlyDigits(this.value, 2);
+        var m = parseInt(this.value, 10);
+        if(!isNaN(m) && m > 12) this.value = '12';
+        if(this.value.length === 2) inpDay.focus();
+        // 月份变化后，若当前日超出新月份上限则自动修正
+        var y = parseInt(inpYear.value, 10);
+        if(!isNaN(y) && this.value.length > 0){
+            var m2 = parseInt(this.value, 10);
+            if(!isNaN(m2)){
+                var d = parseInt(inpDay.value, 10);
+                if(!isNaN(d) && d > daysInMonth(y, m2)){
+                    inpDay.value = String(daysInMonth(y, m2));
                 }
             }
-        });
-    }
-    // 键盘 ↑↓ 切换选中项（焦点在某列上时）
-    function bindColKey(col, key){
-        col.tabIndex = 0;
-        col.addEventListener('keydown', function(e){
-            if(e.key!=='ArrowDown' && e.key!=='ArrowUp') return;
-            e.preventDefault();
-            var items = col.querySelectorAll('.picker-item');
-            if(items.length===0) return;
-            var cur = getSelected(col);
-            if(!cur) return;
-            var idx = cur.index + (e.key==='ArrowDown'? 1 : -1);
-            if(idx<0) idx=0;
-            if(idx>=items.length) idx=items.length-1;
-            var v = parseInt(items[idx].getAttribute('data-v'),10);
-            commitSelect(col, key, v, idx);
-        });
-    }
-    // 选中并刷新
-    function commitSelect(col, key, v, idx){
-        if(state[key] !== v){
-            state[key] = v;
-            if(key==='y'){
-                buildMonths();
-                snapTo(colMonth, state.m-1, false);
-                updateHighlight(colMonth);
-                rebuildDays();
-            }else if(key==='m'){
-                rebuildDays();
+        }
+        tryUpdateFromInput();
+    });
+    // —— 日框：只允许数字，超当月上限截断 ——
+    inpDay.addEventListener('input', function(){
+        this.value = onlyDigits(this.value, 2);
+        var y = parseInt(inpYear.value, 10);
+        var m = parseInt(inpMonth.value, 10);
+        if(!isNaN(y) && !isNaN(m)){
+            var d = parseInt(this.value, 10);
+            if(!isNaN(d) && d > daysInMonth(y, m)){
+                this.value = String(daysInMonth(y, m));
             }
-            render();
         }
-        snapTo(col, idx, true);
-        updateHighlight(col);
-    }
-
-    // ============ 滚轮：选中项与高亮 ============
-    function snapTo(col, index, smooth){
-        var top = index * ITEM_H; // pad 在前，首项 index 0 顶部对齐 pad 之后
-        col.scrollTo({ top: top, behavior: smooth ? 'smooth' : 'auto' });
-    }
-    function getSelected(col){
-        var idx = Math.round(col.scrollTop / ITEM_H);
-        var items = col.querySelectorAll('.picker-item');
-        if(items.length===0) return null;
-        if(idx<0) idx=0;
-        if(idx>=items.length) idx=items.length-1;
-        return { index: idx, value: items[idx].getAttribute('data-v') };
-    }
-    function updateHighlight(col){
-        var items = col.querySelectorAll('.picker-item');
-        if(items.length===0) return;
-        var center = col.scrollTop + col.clientHeight/2;
-        for(var i=0;i<items.length;i++){
-            var it = items[i];
-            var top = it.offsetTop;
-            var mid = top + it.offsetHeight/2;
-            var dist = Math.abs(mid - center);
-            var norm = dist / ITEM_H; // 0=选中
-            var op = 1 - Math.min(0.68, norm*0.34);
-            var sc = 1 - Math.min(0.18, norm*0.09);
-            it.style.opacity = op.toFixed(2);
-            it.style.transform = 'scale('+sc.toFixed(3)+')';
-        }
-    }
+        tryUpdateFromInput();
+    });
+    // 失焦补零
+    inpYear.addEventListener('blur',  function(){ padField(this, 4); tryUpdateFromInput(); });
+    inpMonth.addEventListener('blur', function(){ padField(this, 2); tryUpdateFromInput(); });
+    inpDay.addEventListener('blur',   function(){ padField(this, 2); tryUpdateFromInput(); });
 
     // ============ 排盘输出 ============
     function p2(n){ return n<10?'0'+n:''+n; }
-    function pad3(n){ return n<10?'0'+n:''+n; }
     function arrDiffDaysHours(fromDate, toDate){
         var ms = toDate - fromDate;
         if(ms<0) ms=0;
@@ -561,7 +453,6 @@
     function hourGanZhi(dayGanZhi, ztH){
         var dayGan = dayGanZhi.charAt(0);
         var dgIdx = GAN.indexOf(dayGan);
-        // 子时天干索引
         var ziGanIdx = (dgIdx % 5) * 2; // 甲己→0(甲),乙庚→2(丙),丙辛→4(戊),丁壬→6(庚),戊癸→8(壬)
         var zhiIdx = Math.floor(((ztH+1)%24)/2); // 23→0,0→0,1→1,3→2...
         var ganIdx = (ziGanIdx + zhiIdx) % 10;
@@ -608,7 +499,6 @@
             var diff = arrDiffDaysHours(curDate, nextDate);
             jqText += '<span class="jq-sub">　距下个节气 '+nextJq.getName()+' 还有 '+diff.days+'天'+diff.hours+'小时'+diff.mins+'分</span>';
         }
-
         jieqiBar.innerHTML = jqText;
 
         // JSON
@@ -642,47 +532,7 @@
         return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
-    // ============ 滚轮事件 ============
-    function onColScroll(col, key){
-        updateHighlight(col);
-        // 防抖：滚动结束后定选中
-        if(col._t) clearTimeout(col._t);
-        col._t = setTimeout(function(){
-            var sel = getSelected(col);
-            if(!sel) return;
-            var nv = parseInt(sel.value,10);
-            if(state[key] !== nv){
-                state[key] = nv;
-                if(key==='y'){
-                    // 年变→月农历标注变、日列重建
-                    buildMonths();
-                    snapTo(colMonth, state.m-1, false);
-                    updateHighlight(colMonth);
-                    rebuildDays();
-                }else if(key==='m'){
-                    rebuildDays();
-                }
-                render();
-            }
-            // 吸附到精确位置
-            snapTo(col, sel.index, true);
-        }, 120);
-    }
-    function rebuildDays(){
-        lock = true;
-        var oldD = state.d;
-        buildDays();
-        var dim = [31,28,31,30,31,30,31,31,30,31,30,31];
-        var isLeap = (state.y%4===0 && state.y%100!==0) || (state.y%400===0);
-        if(isLeap) dim[1]=29;
-        var maxD = dim[state.m-1];
-        if(oldD>maxD) state.d = maxD;
-        snapTo(colDay, state.d-1, false);
-        updateHighlight(colDay);
-        lock = false;
-    }
-
-    // ============ 时间/地点事件 ============
+    // ============ 时间选择 ============
     function fillTimeSelects(){
         var hh='', mm='';
         for(var i=0;i<24;i++) hh += '<option value="'+i+'">'+p2(i)+'</option>';
@@ -693,21 +543,16 @@
 
     // ============ 自动定位 ============
     // 流程：GPS（手机快） → IP 定位（电脑无GPS兜底） → 默认北京基准
-    // 多个 IP API 兜底，确保电脑端拿到城市+经度
     btnLoc.addEventListener('click', function(){
-        locMsg.textContent = '定位中…（手机端用 GPS，电脑端约 1-2 秒通过 IP 兜底）';
-        locPlace.textContent = '定位中';
-        locPlace.classList.remove('has-data');
-        locPlace.classList.add('loading');
+        locMsg.textContent = '定位中';
+        locMsg.className = 'loc-status loading';
 
         function onSuccess(lng, name, type){
             state.lng = lng;
             state.placeName = name + (type==='gps'?'（GPS）':'（IP）');
             state.locationType = type;
-            locPlace.textContent = state.placeName;
-            locPlace.classList.remove('loading');
-            locPlace.classList.add('has-data');
-            locMsg.innerHTML = '✅ 定位成功　经度 '+lng.toFixed(2)+'°E　真太阳时已重新计算';
+            locMsg.textContent = '✅ 定位成功　经度 '+lng.toFixed(2)+'°E　真太阳时已重新计算';
+            locMsg.className = 'loc-status success';
             render();
         }
         function tryIp(i){
@@ -718,16 +563,15 @@
                   parse:function(j){ return j.longitude!=null ? {lng:+j.longitude, name:(j.city||j.region||j.country_name||'当前城市')} : null; } }
             ];
             if(i >= apis.length){
-                locPlace.classList.remove('loading');
-                locPlace.textContent = '北京基准（默认）';
-                locPlace.classList.add('has-data');
+                locMsg.textContent = '⚠️ GPS 与 IP 定位均失败，已使用默认北京基准（116.41°E）';
+                locMsg.className = 'loc-status';
                 state.placeName = '北京基准（默认）';
                 state.locationType = 'fallback';
-                locMsg.innerHTML = '⚠️ GPS 与 IP 定位均失败，已使用默认北京基准（116.41°E）。请检查网络后重试。';
+                render();
                 return;
             }
             var api = apis[i];
-            locMsg.textContent = 'IP 定位中…（尝试源 '+(i+1)+'/'+apis.length+'）';
+            locMsg.textContent = 'IP 定位中…（源 '+(i+1)+'/'+apis.length+'）';
             fetch(api.url, {method:'GET', cache:'no-store', mode:'cors'})
                 .then(function(r){
                     if(!r.ok) throw new Error('http '+r.status);
@@ -774,28 +618,10 @@
         selHour.value = state.h;
         selMin.value = state.mi;
 
-        buildYears();
-        buildMonths();
-        buildDays();
-
-        // 滚动到当前
-        snapTo(colYear, state.y - YEAR_MIN, false);
-        snapTo(colMonth, state.m - 1, false);
-        snapTo(colDay, state.d - 1, false);
-        updateHighlight(colYear);
-        updateHighlight(colMonth);
-        updateHighlight(colDay);
-
-        // 绑定滚动 + 点击 + 键盘 ↑↓（PC鼠标 / 手机滑动 / 邻近点选三场兼容）
-        [colYear,colMonth,colDay].forEach(function(col){
-            col.addEventListener('scroll', function(){
-                var key = col===colYear?'y':(col===colMonth?'m':'d');
-                onColScroll(col, key);
-            }, { passive: true });
-            var key = col===colYear?'y':(col===colMonth?'m':'d');
-            bindColClick(col, key);
-            bindColKey(col, key);
-        });
+        // 日期输入框初始值（补零显示）
+        inpYear.value = String(state.y);
+        inpMonth.value = state.m < 10 ? '0' + state.m : '' + state.m;
+        inpDay.value = state.d < 10 ? '0' + state.d : '' + state.d;
 
         render();
         console.log('✅ 万年历排盘页已加载');
