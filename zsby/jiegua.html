@@ -379,6 +379,67 @@
             color: #7a6652;
             margin-right: 4px;
         }
+
+        /* ===== 求卦者资料区（释卦页可编辑） ===== */
+        .user-info-area-jg {
+            background: #fcf8f0;
+            border-radius: 16px;
+            padding: 14px 18px;
+            margin: 10px 0 12px;
+            border: 1px solid #d5c6b4;
+        }
+        .user-info-title-jg {
+            font-size: 13px;
+            font-weight: bold;
+            color: #3f2e1e;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+        .user-info-fields-jg {
+            display: flex;
+            gap: 10px 14px;
+            flex-wrap: wrap;
+        }
+        .field-group-jg {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .field-group-jg label {
+            font-size: 11px;
+            color: #8a7560;
+            letter-spacing: 1px;
+        }
+        .field-group-jg input,
+        .field-group-jg select {
+            padding: 7px 10px;
+            font-size: 13px;
+            border-radius: 8px;
+            border: 1px solid #cbb8a4;
+            background: #fffdf8;
+            font-family: inherit;
+            color: #3c2e22;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .field-group-jg input:focus,
+        .field-group-jg select:focus {
+            border-color: #8a765d;
+            box-shadow: 0 0 0 2px rgba(138,118,93,0.15);
+        }
+        /* 姓名窄、性别最窄、出生时辰宽、所问之事最宽 */
+        .fg-name     { min-width: 80px; flex: 0.8; }
+        .fg-gender   { min-width: 60px; flex: 0.5; }
+        .fg-birth    { min-width: 160px; flex: 1.5; }
+        .fg-question { min-width: 200px; flex: 2.2; }
+        .fg-question input { width: 100%; }
+        .user-info-tip-jg {
+            margin-top: 8px;
+            font-size: 11px;
+            color: #a48d78;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
         @media (max-width: 500px) {
             /* 页面边框：body padding 缩到 4px，最大化利用屏幕宽度 */
             body { padding: 4px; }
@@ -440,6 +501,26 @@
             .info-area .value { font-size: 12px; }
             .time-info-display { font-size: 10px; padding: 6px 8px; }
             .result-content .title .action-btn { font-size: 11px; padding: 4px 8px; }
+
+            /* 求卦者资料区：手机端竖排 */
+            .user-info-area-jg { padding: 10px 12px; border-radius: 12px; }
+            .user-info-title-jg { font-size: 12px; margin-bottom: 8px; }
+            .user-info-fields-jg {
+                flex-direction: column;
+                gap: 8px;
+            }
+            .field-group-jg label { font-size: 11px; }
+            .field-group-jg input,
+            .field-group-jg select {
+                padding: 8px 10px;
+                font-size: 13px;
+            }
+            .fg-name, .fg-gender, .fg-birth, .fg-question {
+                flex: none;
+                min-width: auto;
+                width: 100%;
+            }
+            .user-info-tip-jg { font-size: 10px; }
         }
     </style>
 </head>
@@ -467,6 +548,33 @@
             <span>变卦：<strong id="bianGuaName">—</strong></span>
             <span>动爻：<strong id="dongYaoInfo">—</strong></span>
         </div>
+    </div>
+
+    <!-- 求卦者资料（可编辑，解决 localStorage 传输不稳定的问题） -->
+    <div class="user-info-area-jg" id="userInfoAreaJG">
+        <div class="user-info-title-jg">🧘 求卦者资料</div>
+        <div class="user-info-fields-jg">
+            <div class="field-group-jg fg-name">
+                <label for="jgUserName">姓名</label>
+                <input type="text" id="jgUserName" placeholder="请填写您的姓名">
+            </div>
+            <div class="field-group-jg fg-gender">
+                <label for="jgUserGender">性别</label>
+                <select id="jgUserGender">
+                    <option value="男">男</option>
+                    <option value="女">女</option>
+                </select>
+            </div>
+            <div class="field-group-jg fg-birth">
+                <label for="jgUserBirth">出生时辰</label>
+                <input type="text" id="jgUserBirth" placeholder="如：癸卯年辛酉月癸酉日庚申时">
+            </div>
+            <div class="field-group-jg fg-question">
+                <label for="jgUserQuestion">所问之事</label>
+                <input type="text" id="jgUserQuestion" placeholder="请简要描述您所问之事">
+            </div>
+        </div>
+        <div class="user-info-tip-jg">💡 此处可查看/补充起卦页填入的资料（如为空请手动填写）</div>
     </div>
 
     <!-- 起卦时间信息 -->
@@ -696,11 +804,23 @@
                 return;
             }
 
-            // 获取求卦者信息（从 localStorage 读取）
+            // 获取求卦者信息（优先从页面输入框读取，解决 localStorage 传输不稳定问题）
             let userInfo = {};
-            try {
-                userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-            } catch(e) {}
+            const jgName = document.getElementById('jgUserName');
+            const jgGender = document.getElementById('jgUserGender');
+            const jgBirth = document.getElementById('jgUserBirth');
+            const jgQuestion = document.getElementById('jgUserQuestion');
+            if (jgName && jgGender && jgBirth && jgQuestion) {
+                userInfo.name = jgName.value.trim() || '匿名';
+                userInfo.gender = jgGender.value || '男';
+                userInfo.birth = jgBirth.value.trim() || '未知';
+                userInfo.question = jgQuestion.value.trim() || '未提供具体问题，请综合解读';
+            } else {
+                // 兜底：从 localStorage 读取
+                try {
+                    userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+                } catch(e) {}
+            }
             const question = userInfo.question || '未提供具体问题，请综合解读';
 
             // 获取选中的模型
@@ -947,6 +1067,27 @@ ${mdToPlain(result)}
         // ============================================================
         const guaData = loadGuaData();
         displayGuaInfo(guaData);
+
+        // 填充求卦者资料到输入框（从 localStorage/sessionStorage 读取，让用户可确认/补充）
+        (function initUserInfoFields() {
+            let saved = {};
+            try {
+                saved = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            } catch(e) {}
+            if (!saved.name && !saved.question) {
+                try { saved = JSON.parse(sessionStorage.getItem('userInfo') || '{}'); } catch(e) {}
+            }
+            const fields = {
+                jgUserName: saved.name || '',
+                jgUserGender: saved.gender || '男',
+                jgUserBirth: saved.birth || '',
+                jgUserQuestion: saved.question || ''
+            };
+            for (const [id, val] of Object.entries(fields)) {
+                const el = document.getElementById(id);
+                if (el) el.value = val;
+            }
+        })();
 
         console.log('✅ 解卦页面已加载（含时间信息）');
         console.log('📊 当前卦象:', guaData);
