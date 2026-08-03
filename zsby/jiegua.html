@@ -139,6 +139,11 @@
             border-top: 2px dashed #d5c6b4;
             margin: 12px 0;
         }
+        .gua-detail {
+            margin-top: 8px;
+            font-size: 14px;
+            color: #6b5844;
+        }
         .question-area {
             margin-top: 12px;
         }
@@ -470,7 +475,7 @@
                 word-break: break-all;
                 margin: 4px 0 8px;
             }
-            .info-area > div[style*="font-size:14px"] { font-size: 12px !important; gap: 4px !important; }
+            .info-area .gua-detail { font-size: 12px; color: #6b5844; margin-top: 6px; }
 
             /* 时间/农历块：字号缩到 11px，左对齐 */
             .time-info-display {
@@ -501,6 +506,7 @@
             .info-area .value { font-size: 12px; }
             .time-info-display { font-size: 10px; padding: 6px 8px; }
             .result-content .title .action-btn { font-size: 11px; padding: 4px 8px; }
+            .info-area .gua-detail { font-size: 11px; margin-top: 4px; }
 
             /* 求卦者资料区：手机端竖排 */
             .user-info-area-jg { padding: 10px 12px; border-radius: 12px; }
@@ -542,12 +548,12 @@
     <div class="info-area" id="guaInfo">
         <div class="label">📌 当前卦象</div>
         <div class="value" id="guaDisplay">尚未起卦</div>
-        <hr class="divider">
-        <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; font-size:14px; color:#6b5844;">
-            <span>本卦：<strong id="benGuaName">—</strong></span>
-            <span>变卦：<strong id="bianGuaName">—</strong></span>
+        <div class="gua-detail">
             <span>动爻：<strong id="dongYaoInfo">—</strong></span>
         </div>
+        <!-- 本卦/变卦已在上方 guaDisplay 显示，此处仅保留隐藏字段供 JS 兼容使用，避免重复 -->
+        <span style="display:none;" id="benGuaName">—</span>
+        <span style="display:none;" id="bianGuaName">—</span>
     </div>
 
     <!-- 求卦者资料（可编辑，解决 localStorage 传输不稳定的问题） -->
