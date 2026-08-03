@@ -397,6 +397,20 @@
             el.className = 'coin face-yang';
         });
 
+        // 重置手动输卦下拉框（默认回到少阳·静，与初始一致）
+        if (yaoInputContainer) {
+            const defaultVal = YAO_OPTIONS[1].value; // '7' 少阳（静）
+            yaoInputContainer.querySelectorAll('select').forEach(sel => {
+                sel.value = defaultVal;
+                const yaoIdx = sel.getAttribute('data-yao');
+                const preview = yaoInputContainer.querySelector('[data-preview="' + yaoIdx + '"]');
+                if (preview) {
+                    const opt = YAO_OPTIONS.find(o => o.value === defaultVal);
+                    preview.textContent = opt ? opt.symbol : '';
+                }
+            });
+        }
+
         progressText.textContent = '第 0 / 6 爻';
         shakeBtn.disabled = false;
         completeBtn.disabled = isCoinMode ? (currentStep < 6) : false;
@@ -416,7 +430,7 @@
             row.innerHTML =
                 '<span class="yao-input-label">第' + i + '爻</span>' +
                 '<select data-yao="' + i + '">' +
-                    YAO_OPTIONS.map(o => '<option value="' + o.value + '">' + o.text + '</option>').join('') +
+                    YAO_OPTIONS.map(o => '<option value="' + o.value + '"' + (o.value === '7' ? ' selected' : '') + '>' + o.text + '</option>').join('') +
                 '</select>' +
                 '<span class="yao-preview" data-preview="' + i + '">' + YAO_OPTIONS[1].symbol + '</span>';
             yaoInputContainer.appendChild(row);
