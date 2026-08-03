@@ -8,11 +8,11 @@
 
 ```
 F:\github-dx\wx\
-├── index1.html          # 道玄文集首页（导航栏"增删卜易"→ zsby/liuyao_divine.html）
+├── index1.html          # 道玄文集首页（导航栏"增删卜易"→ zsby/jiegou.html）
 ├── lunar.js             # 农历计算库（zsby 通过 ../lunar.js 引用，共享）
 ├── config.js            # API 配置：千问/千问备选 密钥（zsby 通过 ../config.js 引用，共享）
 └── zsby/                # 增删卜易子系统
-    ├── liuyao_divine.html   # 起卦主页面（铜钱摇卦 + 手动输卦双模式 + 八宫纳甲排盘）
+    ├── jiegou.html   # 起卦主页面（铜钱摇卦 + 手动输卦双模式 + 八宫纳甲排盘）
     ├── jiegu.html           # 释卦页面（AI 解读）
     ├── history.html         # 占卜历史（本地存储，目录折叠式）
     ├── help.html            # 使用指南
@@ -25,7 +25,7 @@ F:\github-dx\wx\
 
 ## 核心数据流
 
-1. **起卦**（`liuyao_divine.html`）：支持两种起卦模式
+1. **起卦**（`jiegou.html`）：支持两种起卦模式
    - **铜钱摇卦**：三枚铜钱六次摇卦 → 生成 `yaoResults`/`dongStatus`
    - **手动输卦**：为六爻逐个选择"少阳/少阴/老阳/老阴" → 生成与摇卦**格式完全一致**的 `yaoResults`/`dongStatus`
    - 两种模式均调用同一 `completeAndDisplay()` 排盘 → 保存 `guaData` 至 `localStorage.currentGua`
@@ -48,7 +48,7 @@ F:\github-dx\wx\
 ## 本次改进
 
 ### 手动输卦模式（2026-08）
-- `liuyao_divine.html` 新增"手动输卦"模式，与"铜钱摇卦"可一键切换
+- `jiegou.html` 新增"手动输卦"模式，与"铜钱摇卦"可一键切换
 - 页面顶部模式切换按钮栏（`.mode-switch-bar` / `.mode-btn`），铜钱区下方新增手动输入面板（`#inputArea`，默认隐藏）
 - 每爻可选"少阳/少阴/老阳/老阴"四象（`YAO_OPTIONS` 常量定义），含实时符号预览
 - `confirmInput()` 读取六爻选择，生成与摇卦格式一致的 `yaoResults`（1阳0阴）/`dongStatus`（动/静），设置 `currentStep=6` 后直接复用 `completeAndDisplay()` 排盘
@@ -61,7 +61,7 @@ F:\github-dx\wx\
 - `userPrompt` 结构化传入：求卦者信息、卦象数据（世应、六爻排列含动变）、时间信息（月建/日辰/旬空）
 
 ### 改进三：起卦保存完整排盘数据
-- `liuyao_divine.html` 的 `guaData` 新增 `shiYao`、`yingYao`、`dongDetail` 字段，直接取自排盘结果
+- `jiegou.html` 的 `guaData` 新增 `shiYao`、`yingYao`、`dongDetail` 字段，直接取自排盘结果
 
 ### 改进四/五：释卦构建完整 guaInfo
 - `jiegu.html` 构建 `guaInfo` 含 `userName/userGender/userBirth/userQuestion/qiGuaTime`、`shiYao/yingYao`（文本化，如"世爻在三爻辰土父母"）、`yaoDetail`（含动变地支六亲）
@@ -71,7 +71,7 @@ F:\github-dx\wx\
 - 5 个页面 + `api/` 文件夹移入 `zsby/`
 - 各页导航栏"文集"按钮指向 `../index1.html`
 - `jiegu.html`、`wnl.html` 的 `lunar.js`、`config.js` 通过 `../` 引用父目录
-- `index1.html` 的"增删卜易"按钮指向 `zsby/liuyao_divine.html`
+- `index1.html` 的"增删卜易"按钮指向 `zsby/jiegou.html`
 
 ### 模型替换历史
 1. **智谱 GLM → DeepSeek-V4-Pro**：因智谱断卦错误较多，替换为 DeepSeek
@@ -99,7 +99,7 @@ F:\github-dx\wx\
 
 ## 技术约束（不可改动）
 
-- `liuyao_divine.html` 排盘核心逻辑（`completeAndDisplay`、`renderFinalResult`、`buildGuaHtml`、八宫纳甲算法）
+- `jiegou.html` 排盘核心逻辑（`completeAndDisplay`、`renderFinalResult`、`buildGuaHtml`、八宫纳甲算法）
 - `lunar.js` 时间计算核心逻辑
 - API 调用函数基本结构（`fetch` / `try-catch` / 响应处理）
 

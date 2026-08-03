@@ -639,7 +639,7 @@
     <!-- 导航栏 -->
     <div class="nav-bar">
         <a href="liuyao_divine.html" class="active">🔮 起卦</a>
-        <a href="jiegu.html">📜 释卦</a>
+        <a href="jiegua.html">📜 释卦</a>
         <a href="history.html">📖 历史</a>
         <a href="help.html">❓ 指南</a>
         <a href="wnl.html" title="万年历">🗓️ 万年历</a>
@@ -1407,7 +1407,7 @@
             // 1) sessionStorage 兜底（应对 file:// 协议或浏览器拦截 URL 参数）
             try { sessionStorage.setItem('currentGua', guaDataRaw); } catch(e) {}
             // 2) URL 参数传递（兼容大多数场景）
-            window.location.href = 'jiegu.html?data=' + encodeURIComponent(guaDataRaw);
+            window.location.href = 'jiegua.html?data=' + encodeURIComponent(guaDataRaw);
         });
         resetBtn.addEventListener('click', resetAll);
 

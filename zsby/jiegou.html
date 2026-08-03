@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>增删卜易 · 铜钱占</title>
+    <link rel="stylesheet" href="ly/yangshi.css">
+</head>
+<body>
+<div class="container">
+    <h1>⚘ 增删卜易 · 铜钱占</h1>
+
+    <!-- 导航栏 -->
+    <div class="nav-bar">
+        <a href="jiegou.html" class="active">🔮 起卦</a>
+        <a href="jiegua.html">📜 释卦</a>
+        <a href="history.html">📖 历史</a>
+        <a href="help.html">❓ 指南</a>
+        <a href="wnl.html" title="万年历">🗓️ 万年历</a>
+        <a href="../index1.html" target="_blank" class="external-link" title="返回道玄文集">🏠 文集</a>
+    </div>
+
+    <!-- 模式切换 -->
+    <div class="mode-switch-bar">
+        <button class="mode-btn active" id="modeCoinBtn">🪙 铜钱摇卦</button>
+        <button class="mode-btn" id="modeInputBtn">✍️ 手动输卦</button>
+    </div>
+
+    <!-- 求卦者信息 -->
+    <div class="user-info-area" id="userInfoArea">
+        <div class="user-info-title">🧘 求卦者信息</div>
+        <div class="user-info-fields">
+            <div class="field-group fixed-name">
+                <label for="userName">姓名</label>
+                <input type="text" id="userName" placeholder="请填写您的姓名">
+            </div>
+            <div class="field-group fixed-gender">
+                <label for="userGender">性别</label>
+                <select id="userGender">
+                    <option value="男">男</option>
+                    <option value="女">女</option>
+                </select>
+            </div>
+            <div class="field-group fixed-birth">
+                <label for="userBirth">出生时辰</label>
+                <input type="text" id="userBirth" placeholder="如：癸卯年辛酉月癸酉日庚申时">
+            </div>
+            <div class="field-group fluid">
+                <label for="userQuestion">所问之事</label>
+                <input type="text" id="userQuestion" placeholder="请简要描述您所问之事">
+            </div>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <span class="progress-text" id="progressText">第 0 / 6 爻</span>
+        <button class="reset-btn" id="resetBtn">⟲ 重起</button>
+    </div>
+    <div class="coin-area" id="coinArea">
+        <div class="coin" id="coin1">⚊</div>
+        <div class="coin" id="coin2">⚊</div>
+        <div class="coin" id="coin3">⚊</div>
+    </div>
+    <!-- 手动输卦面板（默认隐藏） -->
+    <div id="inputArea" style="display: none; background: #e6dbce; border-radius: 80px; padding: 20px 16px; margin-bottom: 20px; border: 1px solid #bfae99; box-shadow: inset 0 4px 12px rgba(0,0,0,0.08);">
+        <div class="input-panel-title">✍️ 手动输入六爻（初爻在下，上爻在上）</div>
+        <div id="yaoInputContainer"></div>
+        <div style="text-align:center; margin-top:12px; font-size:12px; color:#7a6a55;">选好六爻后，点下方「排盘」即可</div>
+    </div>
+    <div class="action-area">
+        <button class="primary-btn" id="shakeBtn">摇 卦</button>
+        <button class="secondary-btn" id="completeBtn" disabled>排 盘</button>
+        <button class="secondary-btn" id="interpretBtn" disabled>释 卦</button>
+    </div>
+    <div id="resultArea">
+        <div class="result-placeholder">静心凝神，摇动铜钱，以决疑事</div>
+    </div>
+    <div class="footer-note">📖 以《增删卜易》为宗 · 浑天甲子纳甲 · 六爻排盘</div>
+</div>
+
+<!-- 依赖加载顺序：lunar.js → shuju.js → suanfa.js → zhukong.js -->
+<script src="ly/lunar.js"></script>
+<script src="ly/shuju.js"></script>
+<script src="ly/suanfa.js"></script>
+<script src="ly/zhukong.js"></script>
+</body>
+</html>
