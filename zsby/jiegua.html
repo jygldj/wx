@@ -385,65 +385,82 @@
             margin-right: 4px;
         }
 
-        /* ===== 求卦者资料区（释卦页可编辑） ===== */
-        .user-info-area-jg {
-            background: #fcf8f0;
-            border-radius: 16px;
-            padding: 14px 18px;
-            margin: 10px 0 12px;
+        /* ===== 求卦者信息区（格式与起卦页 jiegou.html / yangshi.css 保持一致） ===== */
+        .user-info-area {
+            background: rgba(255, 248, 240, 0.85);
+            backdrop-filter: blur(8px);
+            border-radius: 20px;
+            padding: 16px 24px;
+            margin-bottom: 16px;
             border: 1px solid #d5c6b4;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
         }
-        .user-info-title-jg {
-            font-size: 13px;
+        .user-info-title {
+            font-size: 16px;
             font-weight: bold;
-            color: #3f2e1e;
-            margin-bottom: 10px;
-            letter-spacing: 1px;
+            color: #4d3b2b;
+            letter-spacing: 4px;
+            border-bottom: 1px solid #e0d3c4;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
         }
-        .user-info-fields-jg {
+        .user-info-fields {
             display: flex;
-            gap: 10px 14px;
             flex-wrap: wrap;
+            gap: 12px;
+            align-items: flex-end;
         }
-        .field-group-jg {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
+        .field-group {
+            min-width: 0;
         }
-        .field-group-jg label {
-            font-size: 11px;
-            color: #8a7560;
-            letter-spacing: 1px;
+        .field-group.fixed-name { flex: 0 0 90px; }
+        .field-group.fixed-gender { flex: 0 0 64px; }
+        .field-group.fixed-birth { flex: 0 0 230px; }
+        .field-group.fluid { flex: 1; min-width: 200px; }
+        .field-group label {
+            display: block;
+            font-size: 12px;
+            color: #7a6652;
+            letter-spacing: 2px;
+            margin-bottom: 4px;
         }
-        .field-group-jg input,
-        .field-group-jg select {
-            padding: 7px 10px;
-            font-size: 13px;
-            border-radius: 8px;
-            border: 1px solid #cbb8a4;
-            background: #fffdf8;
+        .field-group input,
+        .field-group select {
+            width: 100%;
+            padding: 8px 12px;
+            font-size: 14px;
+            border-radius: 10px;
+            border: 1px solid #d5c6b4;
+            background: rgba(255, 248, 240, 0.6);
             font-family: inherit;
             color: #3c2e22;
+            transition: 0.2s;
+        }
+        .field-group input:focus,
+        .field-group select:focus {
             outline: none;
-            transition: border-color 0.2s;
-        }
-        .field-group-jg input:focus,
-        .field-group-jg select:focus {
             border-color: #8a765d;
-            box-shadow: 0 0 0 2px rgba(138,118,93,0.15);
+            box-shadow: 0 0 0 3px rgba(107, 79, 57, 0.15);
         }
-        /* 姓名窄、性别最窄、出生时辰宽、所问之事最宽 */
-        .fg-name     { min-width: 80px; flex: 0.8; }
-        .fg-gender   { min-width: 60px; flex: 0.5; }
-        .fg-birth    { min-width: 160px; flex: 1.5; }
-        .fg-question { min-width: 200px; flex: 2.2; }
-        .fg-question input { width: 100%; }
-        .user-info-tip-jg {
-            margin-top: 8px;
-            font-size: 11px;
-            color: #a48d78;
-            text-align: center;
-            letter-spacing: 0.5px;
+        .field-group select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            cursor: pointer;
+            padding-right: 28px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%236b4f39' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 12px;
+        }
+        .field-group input::placeholder {
+            color: #b09a84;
+            font-style: italic;
+        }
+        .user-info-fields .field-group label,
+        .field-group.user-label-bold label {
+            font-weight: bold;
+            color: #5a4632;
         }
         @media (max-width: 500px) {
             /* 页面边框：body padding 缩到 4px，最大化利用屏幕宽度 */
@@ -477,6 +494,25 @@
             }
             .info-area .gua-detail { font-size: 12px; color: #6b5844; margin-top: 6px; }
 
+            /* 求卦者信息区：与起卦页手机端格式一致 */
+            .user-info-area { padding: 10px 8px; }
+            .user-info-title { font-size: 14px; margin-bottom: 8px; }
+            .user-info-fields {
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 6px 6px;
+            }
+            .field-group.fixed-name { flex: 1 1 0; min-width: 4em; }
+            .field-group.fixed-gender { flex: 0 0 4.5em; }
+            .field-group.fixed-birth { flex: 0 0 100%; }
+            .field-group.fluid { flex: 1 1 100%; min-width: 0; }
+            .field-group { min-width: 0; }
+            .field-group input,
+            .field-group select {
+                padding: 7px 8px;
+                font-size: 15px;
+            }
+
             /* 时间/农历块：字号缩到 11px，左对齐 */
             .time-info-display {
                 flex-direction: column;
@@ -508,25 +544,10 @@
             .result-content .title .action-btn { font-size: 11px; padding: 4px 8px; }
             .info-area .gua-detail { font-size: 11px; margin-top: 4px; }
 
-            /* 求卦者资料区：手机端竖排 */
-            .user-info-area-jg { padding: 10px 12px; border-radius: 12px; }
-            .user-info-title-jg { font-size: 12px; margin-bottom: 8px; }
-            .user-info-fields-jg {
-                flex-direction: column;
-                gap: 8px;
-            }
-            .field-group-jg label { font-size: 11px; }
-            .field-group-jg input,
-            .field-group-jg select {
-                padding: 8px 10px;
-                font-size: 13px;
-            }
-            .fg-name, .fg-gender, .fg-birth, .fg-question {
-                flex: none;
-                min-width: auto;
-                width: 100%;
-            }
-            .user-info-tip-jg { font-size: 10px; }
+            /* 求卦者信息区：与起卦页手机端格式一致 */
+            .user-info-area { padding: 8px 6px; }
+            .field-group.fixed-name { flex: 1 1 0; min-width: 3.5em; }
+            .field-group.fixed-gender { flex: 0 0 4em; }
         }
     </style>
 </head>
@@ -556,31 +577,30 @@
         <span style="display:none;" id="bianGuaName">—</span>
     </div>
 
-    <!-- 求卦者资料（可编辑，解决 localStorage 传输不稳定的问题） -->
-    <div class="user-info-area-jg" id="userInfoAreaJG">
-        <div class="user-info-title-jg">🧘 求卦者资料</div>
-        <div class="user-info-fields-jg">
-            <div class="field-group-jg fg-name">
+    <!-- 求卦者信息（可编辑，解决 localStorage 传输不稳定的问题） -->
+    <div class="user-info-area" id="userInfoAreaJG">
+        <div class="user-info-title">🧘 求卦者信息</div>
+        <div class="user-info-fields">
+            <div class="field-group fixed-name">
                 <label for="jgUserName">姓名</label>
                 <input type="text" id="jgUserName" placeholder="请填写您的姓名">
             </div>
-            <div class="field-group-jg fg-gender">
+            <div class="field-group fixed-gender">
                 <label for="jgUserGender">性别</label>
                 <select id="jgUserGender">
                     <option value="男">男</option>
                     <option value="女">女</option>
                 </select>
             </div>
-            <div class="field-group-jg fg-birth">
+            <div class="field-group fixed-birth">
                 <label for="jgUserBirth">出生时辰</label>
                 <input type="text" id="jgUserBirth" placeholder="如：癸卯年辛酉月癸酉日庚申时">
             </div>
-            <div class="field-group-jg fg-question">
+            <div class="field-group fluid">
                 <label for="jgUserQuestion">所问之事</label>
                 <input type="text" id="jgUserQuestion" placeholder="请简要描述您所问之事">
             </div>
         </div>
-        <div class="user-info-tip-jg">💡 此处可查看/补充起卦页填入的资料（如为空请手动填写）</div>
     </div>
 
     <!-- 起卦时间信息 -->
@@ -931,7 +951,7 @@
                             </div>
                         </div>
                         <div class="user-block">
-                            <div class="user-title">🧘 求卦者资料</div>
+                            <div class="user-title">🧘 求卦者信息</div>
                             <div class="user-row">
                                 <span>👤 ${userText}</span>
                             </div>
@@ -1074,7 +1094,7 @@ ${mdToPlain(result)}
         const guaData = loadGuaData();
         displayGuaInfo(guaData);
 
-        // 填充求卦者资料到输入框（从 localStorage/sessionStorage 读取，让用户可确认/补充）
+        // 填充求卦者信息到输入框（从 localStorage/sessionStorage 读取，让用户可确认/补充）
         (function initUserInfoFields() {
             let saved = {};
             try {
