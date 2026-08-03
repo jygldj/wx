@@ -508,7 +508,7 @@
             return;
         }
         try { sessionStorage.setItem('currentGua', guaDataRaw); } catch(e) {}
-        window.location.href = '../jiegua.html?data=' + encodeURIComponent(guaDataRaw);
+        window.location.href = 'jiegua.html?data=' + encodeURIComponent(guaDataRaw);
     });
     resetBtn.addEventListener('click', resetAll);
 
