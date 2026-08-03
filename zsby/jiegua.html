@@ -701,6 +701,26 @@
         }
 
         // ============================================================
+        // 1.4 伏神关系判定（仅用于展示，非核心排盘）
+        //     伏神为隐藏之人事物，其吉凶由伏神与飞神（同爻位之本卦爻）的五行关系决定
+        // ============================================================
+        const DIZHI_WUXING_LOCAL = {
+            '子':'水','丑':'土','寅':'木','卯':'木','辰':'土','巳':'火',
+            '午':'火','未':'土','申':'金','酉':'金','戌':'土','亥':'水'
+        };
+        const WX_SHENG = { '木':'火', '火':'土', '土':'金', '金':'水', '水':'木' }; // 我生者
+        const WX_KE = { '木':'土', '土':'水', '水':'火', '火':'金', '金':'木' };    // 我克者
+        function fuShenRelation(feiWx, fuWx) {
+            if (!feiWx || !fuWx) return '未知';
+            if (feiWx === fuWx) return '比和（伏神与飞神五行相同，力量相当）';
+            if (WX_SHENG[feiWx] === fuWx) return '飞生伏（吉，暗中有人相助，隐藏的机遇）';
+            if (WX_SHENG[fuWx] === feiWx) return '伏生飞（凶，付出多回报少，精力被消耗）';
+            if (WX_KE[feiWx] === fuWx) return '飞克伏（凶，外部压制，隐藏的阻碍）';
+            if (WX_KE[fuWx] === feiWx) return '伏克飞（吉，能克服困难，反客为主）';
+            return '比和';
+        }
+
+        // ============================================================
         // 1.5 轻量 Markdown 解析（支持标题/粗体/斜体/列表/行内代码，无外部依赖）
         // ============================================================
         function mdInline(text) {
@@ -871,6 +891,32 @@
             jieGuaBtn.disabled = true;
 
             try {
+                // ⭐ 伏神信息：从 localStorage 读取本卦伏神，并补算飞神地支/六亲与五行关系
+                let fuShenList = [];
+                try {
+                    const rawList = guaData.benFuShen;
+                    if (Array.isArray(rawList)) {
+                        fuShenList = rawList.map(f => {
+                            const yaoWei = f.fuShenYaoWei;
+                            const fei = (guaData.benYao && guaData.benYao[yaoWei - 1]) ? guaData.benYao[yaoWei - 1] : null;
+                            const feiDiZhi = fei ? fei.地支 : '';
+                            const feiLiuQin = fei ? fei.六亲 : '';
+                            const feiWx = feiDiZhi ? (DIZHI_WUXING_LOCAL[feiDiZhi] || '') : '';
+                            const fuWx = f.fuShenDizhi ? (DIZHI_WUXING_LOCAL[f.fuShenDizhi] || '') : '';
+                            return {
+                                六亲: f.fuShenLiuQin,
+                                天干: f.fuShenTianGan,
+                                地支: f.fuShenDizhi,
+                                伏神爻位: yaoWei,
+                                飞神爻位: yaoWei,
+                                飞神地支: feiDiZhi,
+                                飞神六亲: feiLiuQin,
+                                关系: (feiWx && fuWx) ? fuShenRelation(feiWx, fuWx) : '未知'
+                            };
+                        });
+                    }
+                } catch(e) { console.warn('伏神数据解析失败:', e); }
+
                 // 构建详细的卦象数据（供 AI 直接使用，世应/动变已排定）
                 const guaInfo = {
                     // 基础信息
@@ -917,6 +963,10 @@
 
                     // 时间信息
                     timeInfo: timeInfo,
+
+                    // ⭐ 伏神信息（供提示词使用；无伏神时 fuShen 为 null，fuShenList 为空数组）
+                    fuShen: fuShenList.length ? fuShenList : null,
+                    fuShenList: fuShenList,
 
                     // 保留原始 userInfo（兼容旧逻辑）
                     userInfo: userInfo
