@@ -198,6 +198,101 @@
     if (selYear) initTimeSelectors();
     const completeBtn = document.getElementById('completeBtn');
     if (completeBtn) completeBtn.addEventListener('click', applyManualTimeInfo);
+
+    // ===== rw7 内联角标注入（排盘页每爻行旁显示月破/日破/暗动/真空/假空）=====
+    // 在 renderFinalResult 渲染 .yao-row 之后执行，从 currentGua 读取数据，
+    // 调用 suanfa.js 的 5 个 rw7 函数计算，再注入高对比度角标到每爻行 DOM。
+    // 不改 zhukong.js / suanfa.js 地基。
+    function injectRw7InlineMarks() {
+        var rows = document.querySelectorAll('.yao-row');
+        if (!rows || rows.length === 0) return;
+
+        try {
+            var raw = localStorage.getItem('currentGua');
+            if (!raw) return;
+            var gd = JSON.parse(raw);
+            if (!gd || !gd.benYao) return;
+
+            // 构造 timeInfo（优先手动输入，否则当前时间）
+            var ti = gd.timeInfo || null;
+            if (!ti || !ti.yueJian) {
+                try {
+                    var now2 = new Date();
+                    var lunar2 = Solar.fromDate(now2).getLunar();
+                    var h2 = now2.getHours();
+                    var si2 = (h2 >= 23 || h2 < 1) ? 0 : Math.floor(h2 / 2);
+                    ti = {
+                        yueJian: lunar2.getMonthZhi(),
+                        riChen: lunar2.getDayInGanZhi(),
+                        xunKong: lunar2.getDayXunKong()
+                    };
+                } catch (e3) { ti = { yueJian: '', riChen: '', xunKong: '' }; }
+            }
+
+            // 构造 guaInfo（与 jiegua.html 同构）
+            var guaInfo = {
+                yaoDetail: (gd.benYao || []).map(function (yao, idx) {
+                    var r = { dizhi: yao.地支, liuqin: yao.六亲, isDong: false };
+                    if (gd.dongStatus && gd.dongStatus[idx]) r.isDong = true;
+                    if (gd.bianYao && gd.bianYao[idx]) { r.bianDizhi = gd.bianYao[idx].地支; r.bianLiuqin = gd.bianYao[idx].六亲; }
+                    return r;
+                }),
+                fuShenList: [],
+                shiYaoIndex: gd.shiYao || null,
+                timeInfo: ti
+            };
+            // 伏神映射
+            if (Array.isArray(gd.benFuShen)) {
+                guaInfo.fuShenList = gd.benFuShen.map(function (f) {
+                    return { liuqin: f.fuShenLiuQin, dizhi: f.fuShenDizhi, yaoWei: f.fuShenYaoWei, isKong: false };
+                });
+            }
+
+            // 调用 5 个 rw7 函数（suanfa.js 已全局加载）
+            if (typeof jiSuanYuePo === 'function') jiSuanYuePo(guaInfo);
+            if (typeof jiSuanRiPoAnDong === 'function') jiSuanRiPoAnDong(guaInfo);
+            if (typeof jiSuanZhenKongJiaKong === 'function') jiSuanZhenKongJiaKong(guaInfo);
+            if (typeof jiSuanShiYaoZhuangTai === 'function') jiSuanShiYaoZhuangTai(guaInfo);
+
+            // 注入内联角标到每爻行
+            var style = 'display:inline-block;margin-left:6px;padding:1px 7px;border-radius:8px;font-size:11px;font-weight:bold;vertical-align:middle;letter-spacing:0.5px;';
+            var marks = {
+                yuePo:   { text: '月破', css: style + 'background:#c0392b;color:#fff;border:1px solid #e6b0aa;' },
+                riPo:    { text: '日破', css: style + 'background:#2471a3;color:#fff;border:1px solid #aed6f1;' },
+                anDong:  { text: '暗动', css: style + 'background:#1abc9c;color:#fff;border:1px solid #a3e4d7;' },
+                zhenKong:{ text: '真空', css: style + 'background:#7f8c8d;color:#fff;border:1px solid #bdc3c7;' },
+                jiaKong: { text: '假空', css: style + 'background:#d4ac0d;color:#fff;border:1px solid #f9e79f;' }
+            };
+
+            (guaInfo.yaoDetail || []).forEach(function (y, i) {
+                if (i >= rows.length) return;
+                var row = rows[i];
+                var tags = [];
+                if (y.yuePo) tags.push(marks.yuePo);
+                if (y.riPoOrAnDong && y.riPoOrAnDong !== 'none') {
+                    if (y.riPoOrAnDong === '日破') tags.push(marks.riPo);
+                    else if (y.riPoOrAnDong === '暗动') tags.push(marks.anDong);
+                    else tags.push({ text: y.riPoOrAnDong, css: style + 'background:#5dade2;color:#fff;border:1px solid #aed6f1;' });
+                }
+                if (y.kongType && y.kongType !== 'none') {
+                    if (y.kongType === '真空') tags.push(marks.zhenKong);
+                    else if (y.kongType === '假空') tags.push(marks.jiaKong);
+                    else tags.push({ text: y.kongType, css: style + 'background:#e67e22;color:#fff;border:1px solid #f9e79f;' });
+                }
+                if (tags.length > 0) {
+                    var html = tags.map(function (m) { return '<span style="' + m.css + '">' + m.text + '</span>'; }).join('');
+                    var anchor = row.querySelector('.yao-dong-mark') || row.querySelector('.yao-shiying') || row.lastElementChild;
+                    if (anchor) anchor.insertAdjacentHTML('afterend', html);
+                    else row.insertAdjacentHTML('beforeend', html);
+                }
+            });
+
+            console.log('✅ rw7 内联角标已注入排盘页（' + rows.length + '爻）');
+        } catch (e) { console.warn('rw7 内联角标注入失败:', e); }
+    }
+
+    // 排盘后注入（等 zhukong.js 的 renderFinalResult 先完成）
+    if (completeBtn) completeBtn.addEventListener('click', function () { setTimeout(injectRw7InlineMarks, 50); });
 })();
 </script>
 </body>
