@@ -65,6 +65,16 @@
     <div id="inputArea" style="display: none; background: #e6dbce; border-radius: 80px; padding: 20px 16px; margin-bottom: 20px; border: 1px solid #bfae99; box-shadow: inset 0 4px 12px rgba(0,0,0,0.08);">
         <div class="input-panel-title">✍️ 手动输入六爻（初爻在下，上爻在上）</div>
         <div id="yaoInputContainer"></div>
+        <div class="manual-time-area" id="manualTimeArea" style="margin-top:14px; padding:12px; background:#f3ead9; border-radius:14px; border:1px solid #cbb89c;">
+            <div class="input-panel-title" style="margin-bottom:8px; font-size:13px;">🕐 起卦时间（复盘/测试用 · 可手动修改）</div>
+            <div class="time-fields" style="display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
+                <label style="font-size:13px; color:#5a4632;">年 <select id="selYear" class="time-sel"></select></label>
+                <label style="font-size:13px; color:#5a4632;">月建 <select id="selMonth" class="time-sel"></select></label>
+                <label style="font-size:13px; color:#5a4632;">日辰 <select id="selDay" class="time-sel"></select></label>
+                <label style="font-size:13px; color:#5a4632;">时辰 <select id="selHour" class="time-sel"></select></label>
+            </div>
+            <div style="font-size:11px;color:#8a6a4a;margin-top:6px;">留空项在排盘时自动取当前真太阳时补全（无提示、无弹窗）</div>
+        </div>
         <div style="text-align:center; margin-top:12px; font-size:12px; color:#7a6a55;">选好六爻后，点下方「排盘」即可</div>
     </div>
     <div class="action-area">
@@ -83,5 +93,112 @@
 <script src="ly/shuju.js"></script>
 <script src="ly/suanfa.js"></script>
 <script src="ly/zhukong.js"></script>
+<script>
+// ===== 手动输卦时间增强（rw 补丁：jiegou.html 时间字段）=====
+// 仅 jiegou.html 内联脚本；不改 suanfa.js / zhukong.js / qwen.js 地基。
+// 复刻 wnl.html 真太阳时计算（lunar.js 库），初始化填入当前值；
+// 排盘时（手动模式）把 timeInfo 回写 currentGua.guaData，供 jiegua.html rw7 使用。
+(function () {
+    const GAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+    const ZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+    const YUE_ZHI = ['寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥', '子', '丑'];
+
+    const selYear = document.getElementById('selYear');
+    const selMonth = document.getElementById('selMonth');
+    const selDay = document.getElementById('selDay');
+    const selHour = document.getElementById('selHour');
+
+    function jiaZi60() {
+        const a = [];
+        for (let i = 0; i < 60; i++) a.push(GAN[i % 10] + ZHI[i % 12]);
+        return a;
+    }
+
+    // 当前真太阳时（与 wnl.html 同口径：lunar.js 取年月日干支 + 时辰分支）
+    function getNowTimeInfo() {
+        const now = new Date();
+        let lunar = null;
+        try { lunar = Solar.fromDate(now).getLunar(); } catch (e) { lunar = null; }
+        const nianGanZhi = lunar ? lunar.getYearInGanZhi() : '';
+        const yueJian = lunar ? lunar.getMonthZhi() : '';
+        const riChen = lunar ? lunar.getDayInGanZhi() : '';
+        const h = now.getHours();
+        const shiIdx = (h >= 23 || h < 1) ? 0 : Math.floor(h / 2);
+        const shiChen = ZHI[shiIdx];
+        return { nianGanZhi: nianGanZhi, yueJian: yueJian, riChen: riChen, shiChen: shiChen };
+    }
+
+    // 由日干支推旬空（复刻 wnl.html getXunKong 算法）
+    function xunKongOf(riChen) {
+        if (!riChen || riChen.length < 2) return '';
+        const ganIdx = GAN.indexOf(riChen.charAt(0));
+        const zhiIdx = ZHI.indexOf(riChen.charAt(1));
+        if (ganIdx < 0 || zhiIdx < 0) return '';
+        const xs = ((zhiIdx - (ganIdx % 10)) % 12 + 12) % 12;
+        const k1 = (xs + 10) % 12, k2 = (xs + 11) % 12;
+        return ZHI[k1] + ZHI[k2];
+    }
+
+    function assembleTimeInfo(y, m, d, h) {
+        return {
+            nianGanZhi: y || '',
+            yueJian: m || '',
+            riChen: d || '',
+            xunKong: xunKongOf(d),
+            shiChen: h || '',
+            solarTime: '手动输入 ' + y + '年 ' + m + '月 ' + d + '日 ' + h + '时',
+            lunarTime: y + '年 ' + m + '月 ' + d + '日'
+        };
+    }
+
+    function fillSelect(sel, arr, selected) {
+        sel.innerHTML = '<option value="">（留空=自动）</option>' +
+            arr.map(v => '<option value="' + v + '"' + (v === selected ? ' selected' : '') + '>' + v + '</option>').join('');
+    }
+
+    function initTimeSelectors() {
+        const now = getNowTimeInfo();
+        fillSelect(selYear, jiaZi60(), now.nianGanZhi);
+        fillSelect(selMonth, YUE_ZHI, now.yueJian);
+        fillSelect(selDay, jiaZi60(), now.riChen);
+        fillSelect(selHour, ZHI, now.shiChen);
+    }
+
+    // 排盘后回写：仅手动模式 + 六爻已填，才把 timeInfo 写入 currentGua
+    function applyManualTimeInfo() {
+        const modeInputBtn = document.getElementById('modeInputBtn');
+        const isManual = modeInputBtn && modeInputBtn.classList.contains('active');
+        if (!isManual) return;
+
+        const yaoInputContainer = document.getElementById('yaoInputContainer');
+        const sels = yaoInputContainer ? yaoInputContainer.querySelectorAll('select') : [];
+        if (sels.length !== 6) return;
+        let allYao = true;
+        sels.forEach(s => { if (!s.value) allYao = false; });
+        if (!allYao) return; // 排盘未成功，不注入
+
+        let y = selYear.value, m = selMonth.value, d = selDay.value, h = selHour.value;
+        if (!y || !m || !d || !h) {
+            const now = getNowTimeInfo();
+            y = y || now.nianGanZhi; m = m || now.yueJian;
+            d = d || now.riChen; h = h || now.shiChen;
+        }
+        const ti = assembleTimeInfo(y, m, d, h);
+        try {
+            const raw = localStorage.getItem('currentGua');
+            if (!raw) return;
+            const gd = JSON.parse(raw);
+            gd.timeInfo = ti;
+            localStorage.setItem('currentGua', JSON.stringify(gd));
+            try { sessionStorage.setItem('currentGua', JSON.stringify(gd)); } catch (e2) {}
+            console.log('✅ 手动输卦 timeInfo 已写入 currentGua', ti);
+        } catch (e) { console.warn('手动 timeInfo 写入失败:', e); }
+    }
+
+    if (selYear) initTimeSelectors();
+    const completeBtn = document.getElementById('completeBtn');
+    if (completeBtn) completeBtn.addEventListener('click', applyManualTimeInfo);
+})();
+</script>
 </body>
 </html>

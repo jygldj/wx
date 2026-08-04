@@ -913,12 +913,15 @@
             // 获取选中的模型
             const model = document.querySelector('input[name="model"]:checked').value;
 
-            // 获取当前时间信息
-            let timeInfo = {};
-            try {
-                timeInfo = getTimeInfo();
-            } catch(e) {
-                console.warn('获取时间信息失败，将不传递时间信息:', e);
+            // 获取时间信息：手动输卦带来 guaData.timeInfo 时优先采用，否则回退实时
+            let timeInfo = (guaData && guaData.timeInfo && guaData.timeInfo.yueJian) ? guaData.timeInfo : null;
+            if (!timeInfo) {
+                try {
+                    timeInfo = getTimeInfo();
+                } catch(e) {
+                    console.warn('获取时间信息失败，将不传递时间信息:', e);
+                    timeInfo = {};
+                }
             }
 
             // 显示加载状态
