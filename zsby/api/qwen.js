@@ -6,15 +6,15 @@
 async function callQwen(guaInfo) {
     const config = CONFIG.qwen;
 
-    // 从 guaInfo 提取用户信息
+    // 从 guaInfo 提取用户信息（中性默认值，禁止"匿名""未知"）
     const userInfo = {
-        name: guaInfo.userName || '匿名',
-        gender: guaInfo.userGender || '男',
-        birth: guaInfo.userBirth || '未知',
-        question: guaInfo.userQuestion || '未记录'
+        name: guaInfo.userName || '',
+        gender: guaInfo.userGender || '未填',
+        birth: guaInfo.userBirth || '',
+        question: guaInfo.userQuestion || ''
     };
 
-    const qiGuaTime = guaInfo.qiGuaTime || '未知';
+    // qiGuaTime 不传给 AI（起卦方式对释卦是干扰，AI 可能据此胡编"手动说明心不诚"等废话）
     const timeInfo = guaInfo.timeInfo || {};
 
     // ===== rw7 增强版 systemPrompt =====
@@ -164,7 +164,15 @@ async function callQwen(guaInfo) {
 
 3. 伏神出伏的应期：伏神逢值逢合之日（如伏神为寅木，则寅日、亥日可出伏）。
 
-4. 如果卦中无伏神，则完全不提伏神，保持简洁自然。`;
+4. 如果卦中无伏神，则完全不提伏神，保持简洁自然。
+
+【📋 释卦格式铁律（必须严格遵守）】
+1. 开头句锁死（不可更改一字）：
+   "野鹤老人曰：卜以决疑，不疑何卜？{称谓}请坐，听吾为你层层剖析此卦——今问"{问题}"，得{本卦}之{变卦}。"
+   其中 {称谓} 根据求卦者性别取值：男→"先生"，女→"女士"，未填→"道友"。禁止出现"匿名""未知""未输入"。
+2. 禁止自由发挥开场白：禁止"道友请坐，吾观此卦""吾乃研习《增删卜易》之士"等随机古风开场。凡违反此条视为释卦不合格。
+3. 开头句之后必须原文复述用神选取理由（舍X取X）与旺衰评分明细（各维度加减），不可简化、不可凭记忆作答。
+4. 起卦方式（手动输入/自动起卦）不写入释卦文本；时间仅使用农历月建、日辰、旬空，不写公历日期。`;
 
     // ===== rw7 增强版 userPrompt =====
     // 辅助：爻位 rw7 角标
@@ -182,19 +190,23 @@ async function callQwen(guaInfo) {
         return tags.length ? ' ' + tags.join('') : '';
     }
 
-    const userPrompt = `请为以下求卦者解读卦象：
+    // 称谓取值（固定开头句用）
+    const chenghu = (userInfo.gender === '女') ? '女士' : (userInfo.gender ? '先生' : '道友');
 
-【求卦者信息】
-姓名：${userInfo.name}
-性别：${userInfo.gender}
-出生时辰：${userInfo.birth}
-所问之事：${userInfo.question}
+    const userPrompt = `野鹤老人曰：卜以决疑，不疑何卜？${chenghu}请坐，听吾为你层层剖析此卦——今问"${userInfo.question}"，得${guaInfo.benGua}之${guaInfo.bianGua}。
+
+【用神选取与旺衰（须原文复述，不可简化）】
+${guaInfo.yongShen && guaInfo.yongShen.liuqin ? `用神：${guaInfo.yongShen.liuqin}（${typeof guaInfo.yongShen.primaryIndex === 'number' ? '第'+guaInfo.yongShen.primaryIndex+'爻' : (guaInfo.yongShen.primaryIndex||'')+'（伏神）'}）— 选取理由：${guaInfo.yongShen.reason || '未知'}。旺衰评分：${guaInfo.yongShen.wangShuaiScore ? guaInfo.yongShen.wangShuaiScore.index + '分（' + guaInfo.yongShen.wangShuaiScore.detail + '）' : '未计算'}` : '未计算'}
+${guaInfo.jiShenState ? `忌神：${guaInfo.jiShenState.liuqin}（${typeof guaInfo.jiShenState.positions[0] === 'number' ? '第'+guaInfo.jiShenState.positions[0]+'爻' : (guaInfo.jiShenState.positions[0]||'')+'（伏神）'}）— 旺衰：${guaInfo.jiShenState.wangShuaiScore ? guaInfo.jiShenState.wangShuaiScore.index + '分（' + guaInfo.jiShenState.wangShuaiScore.detail + '）' : '未计算'}。断语：${guaInfo.jiShenState.duanYu || ''}` : ''}
+${guaInfo.chouShenState ? `仇神：${guaInfo.chouShenState.liuqin}（${typeof guaInfo.chouShenState.positions[0] === 'number' ? '第'+guaInfo.chouShenState.positions[0]+'爻' : (guaInfo.chouShenState.positions[0]||'')+'（伏神）'}）— 旺衰：${guaInfo.chouShenState.wangShuaiScore ? guaInfo.chouShenState.wangShuaiScore.index + '分（' + guaInfo.chouShenState.wangShuaiScore.detail + '）' : '未计算'}。断语：${guaInfo.chouShenState.duanYu || ''}` : ''}
+
+以下逐层解读：
 
 【卦象数据（已排定，含 rw7 精细标注，请直接使用）】
 本卦：${guaInfo.benGua}（${guaInfo.benPalace}）
 变卦：${guaInfo.bianGua}（${guaInfo.bianPalace}）
-世爻：${guaInfo.shiYao || '未知'}${guaInfo.shiYaoZhuangTai && guaInfo.shiYaoZhuangTai !== '平稳' && guaInfo.shiYaoZhuangTai !== '未知' ? '［' + guaInfo.shiYaoZhuangTai + ':' + (guaInfo.shiYaoDetail || '') + '］' : ''}
-应爻：${guaInfo.yingYao || '未知'}
+世爻：${guaInfo.shiYao || ''}${guaInfo.shiYaoZhuangTai && guaInfo.shiYaoZhuangTai !== '平稳' && guaInfo.shiYaoZhuangTai !== '未知' ? '［' + guaInfo.shiYaoZhuangTai + ':' + (guaInfo.shiYaoDetail || '') + '］' : ''}
+应爻：${guaInfo.yingYao || ''}
 六爻排列（从下往上，已含 rw7 角标）：
 ${(guaInfo.yaoDetail || []).map((y, i) => `第${i+1}爻：${y.dizhi} ${y.liuqin}${y.isDong ? '（动化' + y.bianDizhi + y.bianLiuqin + '）' : ''}${yaoRw7Tag(y)}`).join('\n')}
 
@@ -202,26 +214,17 @@ ${(guaInfo.yaoDetail || []).map((y, i) => `第${i+1}爻：${y.dizhi} ${y.liuqin}
 ${guaInfo.fuShenList && guaInfo.fuShenList.length ? guaInfo.fuShenList.map(f => `伏神：${f.六亲}${f.天干}${f.地支}（伏于第${f.飞神爻位}爻 ${f.飞神地支}${f.飞神六亲}之下，${f.关系}）${f.kongType && f.kongType !== 'none' ? '［' + f.kongType + (f.kongDetail ? ':' + f.kongDetail : '') + '］' : ''}`).join('；') : '无伏神'}
 
 【原神状态（rw7 精细判定）】
-${guaInfo.yuanShenState ? `用神：${guaInfo.yuanShenState.yongShen || '未知'}，原神：${guaInfo.yuanShenState.liuqin}（${guaInfo.yuanShenState.isFuCang ? '伏藏' : '显'}，${guaInfo.yuanShenState.isKong ? '旬空' : '不空'}）—— ${guaInfo.yuanShenState.duanYu || ''}` : '无（或尚未计算）'}
-
-【用神状态（rw8 精细判定）】
-${guaInfo.yongShen && guaInfo.yongShen.liuqin ? `用神：${guaInfo.yongShen.liuqin}（${typeof guaInfo.yongShen.primaryIndex === 'number' ? '第'+guaInfo.yongShen.primaryIndex+'爻' : (guaInfo.yongShen.primaryIndex||'')+'（伏神）'}）— 选取理由：${guaInfo.yongShen.reason || '未知'}。旺衰评分：${guaInfo.yongShen.wangShuaiScore ? guaInfo.yongShen.wangShuaiScore.index + '分（' + guaInfo.yongShen.wangShuaiScore.detail + '）' : '未计算'}` : '未计算'}
-
-【忌神状态（rw8 精细判定）】
-${guaInfo.jiShenState ? `忌神：${guaInfo.jiShenState.liuqin}（${typeof guaInfo.jiShenState.positions[0] === 'number' ? '第'+guaInfo.jiShenState.positions[0]+'爻' : (guaInfo.jiShenState.positions[0]||'')+'（伏神）'}）— 旺衰：${guaInfo.jiShenState.wangShuaiScore ? guaInfo.jiShenState.wangShuaiScore.index + '分（' + guaInfo.jiShenState.wangShuaiScore.detail + '）' : '未计算'}。断语：${guaInfo.jiShenState.duanYu || ''}` : '未计算'}
-
-【仇神状态（rw8 精细判定）】
-${guaInfo.chouShenState ? `仇神：${guaInfo.chouShenState.liuqin}（${typeof guaInfo.chouShenState.positions[0] === 'number' ? '第'+guaInfo.chouShenState.positions[0]+'爻' : (guaInfo.chouShenState.positions[0]||'')+'（伏神）'}）— 旺衰：${guaInfo.chouShenState.wangShuaiScore ? guaInfo.chouShenState.wangShuaiScore.index + '分（' + guaInfo.chouShenState.wangShuaiScore.detail + '）' : '未计算'}。断语：${guaInfo.chouShenState.duanYu || ''}` : '未计算'}
+${guaInfo.yuanShenState ? `用神：${guaInfo.yuanShenState.yongShen || ''}，原神：${guaInfo.yuanShenState.liuqin}（${guaInfo.yuanShenState.isFuCang ? '伏藏' : '显'}，${guaInfo.yuanShenState.isKong ? '旬空' : '不空'}）—— ${guaInfo.yuanShenState.duanYu || ''}` : '无（或尚未计算）'}
 
 【世爻状态（rw7 精细判定）】
 ${guaInfo.shiYaoZhuangTai ? guaInfo.shiYaoZhuangTai + '：' + (guaInfo.shiYaoDetail || '') : '平稳'}
 
-【时间信息（已计算，请直接使用）】
+【时间信息（农历，请直接使用）】
 月建：${timeInfo.yueJian}月
 日辰：${timeInfo.riChen}日
 旬空：${timeInfo.xunKong}
 
-请以《增删卜易》的理论，按以下六步解读（每一步都必须结合上方 rw7 精细标注）：
+请以《增删卜易》的理论，按以下六步解读（每一步都必须结合上方 rw7/rw8 精细标注）：
 1. 用神取舍：用神是什么？根据【用神状态】段落，选用的是第几爻、理由为何（须原文复述"舍X取X"）？用神旺衰评分多少（须逐条复述加减依据）？是否旬空？真空还是假空（见 rw7 规则三）？
 2. 月建影响：月建对用神、世爻是生是克是冲？是否有月破（见 rw7 规则一，注意动爻逢冲不算真破）？
 3. 日辰影响：日辰对用神、世爻是生是克是冲？逢冲者是日破还是暗动（见 rw7 规则二，关键看月建旺衰）？

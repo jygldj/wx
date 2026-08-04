@@ -264,20 +264,22 @@
                 jiaKong: { text: '假空', css: style + 'background:#d4ac0d;color:#fff;border:1px solid #f9e79f;' }
             };
 
+            // 角标优先级（高→低）：月破 > 日破 > 暗动 > 真空 > 假空
+            // 每爻只挂最高优先级的一个标，禁止双标并存
+            var PRIORITY = ['yuePo','riPo','anDong','zhenKong','jiaKong'];
+
             (guaInfo.yaoDetail || []).forEach(function (y, i) {
                 if (i >= rows.length) return;
                 var row = rows[i];
                 var tags = [];
-                if (y.yuePo) tags.push(marks.yuePo);
-                if (y.riPoOrAnDong && y.riPoOrAnDong !== 'none') {
-                    if (y.riPoOrAnDong === '日破') tags.push(marks.riPo);
-                    else if (y.riPoOrAnDong === '暗动') tags.push(marks.anDong);
-                    else tags.push({ text: y.riPoOrAnDong, css: style + 'background:#5dade2;color:#fff;border:1px solid #aed6f1;' });
-                }
-                if (y.kongType && y.kongType !== 'none') {
-                    if (y.kongType === '真空') tags.push(marks.zhenKong);
-                    else if (y.kongType === '假空') tags.push(marks.jiaKong);
-                    else tags.push({ text: y.kongType, css: style + 'background:#e67e22;color:#fff;border:1px solid #f9e79f;' });
+                // 按优先级遍历，命中第一个即停止
+                for (var pi = 0; pi < PRIORITY.length; pi++) {
+                    var key = PRIORITY[pi];
+                    if (key === 'yuePo' && y.yuePo) { tags.push(marks.yuePo); break; }
+                    if (key === 'riPo' && y.riPoOrAnDong && y.riPoOrAnDong === '日破') { tags.push(marks.riPo); break; }
+                    if (key === 'anDong' && y.riPoOrAnDong && y.riPoOrAnDong === '暗动') { tags.push(marks.anDong); break; }
+                    if (key === 'zhenKong' && y.kongType && y.kongType === '真空') { tags.push(marks.zhenKong); break; }
+                    if (key === 'jiaKong' && y.kongType && y.kongType === '假空') { tags.push(marks.jiaKong); break; }
                 }
                 if (tags.length > 0) {
                     var html = tags.map(function (m) { return '<span style="' + m.css + '">' + m.text + '</span>'; }).join('');
