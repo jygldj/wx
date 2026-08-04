@@ -345,3 +345,272 @@ function yaoToPattern(yaoResults) {
 function getBianPattern(yaoResults, dongStatus) {
     return yaoResults.map((y, idx) => dongStatus[idx] ? (1 - y) : y).join('');
 }
+
+// ============================================================
+// 八、rw7 新增：月破 / 日破暗动 / 真空假空 / 原神空伏 / 世爻状态
+// 设计说明：
+//   - 本组函数均接收由 jiegua.html 构建的 guaInfo 对象（含 timeInfo 与 yaoDetail），
+//     判定结果直接写入 guaInfo 的新增字段，符合 rw7「结果写入 guaInfo」的要求。
+//   - timeInfo.yueJian 为单字月支(如"未")；timeInfo.riChen 为日干支2字(如"己酉")，
+//     riZhi 取其 charAt(1)；timeInfo.xunKong 为旬空地支串(如"寅卯")。
+//   - 只读 guaInfo 既有数据（benYao/yaoDetail 等），不重写已验证的排盘核心。
+//   - 常量加 _RW7 后缀，避免与 jiegua.html 局部同名变量潜在冲突。
+// ============================================================
+
+// 五行生克（suanfa 此前未定义全局版本，此处补齐供 rw7 使用）
+const WX_SHENG_RW7 = { '木':'火', '火':'土', '土':'金', '金':'水', '水':'木' };
+const WX_KE_RW7    = { '木':'土', '土':'水', '水':'火', '火':'金', '金':'木' };
+
+// 地支六冲
+const DIZHI_LIU_CHONG = [['子','午'],['丑','未'],['寅','申'],['卯','酉'],['辰','戌'],['巳','亥']];
+function isChongRW7(d1, d2) {
+    if (!d1 || !d2) return false;
+    return DIZHI_LIU_CHONG.some(p => (p[0] === d1 && p[1] === d2) || (p[0] === d2 && p[1] === d1));
+}
+// 是否旬空
+function isKongRW7(diZhi, xunKong) {
+    if (!diZhi || !xunKong) return false;
+    return xunKong.indexOf(diZhi) !== -1;
+}
+// 以月建论某爻旺衰：'旺相'(得生/比和/克月建有力) 或 '休囚'(被克/生月建泄气)
+function yaoWangShuaiRW7(yaoWx, yueJianZhi) {
+    if (!yaoWx || !yueJianZhi) return 'unknown';
+    const yueWx = DIZHI_WUXING[yueJianZhi] || '';
+    if (!yueWx) return 'unknown';
+    if (yaoWx === yueWx) return '旺相';                  // 比和
+    if (WX_SHENG_RW7[yueWx] === yaoWx) return '旺相';     // 月建生爻
+    if (WX_KE_RW7[yueWx] === yaoWx) return '休囚';        // 月建克爻
+    if (WX_SHENG_RW7[yaoWx] === yueWx) return '休囚';     // 爻生月建（泄气）
+    if (WX_KE_RW7[yaoWx] === yueWx) return '休囚';        // 爻克月建（耗力）
+    return 'unknown';
+}
+
+/**
+ * 函数1：月破判定
+ * 月破 = 爻地支 与 月建地支 相冲。
+ * 例外：动爻逢月冲不算破（动爻有气待发）。伏神同样参与判定。
+ */
+function jiSuanYuePo(guaInfo) {
+    const yueJian = (guaInfo.timeInfo && guaInfo.timeInfo.yueJian) || '';
+    const yaoDetail = guaInfo.yaoDetail || [];
+    const yuePoList = [];
+
+    yaoDetail.forEach((y, i) => {
+        const d = y.dizhi;
+        if (d && isChongRW7(d, yueJian)) {
+            if (y.isDong) {
+                y.yuePo = false;
+                y.yuePoType = '动爻逢冲不算破';
+            } else {
+                y.yuePo = true;
+                y.yuePoType = '真破';
+                yuePoList.push({ yaoIndex: i + 1, dizhi: d, liuqin: y.liuqin });
+            }
+        } else {
+            y.yuePo = false;
+            y.yuePoType = 'none';
+        }
+    });
+
+    // 伏神逢月冲
+    const fuList = guaInfo.fuShenList || [];
+    fuList.forEach(f => {
+        if (f.地支 && isChongRW7(f.地支, yueJian)) f.yuePo = true;
+    });
+
+    guaInfo.yuePoList = yuePoList;
+    return guaInfo;
+}
+
+/**
+ * 函数2：日破 vs 暗动（rw7 最易出错处）
+ * 前提：只看静爻。静爻地支与日辰地支相冲 → 进入判定。
+ *   日破：月休囚无气 且 旬空
+ *   暗动：月旺相有气 且 不空（或假空有气）
+ * 关键：旺衰以月建为准，日辰仅触发。
+ */
+function jiSuanRiPoAnDong(guaInfo) {
+    const timeInfo = guaInfo.timeInfo || {};
+    const riChen = timeInfo.riChen || '';
+    const riZhi = riChen.length >= 2 ? riChen.charAt(1) : '';
+    const xunKong = timeInfo.xunKong || '';
+    const yueJian = timeInfo.yueJian || '';
+    const yaoDetail = guaInfo.yaoDetail || [];
+
+    yaoDetail.forEach(y => {
+        if (y.isDong) { // 动爻另有处理，不参与
+            y.riChong = false; y.riPoOrAnDong = 'none'; y.riPoReason = '';
+            return;
+        }
+        const d = y.dizhi;
+        if (!d || !riZhi || !isChongRW7(d, riZhi)) {
+            y.riChong = false; y.riPoOrAnDong = 'none'; y.riPoReason = '';
+            return;
+        }
+        y.riChong = true;
+        const yaoWx = DIZHI_WUXING[d] || '';
+        const shuai = yaoWangShuaiRW7(yaoWx, yueJian);
+        const kong = isKongRW7(d, xunKong);
+        if (shuai === '休囚' && kong) {
+            y.riPoOrAnDong = '日破';
+            y.riPoReason = '月建休囚无气 + 旬空，朽木不可雕，断为日破';
+        } else if (shuai === '旺相' && !kong) {
+            y.riPoOrAnDong = '暗动';
+            y.riPoReason = '月建旺相有气 + 不空，暗中动作，断为暗动';
+        } else if (shuai === '旺相' && kong) {
+            y.riPoOrAnDong = '暗动';
+            y.riPoReason = '月建旺相有气 + 假空有气，转暗动';
+        } else { // 休囚且不空
+            y.riPoOrAnDong = '日破';
+            y.riPoReason = '月建休囚无气，断为日破';
+        }
+    });
+    return guaInfo;
+}
+
+/**
+ * 函数3：真空 vs 假空
+ * 只对旬空爻/伏神判定。
+ *   真空：旬空 且 (月破 或 月克无生) 且 无动爻生扶
+ *   假空：旬空 且 (月/日/动爻生扶 或 出空有期)
+ */
+function jiSuanZhenKongJiaKong(guaInfo) {
+    const timeInfo = guaInfo.timeInfo || {};
+    const xunKong = timeInfo.xunKong || '';
+    const yueJian = timeInfo.yueJian || '';
+    const riChen = timeInfo.riChen || '';
+    const riZhi = riChen.length >= 2 ? riChen.charAt(1) : '';
+    const yaoDetail = guaInfo.yaoDetail || [];
+
+    function evalKong(y) {
+        const d = y.dizhi;
+        if (!isKongRW7(d, xunKong)) { y.kongType = 'none'; y.kongDetail = ''; return; }
+        const yaoWx = DIZHI_WUXING[d] || '';
+        const yueWx = DIZHI_WUXING[yueJian] || '';
+        const riWx = DIZHI_WUXING[riZhi] || '';
+        const yueSheng = !!(yueWx && WX_SHENG_RW7[yueWx] === yaoWx);
+        const riSheng  = !!(riWx  && WX_SHENG_RW7[riWx]  === yaoWx);
+        const yueKe    = !!(yueWx && WX_KE_RW7[yueWx] === yaoWx);
+        const dongSheng = yaoDetail.some(o => o.isDong && DIZHI_WUXING[o.dizhi] && WX_SHENG_RW7[DIZHI_WUXING[o.dizhi]] === yaoWx);
+        const zhenKong = (y.yuePo || yueKe) && !yueSheng && !riSheng && !dongSheng;
+        if (zhenKong) {
+            y.kongType = '真空';
+            y.kongDetail = '旬空且月破/月克无生无扶，如石沉大海，终不可得';
+        } else {
+            y.kongType = '假空';
+            y.kongDetail = '旬空但有气得生扶，待出空填空之日，事方有应';
+        }
+    }
+    yaoDetail.forEach(evalKong);
+
+    // 伏神列表
+    const fuList = guaInfo.fuShenList || [];
+    fuList.forEach(f => {
+        const d = f.地支;
+        if (!isKongRW7(d, xunKong)) { f.kongType = 'none'; f.kongDetail = ''; return; }
+        const yaoWx = DIZHI_WUXING[d] || '';
+        const yueWx = DIZHI_WUXING[yueJian] || '';
+        const riWx = DIZHI_WUXING[riZhi] || '';
+        const yueSheng = !!(yueWx && WX_SHENG_RW7[yueWx] === yaoWx);
+        const riSheng  = !!(riWx  && WX_SHENG_RW7[riWx]  === yaoWx);
+        const yueKe    = !!(yueWx && WX_KE_RW7[yueWx] === yaoWx);
+        if (yueKe && !yueSheng && !riSheng) {
+            f.kongType = '真空';
+            f.kongDetail = '伏神旬空且月克无生，如石沉大海，终不可得';
+        } else {
+            f.kongType = '假空';
+            f.kongDetail = '伏神旬空有气，假空，待出空填空';
+        }
+    });
+    return guaInfo;
+}
+
+/**
+ * 函数4：原神空伏
+ * 先按所问之事确定用神 → 原神 = 生用神之爻（六亲名沿生克链前移一位）。
+ * 检查原神是否伏藏(在 fuShenList)且旬空，给出断语。
+ */
+function jiSuanYuanShenKongFu(guaInfo, questionType) {
+    const YONG_SHEN_MAP = {
+        '婚姻':'官鬼', '感情':'官鬼', '妻财问事':'妻财',
+        '财运':'妻财', '求财':'妻财', '失物':'妻财',
+        '事业':'官鬼', '功名':'官鬼', '工作':'官鬼', '诉讼':'官鬼', '官司':'官鬼', '健康':'官鬼', '病':'官鬼',
+        '学业':'父母', '考试':'父母', '文书':'父母', '出行':'父母', '旅行':'父母',
+        '寻人':'子孙'
+    };
+    const YUAN_SHEN_MAP = { '父母':'官鬼', '官鬼':'妻财', '妻财':'子孙', '子孙':'兄弟', '兄弟':'父母' };
+
+    const yongShen = YONG_SHEN_MAP[questionType] || null;
+    if (!yongShen) { guaInfo.yuanShenState = null; return guaInfo; }
+
+    const yuanShen = YUAN_SHEN_MAP[yongShen] || null;
+    const fuList = guaInfo.fuShenList || [];
+    const fuCangItem = fuList.find(f => f.六亲 === yuanShen);
+    const isFuCang = !!fuCangItem;
+
+    let isKong = false;
+    if (isFuCang && fuCangItem) {
+        const xunKong = (guaInfo.timeInfo && guaInfo.timeInfo.xunKong) || '';
+        isKong = isKongRW7(fuCangItem.地支, xunKong);
+    } else {
+        const yuanYao = (guaInfo.yaoDetail || []).find(y => y.liuqin === yuanShen);
+        if (yuanYao && yuanYao.kongType && yuanYao.kongType !== 'none') isKong = true;
+    }
+
+    let duanYu = '';
+    if (isFuCang && isKong) {
+        duanYu = (questionType === '婚姻' || questionType === '感情')
+            ? '原神空伏，根基尚浅，缘分未到，宜静待时机'
+            : '原神不现且空，事之根基不稳，纵用神暂时旺相，亦如无源之水';
+    } else if (isFuCang) {
+        duanYu = '原神伏藏，助力潜藏未显，需待引拔';
+    } else if (isKong) {
+        duanYu = '原神旬空，助力暂缺，待出空方有应';
+    } else {
+        duanYu = '原神得力，根基有靠';
+    }
+
+    guaInfo.yuanShenState = {
+        yongShen: yongShen,
+        liuqin: yuanShen,
+        isFuCang: isFuCang,
+        isKong: isKong,
+        duanYu: duanYu
+    };
+    return guaInfo;
+}
+
+/**
+ * 函数5（rw7 第三节）：世爻"月破+日泄"状态标记
+ * 仅供数据标记（措辞后续由提示词跟进），不修改排盘核心。
+ * 依赖 jiSuanYuePo 已写入的 yuePo 字段。
+ */
+function jiSuanShiYaoZhuangTai(guaInfo) {
+    const idx = guaInfo.shiYaoIndex;
+    if (idx == null) { guaInfo.shiYaoZhuangTai = '未知'; guaInfo.shiYaoDetail = ''; return guaInfo; }
+    const shi = (guaInfo.yaoDetail && guaInfo.yaoDetail[idx - 1]) || null;
+    if (!shi) { guaInfo.shiYaoZhuangTai = '未知'; guaInfo.shiYaoDetail = ''; return guaInfo; }
+
+    const yuePo = shi.yuePo;
+    const shiWx = DIZHI_WUXING[shi.dizhi] || '';
+    const timeInfo = guaInfo.timeInfo || {};
+    const riChen = timeInfo.riChen || '';
+    const riZhi = riChen.length >= 2 ? riChen.charAt(1) : '';
+    const riWx = DIZHI_WUXING[riZhi] || '';
+    const riXie = !!(shiWx && riWx && WX_SHENG_RW7[shiWx] === riWx); // 世生日 = 泄
+
+    if (yuePo && riXie) {
+        guaInfo.shiYaoZhuangTai = '月破+日泄';
+        guaInfo.shiYaoDetail = '世爻月破如根枯，日泄如气散，君此事宜守不宜攻，待出月得生扶方有转机';
+    } else if (yuePo) {
+        guaInfo.shiYaoZhuangTai = '月破';
+        guaInfo.shiYaoDetail = '世爻月破，根基受损，宜谨慎守成';
+    } else if (riXie) {
+        guaInfo.shiYaoZhuangTai = '日泄';
+        guaInfo.shiYaoDetail = '世爻日泄，气力有耗，凡事勿强求';
+    } else {
+        guaInfo.shiYaoZhuangTai = '平稳';
+        guaInfo.shiYaoDetail = '世爻无破无泄，自身状态平稳';
+    }
+    return guaInfo;
+}
