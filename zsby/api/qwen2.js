@@ -41,12 +41,16 @@ async function callQwen2(guaInfo) {
 - 用神持世 = 所求之事与自身紧密相关
 - 应爻旬空 = 对方或事体暂不落实
 - 动爻化出之爻同样参与生克冲合
-- 用神两现（卦中同类六亲出现两处）取舍法则，依次定夺：
-  ① 持世优先：世爻上的用神优先取用
-  ② 舍静取动：一动一静，取动爻
-  ③ 舍衰取旺：旺相者优先于休囚
-  ④ 舍假取真：一真空一实，取实；一破一全，取不破者
-  （次序：持世 > 动静 > 旺衰 > 真假）
+- 用神两现（卦中同类六亲出现两处）取舍法则，须严格按《增删卜易·用神章》口诀执行：
+  ① 舍闲取世：两现中有一爻持世 → 选持世爻（世为问卦者自身，权重最高）
+  ② 舍静取动：两现中一静一动 → 选动爻（动则有变、有兆）
+  ③ 舍破取全：两现中一月破一无破 → 选无破者（月破如朽木不可用）
+  ④ 舍空取实：两现中一旬空一实在 → 选不空者（真空不可用，假空可待）
+  ⑤ 舍伤取安：两现中一受克一不受克 → 选不受克者
+  （次序：持世 > 动静 > 月破 > 旬空 > 受伤）
+  ⚠️ 若以上全平手 → 选离世爻更近者；若仍平 → 两爻并列参考，不断取舍。
+  ⚠️ 若卦面无用神（用神不现）→ 查本宫伏神，取伏神为用，标注"用神不现，取伏神"。
+  卦象数据的【用神状态】段落已给出最终选用爻位和理由，你必须直接引用，不可自行更改。
 
 【🔬 rw7 精细断卦规则（优先级高于基础规则，必须严格遵守）】
 以下五条是经精细推算后标注在卦象数据上的判定结果，你必须直接使用这些标注，不可自行推翻或忽略。
@@ -123,6 +127,27 @@ async function callQwen2(guaInfo) {
    - 若用神得日月之合，又有他爻来生，纵有忌神发动，亦断为"有惊无险，前程可期"。
    - 若用神休囚无气，又受动爻克制，且无生扶，方断为"凶"。
 
+【🔬 rw8 用神选取与旺衰精细规则（优先级高于基础规则，必须严格遵守）】
+以下数据已由系统精密算出并注入【用神状态】【忌神状态】【仇神状态】段落，你必须直接使用，不可自行推翻。
+
+规则一·用神选取理由必须原文复述：
+- 卦象数据中 yongShen.reason 已给出选取理由（如"舍静取动""舍闲取世"）。
+- 你在"第一步·用神取舍"中必须原文写出该理由，不可简化、不可篡改、不可跳过。
+
+规则二·旺衰评分须解读各维度加减依据：
+- yongShen.wangShuaiScore.detail 已给出评分明细（如"月建未土生酉金+30，日辰午火比和+10，动爻+20"）。
+- 你必须逐条复述这些加减项，让求卦者看到"分数从哪来"。
+- 若 wangShuaiScore.index < 40 → 断为"休囚无力"；40 ≤ index < 70 → "平平"；≥ 70 → "旺相有力"。
+
+规则三·忌神/仇神联动断语：
+- 忌神（克用神之爻）旺 → 事有阻力；忌神休囚/月破/日破 → 阻力自消。
+- 仇神（克原神之爻）旺 → 原神受制，根基更损；仇神休囚 → 原神得保。
+- 卦象数据的【忌神状态】【仇神状态】已给出旺衰分和断语，你必须引用并结合综合断语。
+
+规则四·用神不现取伏神的特殊标注：
+- 若 yongShen.reason 含"取伏神"字样，须特别标注"用神伏藏，事有隐情，须待出伏方显"。
+- 伏神出伏应期：伏神逢值（如寅日）或逢合（如亥日）之日。
+
 【伏神断卦规则】
 伏神代表隐藏未显的人事物，是断卦的补充信息。当卦中出现伏神时，须在解读中简要提及。
 
@@ -182,6 +207,15 @@ ${guaInfo.fuShenList && guaInfo.fuShenList.length ? guaInfo.fuShenList.map(f => 
 【原神状态（rw7 精细判定）】
 ${guaInfo.yuanShenState ? `用神：${guaInfo.yuanShenState.yongShen || '未知'}，原神：${guaInfo.yuanShenState.liuqin}（${guaInfo.yuanShenState.isFuCang ? '伏藏' : '显'}，${guaInfo.yuanShenState.isKong ? '旬空' : '不空'}）—— ${guaInfo.yuanShenState.duanYu || ''}` : '无（或尚未计算）'}
 
+【用神状态（rw8 精细判定）】
+${guaInfo.yongShen && guaInfo.yongShen.liuqin ? `用神：${guaInfo.yongShen.liuqin}（${typeof guaInfo.yongShen.primaryIndex === 'number' ? '第'+guaInfo.yongShen.primaryIndex+'爻' : (guaInfo.yongShen.primaryIndex||'')+'（伏神）'}）— 选取理由：${guaInfo.yongShen.reason || '未知'}。旺衰评分：${guaInfo.yongShen.wangShuaiScore ? guaInfo.yongShen.wangShuaiScore.index + '分（' + guaInfo.yongShen.wangShuaiScore.detail + '）' : '未计算'}` : '未计算'}
+
+【忌神状态（rw8 精细判定）】
+${guaInfo.jiShenState ? `忌神：${guaInfo.jiShenState.liuqin}（${typeof guaInfo.jiShenState.positions[0] === 'number' ? '第'+guaInfo.jiShenState.positions[0]+'爻' : (guaInfo.jiShenState.positions[0]||'')+'（伏神）'}）— 旺衰：${guaInfo.jiShenState.wangShuaiScore ? guaInfo.jiShenState.wangShuaiScore.index + '分（' + guaInfo.jiShenState.wangShuaiScore.detail + '）' : '未计算'}。断语：${guaInfo.jiShenState.duanYu || ''}` : '未计算'}
+
+【仇神状态（rw8 精细判定）】
+${guaInfo.chouShenState ? `仇神：${guaInfo.chouShenState.liuqin}（${typeof guaInfo.chouShenState.positions[0] === 'number' ? '第'+guaInfo.chouShenState.positions[0]+'爻' : (guaInfo.chouShenState.positions[0]||'')+'（伏神）'}）— 旺衰：${guaInfo.chouShenState.wangShuaiScore ? guaInfo.chouShenState.wangShuaiScore.index + '分（' + guaInfo.chouShenState.wangShuaiScore.detail + '）' : '未计算'}。断语：${guaInfo.chouShenState.duanYu || ''}` : '未计算'}
+
 【世爻状态（rw7 精细判定）】
 ${guaInfo.shiYaoZhuangTai ? guaInfo.shiYaoZhuangTai + '：' + (guaInfo.shiYaoDetail || '') : '平稳'}
 
@@ -191,7 +225,7 @@ ${guaInfo.shiYaoZhuangTai ? guaInfo.shiYaoZhuangTai + '：' + (guaInfo.shiYaoDet
 旬空：${timeInfo.xunKong}
 
 请以《增删卜易》的理论，按以下六步解读（每一步都必须结合上方 rw7 精细标注）：
-1. 用神取舍：用神是什么？在卦中状态如何（旺相休囚死）？是否旬空？真空还是假空（见 rw7 规则三）？
+1. 用神取舍：用神是什么？根据【用神状态】段落，选用的是第几爻、理由为何（须原文复述"舍X取X"）？用神旺衰评分多少（须逐条复述加减依据）？是否旬空？真空还是假空（见 rw7 规则三）？
 2. 月建影响：月建对用神、世爻是生是克是冲？是否有月破（见 rw7 规则一，注意动爻逢冲不算真破）？
 3. 日辰影响：日辰对用神、世爻是生是克是冲？逢冲者是日破还是暗动（见 rw7 规则二，关键看月建旺衰）？
 4. 世应关系：世应是否生克冲合？世爻状态如何（见 rw7 世爻状态）？
@@ -199,7 +233,7 @@ ${guaInfo.shiYaoZhuangTai ? guaInfo.shiYaoZhuangTai + '：' + (guaInfo.shiYaoDet
 6. 综合断语：权衡全局，给出明确吉凶结论、应期提示和可行建议（若世爻月破+日泄，必须建议"宜守不宜攻"）。
 每一步论证须先述旺衰依据，再下结论——不可跳步。
 
-⚠️ 直接使用上方"已排定"的数据和 rw7 标注，不要自行推演或修改！当 rw7 标注与你的初步判断冲突时，以 rw7 标注为准。`;
+⚠️ 直接使用上方"已排定"的数据、rw7 标注和 rw8 用神/忌神/仇神状态，不要自行推演或修改！当标注与你的初步判断冲突时，以标注为准（它们是按野鹤古法严格算出的）。`;
 
     try {
         const response = await fetch(`${config.baseUrl}/chat/completions`, {
