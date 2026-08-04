@@ -614,3 +614,255 @@ function jiSuanShiYaoZhuangTai(guaInfo) {
     }
     return guaInfo;
 }
+
+// ============================================================
+// 九、rw8 新增：用神两现选取 + 旺衰优先级引擎
+// 设计说明：
+//   - 复用 rw7 常量(WX_SHENG_RW7/WX_KE_RW7/DIZHI_WUXING/isChongRW7/isKongRW7)
+//     与 guaInfo 结构(yaoDetail 已含 yuePo/kongType 等 rw7 字段)。
+//   - 三函数：jiWangShuaiScore(六维评分) / xuanYongShen(两现取舍) /
+//     jiShenChouShen(忌神仇神连带)。仅追加，不改动 rw7 既有函数。
+//   - 修正项（军令有所不受）：月建维度补全"爻生月(泄)-5"(与日辰对称)；
+//     补充"用神不现取伏神"边界；验证例地支矛盾由测试侧修正。
+// ============================================================
+
+// 用神章六亲映射（沿用 rw7 口径，rw8 自包含一份以避免耦合 rw7 局部变量）
+const YONG_SHEN_MAP_RW8 = {
+    '婚姻':'官鬼', '感情':'官鬼', '妻财问事':'妻财',
+    '财运':'妻财', '求财':'妻财', '失物':'妻财',
+    '事业':'官鬼', '功名':'官鬼', '工作':'官鬼', '诉讼':'官鬼', '官司':'官鬼', '健康':'官鬼', '病':'官鬼',
+    '学业':'父母', '考试':'父母', '文书':'父母', '出行':'父母', '旅行':'父母',
+    '寻人':'子孙'
+};
+const YUAN_SHEN_MAP_RW8 = { '父母':'官鬼', '官鬼':'妻财', '妻财':'子孙', '子孙':'兄弟', '兄弟':'父母' };
+
+// 飞伏关系（suanfa 内自算，不依赖 jiegua.html 局部函数）
+function fuShenRelationRW8(feiWx, fuWx) {
+    if (!feiWx || !fuWx) return '未知';
+    if (WX_SHENG_RW7[feiWx] === fuWx) return '生';
+    if (WX_KE_RW7[feiWx] === fuWx) return '克';
+    if (feiWx === fuWx) return '比和';
+    return '无关';
+}
+// 是否受伤（月克或日克）
+function isShangRW8(y, guaInfo) {
+    const timeInfo = guaInfo.timeInfo || {};
+    const yueJian = timeInfo.yueJian || '';
+    const riChen = timeInfo.riChen || '';
+    const riZhi = riChen.length >= 2 ? riChen.charAt(1) : '';
+    const yaoWx = DIZHI_WUXING[y.dizhi] || '';
+    const yueWx = DIZHI_WUXING[yueJian] || '';
+    const riWx = DIZHI_WUXING[riZhi] || '';
+    if (yaoWx && yueWx && WX_KE_RW7[yueWx] === yaoWx) return true;
+    if (yaoWx && riWx && WX_KE_RW7[riWx] === yaoWx) return true;
+    return false;
+}
+
+/**
+ * 函数1：六维旺衰评分（满分100，可负分）
+ * 维度：月建生克 / 日辰生克 / 动静 / 旬空 / 月破 / 飞伏
+ * 注：月建维度补全"爻生月(泄)-5"（与日辰维度对称，属 rw8 对文档的修正）
+ */
+function jiWangShuaiScore(yao, guaInfo) {
+    const timeInfo = guaInfo.timeInfo || {};
+    const yueJian = timeInfo.yueJian || '';
+    const riChen = timeInfo.riChen || '';
+    const riZhi = riChen.length >= 2 ? riChen.charAt(1) : '';
+    const yaoWx = DIZHI_WUXING[yao.dizhi] || '';
+    const yueWx = DIZHI_WUXING[yueJian] || '';
+    const riWx = DIZHI_WUXING[riZhi] || '';
+
+    let score = 0;
+    const dp = [];
+
+    if (yaoWx && yueWx) {
+        if (WX_SHENG_RW7[yueWx] === yaoWx) { score += 30; dp.push('月建生爻+30'); }
+        else if (WX_KE_RW7[yueWx] === yaoWx) { score -= 20; dp.push('月建克爻-20'); }
+        else if (yaoWx === yueWx) { score += 15; dp.push('月建比和+15'); }
+        else if (WX_SHENG_RW7[yaoWx] === yueWx) { score -= 5; dp.push('爻生月建(泄)-5'); }
+        else if (WX_KE_RW7[yaoWx] === yueWx) { score -= 5; dp.push('爻克月建(耗)-5'); }
+    }
+    if (yaoWx && riWx) {
+        if (WX_SHENG_RW7[riWx] === yaoWx) { score += 25; dp.push('日辰生爻+25'); }
+        else if (WX_KE_RW7[riWx] === yaoWx) { score -= 15; dp.push('日辰克爻-15'); }
+        else if (yaoWx === riWx) { score += 10; dp.push('日辰比和+10'); }
+        else if (WX_SHENG_RW7[yaoWx] === riWx) { score -= 5; dp.push('爻生日辰(泄)-5'); }
+    }
+    if (yao.isDong) { score += 20; dp.push('动爻+20'); } else { dp.push('静爻+0'); }
+    if (yao.kongType === '真空') { score -= 15; dp.push('真空-15'); }
+    else { dp.push((yao.kongType === '假空' ? '假空' : '不空') + '+0'); }
+    if (yao.yuePo === true) { score -= 20; dp.push('月破-20'); } else { dp.push('不破+0'); }
+    if (yao.isFuShen && yao.feiRelation) {
+        if (yao.feiRelation === '生') { score += 10; dp.push('飞神生伏+10'); }
+        else { dp.push('飞神克伏+0'); }
+    } else { dp.push('本卦爻飞伏+0'); }
+
+    return { score: score, detail: dp.join('，') };
+}
+
+/**
+ * 函数2：用神两现选取（野鹤《增删卜易·用神章》口诀）
+ * 舍闲取世、舍静取动、舍破取全、舍空取实、舍伤取安
+ */
+function xuanYongShen(guaInfo, questionType) {
+    const yongShenLiuqin = YONG_SHEN_MAP_RW8[questionType] || null;
+    const yaoDetail = guaInfo.yaoDetail || [];
+    const shiYaoIndex = (guaInfo.shiYaoIndex != null) ? guaInfo.shiYaoIndex : -1;
+    const fuList = guaInfo.fuShenList || [];
+
+    if (!yongShenLiuqin) {
+        guaInfo.yongShen = { liuqin:null, positions:[], primaryIndex:null, reason:'未知所问之事，无法定用神', priority:[], wangShuaiScore:{index:0,detail:'无'} };
+        return guaInfo;
+    }
+
+    let positions = [];
+    yaoDetail.forEach((y, i) => { if (y.liuqin === yongShenLiuqin) positions.push(i + 1); });
+
+    // 用神不现 → 取伏神（边界鲁棒）
+    if (positions.length === 0) {
+        const fuItem = fuList.find(f => f.六亲 === yongShenLiuqin) || null;
+        if (fuItem) {
+            const fuWx = DIZHI_WUXING[fuItem.地支] || '';
+            const feiWx = DIZHI_WUXING[fuItem.飞神地支] || '';
+            const fuYao = { dizhi:fuItem.地支, liuqin:fuItem.六亲, isDong:false, isFuShen:true,
+                feiRelation:fuShenRelationRW8(feiWx, fuWx), kongType:fuItem.kongType || 'none' };
+            const sc = jiWangShuaiScore(fuYao, guaInfo);
+            guaInfo.yongShen = { liuqin:yongShenLiuqin, positions:['伏神'], primaryIndex:'伏'+(fuItem.伏神爻位||''),
+                reason:'用神不现，取伏神', priority:[{pos:'伏',score:sc.score,detail:sc.detail}],
+                wangShuaiScore:{index:sc.score,detail:sc.detail} };
+            return guaInfo;
+        }
+        guaInfo.yongShen = { liuqin:yongShenLiuqin, positions:[], primaryIndex:null, reason:'用神不现（本卦与伏神皆无）', priority:[], wangShuaiScore:{index:0,detail:'无'} };
+        return guaInfo;
+    }
+
+    if (positions.length === 1) {
+        const idx = positions[0];
+        const sc = jiWangShuaiScore(yaoDetail[idx - 1], guaInfo);
+        guaInfo.yongShen = { liuqin:yongShenLiuqin, positions:positions, primaryIndex:idx, reason:'用神独现',
+            priority:[{pos:idx,score:sc.score,detail:sc.detail}], wangShuaiScore:{index:sc.score,detail:sc.detail} };
+        return guaInfo;
+    }
+
+    const items = positions.map(p => {
+        const y = yaoDetail[p - 1];
+        return { idx:p, y:y, sc:jiWangShuaiScore(y, guaInfo) };
+    });
+
+    let chosen = null, reason = '';
+
+    // ① 舍闲取世
+    const shiItems = items.filter(it => it.idx === shiYaoIndex);
+    if (shiItems.length === 1) { chosen = shiItems[0]; reason = '舍闲取世（用神持世，取世爻）'; }
+    else {
+        // ② 舍静取动
+        const dongItems = items.filter(it => it.y.isDong);
+        if (dongItems.length === 1) { chosen = dongItems[0]; reason = '舍静取动（取动爻）'; }
+        else {
+            // ③ 舍破取全
+            const wholeItems = items.filter(it => !it.y.yuePo);
+            if (wholeItems.length === 1) { chosen = wholeItems[0]; reason = '舍破取全（取不破者）'; }
+            else {
+                // ④ 舍空取实
+                const realItems = items.filter(it => !(it.y.kongType && it.y.kongType !== 'none'));
+                if (realItems.length === 1) { chosen = realItems[0]; reason = '舍空取实（取不空者）'; }
+                else {
+                    // ⑤ 舍伤取安
+                    const safeItems = items.filter(it => !isShangRW8(it.y, guaInfo));
+                    if (safeItems.length === 1) { chosen = safeItems[0]; reason = '舍伤取安（取不受克者）'; }
+                    else {
+                        // 兜底：平手取近世爻者
+                        let best = items[0], bestDist = 99;
+                        const ref = (shiYaoIndex < 0) ? 3.5 : shiYaoIndex;
+                        items.forEach(it => { const d = Math.abs(it.idx - ref); if (d < bestDist) { bestDist = d; best = it; } });
+                        chosen = best; reason = '取舍平手，取近世爻者';
+                    }
+                }
+            }
+        }
+    }
+
+    guaInfo.yongShen = {
+        liuqin: yongShenLiuqin,
+        positions: positions,
+        primaryIndex: chosen.idx,
+        reason: reason,
+        priority: items.map(it => ({ pos:it.idx, score:it.sc.score, detail:it.sc.detail })),
+        wangShuaiScore: { index:chosen.sc.score, detail:chosen.sc.detail }
+    };
+    return guaInfo;
+}
+
+/**
+ * 函数3：忌神 / 仇神连带判定（按五行生克找卦中实际克用神/克原神之爻）
+ */
+function jiShenChouShen(guaInfo) {
+    const yongShen = guaInfo.yongShen;
+    if (!yongShen || !yongShen.liuqin || yongShen.primaryIndex == null) {
+        guaInfo.jiShenState = null; guaInfo.chouShenState = null; return guaInfo;
+    }
+    const yaoDetail = guaInfo.yaoDetail || [];
+    const fuList = guaInfo.fuShenList || [];
+
+    // 取用神爻（显爻或伏神）
+    let yongYao = null;
+    if (typeof yongShen.primaryIndex === 'number') {
+        yongYao = yaoDetail[yongShen.primaryIndex - 1] || null;
+    } else if (typeof yongShen.primaryIndex === 'string' && yongShen.primaryIndex.indexOf('伏') === 0) {
+        const fuItem = fuList.find(f => ('伏' + (f.伏神爻位||'')) === yongShen.primaryIndex);
+        if (fuItem) yongYao = { dizhi:fuItem.地支, liuqin:fuItem.六亲, isDong:false, kongType:fuItem.kongType||'none' };
+    }
+    if (!yongYao) { guaInfo.jiShenState = null; guaInfo.chouShenState = null; return guaInfo; }
+
+    const yongWx = DIZHI_WUXING[yongYao.dizhi] || '';
+
+    // 忌神：克用神之爻
+    const jiItems = [];
+    yaoDetail.forEach((y, i) => {
+        const w = DIZHI_WUXING[y.dizhi] || '';
+        if (w && yongWx && WX_KE_RW7[w] === yongWx) jiItems.push({ y:y, idx:i + 1 });
+    });
+    fuList.forEach(f => {
+        const w = DIZHI_WUXING[f.地支] || '';
+        if (w && yongWx && WX_KE_RW7[w] === yongWx && f.六亲 !== yongShen.liuqin) {
+            const feiWx = DIZHI_WUXING[f.飞神地支] || '';
+            const fuWx = DIZHI_WUXING[f.地支] || '';
+            jiItems.push({ y:{ dizhi:f.地支, liuqin:f.六亲, isDong:false, isFuShen:true,
+                feiRelation:fuShenRelationRW8(feiWx, fuWx), kongType:f.kongType||'none' }, idx:'伏'+f.伏神爻位 });
+        }
+    });
+
+    // 原神
+    const yuanShenLiuqin = YUAN_SHEN_MAP_RW8[yongShen.liuqin] || null;
+    let yuanYao = null;
+    const yuanXian = yaoDetail.find(y => y.liuqin === yuanShenLiuqin) || null;
+    const yuanFu = fuList.find(f => f.六亲 === yuanShenLiuqin) || null;
+    if (yuanXian) yuanYao = yuanXian;
+    else if (yuanFu) yuanYao = { dizhi:yuanFu.地支, liuqin:yuanFu.六亲, isDong:false, kongType:yuanFu.kongType||'none' };
+    const yuanWx = yuanYao ? (DIZHI_WUXING[yuanYao.dizhi] || '') : '';
+
+    // 仇神：克原神之爻
+    const chouItems = [];
+    if (yuanWx) {
+        yaoDetail.forEach((y, i) => {
+            const w = DIZHI_WUXING[y.dizhi] || '';
+            if (w && yuanWx && WX_KE_RW7[w] === yuanWx) chouItems.push({ y:y, idx:i + 1 });
+        });
+    }
+
+    function buildState(items, name) {
+        if (!items.length) return null;
+        items.sort((a, b) => ((b.y.isDong ? 1 : 0) - (a.y.isDong ? 1 : 0)));
+        const top = items[0];
+        const sc = jiWangShuaiScore(top.y, guaInfo);
+        const liuqin = top.y.liuqin;
+        const duanYu = (name === '忌神')
+            ? `忌神（${liuqin}）${sc.score >= 0 ? '有力' : '无力'}，宜防其克用`
+            : `仇神（${liuqin}）${sc.score >= 0 ? '有力' : '无力'}，宜防其克原神`;
+        return { liuqin:liuqin, positions:items.map(it => it.idx), wangShuaiScore:{index:sc.score,detail:sc.detail}, duanYu:duanYu };
+    }
+
+    guaInfo.jiShenState = buildState(jiItems, '忌神');
+    guaInfo.chouShenState = buildState(chouItems, '仇神');
+    return guaInfo;
+}

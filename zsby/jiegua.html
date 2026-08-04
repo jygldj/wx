@@ -576,6 +576,7 @@
         <span style="display:none;" id="benGuaName">—</span>
         <span style="display:none;" id="bianGuaName">—</span>
         <div class="gua-marks" id="guaMarks" style="display:none;margin-top:8px;"></div>
+        <div class="gua-marks" id="yongShenMarks" style="display:none;margin-top:8px;"></div>
     </div>
 
     <!-- 求卦者信息（可编辑，解决 localStorage 传输不稳定的问题） -->
@@ -878,6 +879,28 @@
             return '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">' + parts.join('') + '</div>';
         }
 
+        // ⭐ rw8：用神两现 / 旺衰评分 / 忌神仇神 展示（供 #yongShenMarks 区域）
+        function buildYongShenHtml(guaInfo) {
+            const ys = guaInfo.yongShen;
+            if (!ys || !ys.liuqin) return '';
+            const tagStyle = 'display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;margin:2px;';
+            const parts = [];
+            const primaryDesc = (typeof ys.primaryIndex === 'number') ? ('第' + ys.primaryIndex + '爻') : String(ys.primaryIndex);
+            parts.push('<span style="' + tagStyle + 'background:#fde8e8;color:#c0392b;border:1px solid #e6b0aa;">用神：' + ys.liuqin + '（' + primaryDesc + '）— ' + ys.reason + '</span>');
+            if (ys.wangShuaiScore && ys.wangShuaiScore.detail) {
+                parts.push('<span style="' + tagStyle + 'background:#eaf2f8;color:#2471a3;border:1px solid #aed6f1;">用神旺衰 ' + ys.wangShuaiScore.index + '　' + ys.wangShuaiScore.detail + '</span>');
+            }
+            if (guaInfo.jiShenState) {
+                const j = guaInfo.jiShenState;
+                parts.push('<span style="' + tagStyle + 'background:#fef9e7;color:#b7950b;border:1px solid #f9e79f;">忌神：' + j.liuqin + '（旺衰 ' + j.wangShuaiScore.index + '）' + j.duanYu + '</span>');
+            }
+            if (guaInfo.chouShenState) {
+                const c = guaInfo.chouShenState;
+                parts.push('<span style="' + tagStyle + 'background:#f4ecf7;color:#7d3c98;border:1px solid #d2b4de;">仇神：' + c.liuqin + '（旺衰 ' + c.wangShuaiScore.index + '）' + c.duanYu + '</span>');
+            }
+            return '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">' + parts.join('') + '</div>';
+        }
+
         // ⭐ rw7.2：内联角标注入——将 rw7 标记直接注入每爻行(.yao-row)内
         // zhukong.js 的 buildGuaHtml 渲染爻行后，本函数做 DOM 后处理
         // 从 guaData.benYao[].{yuePo,riPoOrAnDong,kongType} 读取已算好的 rw7 结果
@@ -1088,12 +1111,27 @@
                     }
                 } catch(e) { console.warn('rw7 标记计算失败（不影响主流程）:', e); }
 
+                // ⭐ rw8 新增：用神两现选取 + 旺衰评分 + 忌神/仇神连带（仅挂 guaInfo，供 qwen.js 增强版消费）
+                try {
+                    const qTypeRW8 = inferQuestionType(question);
+                    xuanYongShen(guaInfo, qTypeRW8);
+                    jiShenChouShen(guaInfo);
+                    const ysEl = document.getElementById('yongShenMarks');
+                    if (ysEl) {
+                        ysEl.innerHTML = buildYongShenHtml(guaInfo);
+                        ysEl.style.display = 'block';
+                    }
+                } catch(e) { console.warn('rw8 计算失败（不影响主流程）:', e); }
+
                 // ⭐ rw7 方案B：把已算好的 rw7 结果 merge 进 guaData，回写 currentGua（供增强版 qwen.js 读取）
                 try {
                     guaData.yuePoList = guaInfo.yuePoList || [];
                     guaData.yuanShenState = guaInfo.yuanShenState || null;
                     guaData.shiYaoZhuangTai = guaInfo.shiYaoZhuangTai || '未知';
                     guaData.shiYaoDetail = guaInfo.shiYaoDetail || '';
+                    guaData.yongShen = guaInfo.yongShen || null;
+                    guaData.jiShenState = guaInfo.jiShenState || null;
+                    guaData.chouShenState = guaInfo.chouShenState || null;
                     (guaInfo.yaoDetail || []).forEach((y, idx) => {
                         const by = (guaData.benYao || [])[idx];
                         if (!by) return;
