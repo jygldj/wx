@@ -1171,7 +1171,16 @@
                        }
 
                 // 显示结果
-                const timeText = `${timeInfo.solarTime || ''}（公历）${timeInfo.lunarTime || ''}（农历）`;
+                // 构建简洁干支年月日（去掉"手动输入"/时辰/"（公历）""（农历）"等冗余信息）
+                let timeText = '';
+                const rawLunar = (timeInfo.lunarTime || '').replace(/（农历）$/, '').trim();
+                if (/^[\u4e00-\u9fa5]/.test(rawLunar) && rawLunar.includes('年')) {
+                    // 干支年格式（如"丙午年 未月 庚戌日"）：清理末尾重复"日"
+                    timeText = rawLunar.replace(/日\s*日$/, '日').replace(/\s+/g, ' ');
+                } else {
+                    // 其他格式（如数字年）：fallback 到 月建+日辰
+                    timeText = `${timeInfo.yueJian || ''}月 ${timeInfo.riChen || ''}日`.replace(/\s+/, ' ').trim();
+                }
                 const userText = `姓名：${userInfo.name || '匿名'}　性别：${userInfo.gender || '未知'}　出生时辰：${userInfo.birth || '未知'}`;
                 const questionText = userInfo.question || '未提供具体问题，请综合解读';
                 const modelName = model === 'qwen' ? '千问 3.7' : '千问备选';
