@@ -1200,15 +1200,17 @@
                 const questionText = userInfo.question || '未提供具体问题，请综合解读';
                 const modelName = model === 'qwen' ? '千问 3.7' : '千问备选';
 
-                // rw9bd 第一刀：AI 释文折叠——通俗默认显示 + 专业详解默认折叠
-                // 以【专业详解】为切割点，该标记及其后内容包裹进原生 <details>
+                // rw10：AI 释文折叠——通俗默认显示 + 专业详解默认折叠
+                // 以【专业详解】为切割点，但标记本身不渲染，仅保留折叠按钮
                 const PRO_MARK = '【专业详解】';
                 const proIdx = result.indexOf(PRO_MARK);
                 let resultHtml;
                 if (proIdx !== -1) {
-                    resultHtml = mdToHtml(result.slice(0, proIdx))
+                    const plainPart = result.slice(0, proIdx).trim();
+                    const proPart = result.slice(proIdx + PRO_MARK.length).trim();
+                    resultHtml = mdToHtml(plainPart)
                         + '<details class="pro-details"><summary>▼ 专业详解</summary>'
-                        + mdToHtml(result.slice(proIdx))
+                        + mdToHtml(proPart)
                         + '</details>';
                 } else {
                     resultHtml = mdToHtml(result);
@@ -1263,14 +1265,19 @@
                     });
                 });
 
-                // 保存纯文本（用于复制/下载）
+                // 保存纯文本（用于复制/下载），清理 AI 可能残留的段落标题与折叠标记
+                const cleanResult = mdToPlain(result)
+                    .replace(/【专业详解】/g, '')
+                    .replace(/【第[一二三四五六七八九十]+段：[^】]*】/g, '')
+                    .replace(/【求卦者档案】/g, '')
+                    .trim();
                 window.__guaResultText = `【卦象解读 · ${guaData.benGuaName} → ${guaData.bianGuaName}】
 求卦者：${userText}
 起卦时间：${timeText}
 月建：${timeInfo.yueJian || '未知'}月　日辰：${timeInfo.riChen || '未知'}日　旬空：${timeInfo.xunKong || '—'}
 所问之事：${questionText}
 
-${mdToPlain(result)}
+${cleanResult}
 
 ---
 野鹤老人的时空对话　${new Date().toLocaleString('zh-CN')}`;
