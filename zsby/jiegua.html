@@ -790,10 +790,22 @@
         // ============================================================
         function loadGuaData() {
             try {
-                // 优先从 sessionStorage 读取（起卦页跳转时已写入，跨页可靠）
+                // rw9bd 第二刀：优先从 URL ?id= 还原（数据藏于 localStorage，URL 仅带 id）
+                const urlParams = new URLSearchParams(window.location.search);
+                const id = urlParams.get('id');
+                if (id) {
+                    const stored = localStorage.getItem('gua_' + id);
+                    if (stored) {
+                        try { localStorage.removeItem('gua_' + id); } catch (e) {} // 还原后立即删除，防存储膨胀
+                        return JSON.parse(stored);
+                    }
+                    // id 存在但数据丢失：置标志供调用处提示
+                    window.__guaDataLost = true;
+                    return null;
+                }
+                // 回退：sessionStorage / localStorage 'currentGua'（兼容直接访问或旧流程）
                 const sessionData = sessionStorage.getItem('currentGua');
                 if (sessionData) return JSON.parse(sessionData);
-                // 兜底：再尝试 localStorage
                 const localData = localStorage.getItem('currentGua');
                 if (localData) return JSON.parse(localData);
                 return null;
@@ -973,10 +985,13 @@
             const guaData = loadGuaData();
             // 守卫：确保 guaData 完整（防止跳转/缓存导致的数据缺失）
             if (!guaData || !guaData.benYao || !guaData.benGuaName) {
+                const lostTip = window.__guaDataLost
+                    ? '卦象数据失效或丢失，请重新排盘。<a href="jiegou.html" style="color:#7a6652;text-decoration:underline;">前往起卦页</a>'
+                    : '未找到卦象数据，请先完成排盘再释卦！';
                 resultArea.innerHTML = `
                     <div class="result-content">
                         <div style="color:#b33;text-align:center;padding:20px 0;">
-                            ⚠️ 未找到卦象数据，请先完成排盘再释卦！
+                            ⚠️ ${lostTip}
                         </div>
                     </div>
                 `;
@@ -1185,6 +1200,20 @@
                 const questionText = userInfo.question || '未提供具体问题，请综合解读';
                 const modelName = model === 'qwen' ? '千问 3.7' : '千问备选';
 
+                // rw9bd 第一刀：AI 释文折叠——通俗默认显示 + 专业详解默认折叠
+                // 以【专业详解】为切割点，该标记及其后内容包裹进原生 <details>
+                const PRO_MARK = '【专业详解】';
+                const proIdx = result.indexOf(PRO_MARK);
+                let resultHtml;
+                if (proIdx !== -1) {
+                    resultHtml = mdToHtml(result.slice(0, proIdx))
+                        + '<details class="pro-details"><summary>▼ 专业详解</summary>'
+                        + mdToHtml(result.slice(proIdx))
+                        + '</details>';
+                } else {
+                    resultHtml = mdToHtml(result);
+                }
+
                 resultArea.innerHTML = `
                     <div class="result-content" id="resultContent">
                         <div class="title">
@@ -1214,12 +1243,20 @@
                                 <span>❓ 所问：${questionText}</span>
                             </div>
                         </div>
-                        <div class="body">${mdToHtml(result)}</div>
+                        <div class="body">${resultHtml}</div>
                         <div style="margin-top:14px;font-size:12px;color:#9a8876;border-top:1px solid #e0d3c4;padding-top:12px;">
                             🗨️ 野鹤老人的时空对话　${new Date().toLocaleString('zh-CN')}
                         </div>
                     </div>
                 `;
+
+                // rw9bd 第一刀：折叠栏 summary 文案切换（默认"▼ 专业详解"，展开"▲ 收起专业详解"）
+                document.querySelectorAll('.pro-details').forEach(function(d) {
+                    d.addEventListener('toggle', function() {
+                        const s = d.querySelector('summary');
+                        if (s) s.textContent = d.open ? '▲ 收起专业详解' : '▼ 专业详解';
+                    });
+                });
 
                 // 保存纯文本（用于复制/下载）
                 window.__guaResultText = `【卦象解读 · ${guaData.benGuaName} → ${guaData.bianGuaName}】
@@ -1370,18 +1407,6 @@ ${mdToPlain(result)}
 
         console.log('✅ 解卦页面已加载（含时间信息）');
         console.log('📊 当前卦象:', guaData);
-
-        // 如果URL参数带有卦象数据（从起卦页面跳转过来）
-        const urlParams = new URLSearchParams(window.location.search);
-        const encodedData = urlParams.get('data');
-        if (encodedData) {
-            try {
-                const data = JSON.parse(decodeURIComponent(encodedData));
-                localStorage.setItem('currentGua', JSON.stringify(data));
-                try { sessionStorage.setItem('currentGua', JSON.stringify(data)); } catch(e) {}
-                displayGuaInfo(data);
-            } catch(e) {}
-        }
     })();
 </script>
 </body>

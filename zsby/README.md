@@ -20,7 +20,6 @@ F:\github-dx\wx\                              # 网站根目录（道玄文集�
     ├── history.html     # 占卜历史（localStorage，目录折叠式）
     ├── help.html        # 使用指南
     ├── wnl.html         # 万年历排盘（农历查询、真太阳时、断卦参数）
-    ├── liuyao_divine.html  # ⚠️ 已废弃·待删：旧版单文件起卦页，已被 jiegou.html + ly/ 取代
     ├── api/
     │   ├── qwen.js      # 通义千问（主力）API 调用模块
     │   └── qwen2.js     # 通义千问（备选）API 调用模块

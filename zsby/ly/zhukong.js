@@ -352,37 +352,43 @@
             console.warn('保存卦象数据失败:', e);
         }
 
-        // 保存求卦者信息
-        const userInfo = {
-            name: document.getElementById('userName').value || '匿名',
-            gender: document.getElementById('userGender').value || '男',
-            birth: document.getElementById('userBirth').value || '未知',
-            question: document.getElementById('userQuestion').value || '未输入个人资料'
-        };
-        try {
-            localStorage.setItem('userInfo', JSON.stringify(userInfo));
-        } catch(e) {}
 
-        // 追加历史记录
-        try {
-            const history = JSON.parse(localStorage.getItem('guaHistory') || '[]');
-            history.push({
-                benGua: guaData.benGuaName,
-                bianGua: guaData.bianGuaName,
-                dongYao: guaData.dongYao,
-                question: (userInfo.name && userInfo.name !== '匿名' ? '【' + userInfo.name + '】' : '') + userInfo.question,
-                time: guaData.time,
-                userInfo: { name: userInfo.name, gender: userInfo.gender, birth: userInfo.birth, question: userInfo.question },
-                timeInfo: null,
-                result: '',
-                modelName: ''
-            });
-            localStorage.setItem('guaHistory', JSON.stringify(history));
-        } catch(e) {
-            console.warn('保存历史记录失败:', e);
+// 保存求卦者信息
+const userInfo = {
+    name: document.getElementById('userName').value || '',
+    gender: document.getElementById('userGender').value || '男',
+    birth: document.getElementById('userBirth').value || '',
+    question: document.getElementById('userQuestion').value || ''
+};
+
+try {
+    localStorage.setItem('userInfo', JSON.stringify(userInfo));
+} catch(e) {}
+
+// 追加历史记录
+try {
+    const history = JSON.parse(localStorage.getItem('guaHistory') || '[]');
+    history.push({
+        benGua: guaData.benGuaName,
+        bianGua: guaData.bianGuaName,
+        dongYao: guaData.dongYao,
+        question: (userInfo.name ? '【' + userInfo.name + '】' : '') + (userInfo.question || ''),
+        time: guaData.time,
+        userInfo: { 
+            name: userInfo.name, 
+            gender: userInfo.gender, 
+            birth: userInfo.birth, 
+            question: userInfo.question 
+        },
+        timeInfo: null,
+        result: '',
+        modelName: ''
+    });
+    localStorage.setItem('guaHistory', JSON.stringify(history));
+} catch(e) {
+    console.warn('保存历史记录失败:', e);
         }
     }
-
     // ============================================================
     // 8. 重置
     // ============================================================
@@ -507,8 +513,12 @@
             alert('请先排盘后再点击「释卦」！');
             return;
         }
-        try { sessionStorage.setItem('currentGua', guaDataRaw); } catch(e) {}
-        window.location.href = 'jiegua.html?data=' + encodeURIComponent(guaDataRaw);
+        try { sessionStorage.setItem('currentGua', guaDataRaw); } catch(e) {} // 保留兜底兼容（供无 id 时回退）
+        // rw9bd 第二刀：净化跳转——完整卦象藏 localStorage，URL 仅携带唯一 id
+        // 釜底抽薪：杜绝 guaData 序列化塞入 URL 导致链接冗长与数据泄露
+        const id = Date.now();
+        try { localStorage.setItem('gua_' + id, guaDataRaw); } catch(err) {}
+        window.location.href = 'jiegua.html?id=' + id;
     });
     resetBtn.addEventListener('click', resetAll);
 

@@ -13,7 +13,7 @@
     <!-- 导航栏 -->
     <div class="nav-bar">
         <a href="jiegou.html" class="active">🔮 起卦</a>
-        <a href="jiegua.html">📜 释卦</a>
+        <a href="jiegua.html" id="jieguaLink">📜 释卦</a>
         <a href="history.html">📖 历史</a>
         <a href="help.html">❓ 指南</a>
         <a href="wnl.html" title="万年历">🗓️ 万年历</a>
@@ -295,6 +295,24 @@
 
     // 排盘后注入（等 zhukong.js 的 renderFinalResult 先完成）
     if (completeBtn) completeBtn.addEventListener('click', function () { setTimeout(injectRw7InlineMarks, 50); });
+
+    // rw9bd 第二刀：净化释卦跳转——数据藏 localStorage，URL 仅携带唯一 id
+    // 杜绝 guaData 序列化塞入 URL 导致的链接冗长与数据泄露风险
+    const jieguaLink = document.getElementById('jieguaLink');
+    if (jieguaLink) {
+        jieguaLink.addEventListener('click', function (e) {
+            const raw = localStorage.getItem('currentGua');
+            if (!raw) return; // 无数据则放行默认链接，由 jiegua.html 兜底
+            try {
+                const id = Date.now();
+                localStorage.setItem('gua_' + id, raw);
+                e.preventDefault();
+                location.href = 'jiegua.html?id=' + id;
+            } catch (err) {
+                console.warn('rw9 净化跳转存储失败，回退默认链接:', err);
+            }
+        });
+    }
 })();
 </script>
 </body>
