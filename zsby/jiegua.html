@@ -1239,6 +1239,11 @@
                             <div class="user-row">
                                 <span>🌙 月建：${timeInfo.yueJian || '未知'}月　☀️ 日辰：${timeInfo.riChen || '未知'}日　🌀 旬空：${timeInfo.xunKong || '—'}</span>
                             </div>
+                            ${timeInfo && timeInfo.yueJian ? `
+                            <div class="user-row" style="margin-top:6px;">
+                                <a href="wnl.html?yingqi=${timeInfo.yueJian}月${(timeInfo.riChen||'').charAt(1)||''}日" style="display:inline-block;background:#b09a84;color:#2d241c;padding:5px 16px;border-radius:30px;font-size:13px;text-decoration:none;border:1px solid #c9b49e;transition:0.2s;" onmouseover="this.style.background='#c0aa94'" onmouseout="this.style.background='#b09a84'">🗓️ 查干支对应公历（应期反查）</a>
+                            </div>
+                            ` : ''}
                             <div class="user-row">
                                 <span>❓ 所问：${questionText}</span>
                             </div>

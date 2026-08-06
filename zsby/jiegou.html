@@ -313,6 +313,94 @@
             }
         });
     }
+
+    // ===== 天时通鉴·回马枪：接收 tstj_timeInfo，预填手动输卦时间 =====
+    // 从 wnl.html 点击"以此时间起卦"后跳转 jiegou.html?from=tstj，
+    // 读取 localStorage.tstj_timeInfo，预填手动输卦区时间下拉框。
+    function receiveTstjTimeInfo() {
+        var search = location.search;
+        if (!search) return;
+        var params = new URLSearchParams(search);
+        if (params.get('from') !== 'tstj') return;
+
+        var raw = null;
+        try { raw = localStorage.getItem('tstj_timeInfo'); } catch (e) { return; }
+        if (!raw) return;
+
+        var ti = null;
+        try { ti = JSON.parse(raw); } catch (e) { return; }
+        if (!ti || !ti.riChen) return;
+
+        // 切换到手动输卦模式
+        var modeInputBtn = document.getElementById('modeInputBtn');
+        var modeCoinBtn = document.getElementById('modeCoinBtn');
+        if (modeInputBtn && !modeInputBtn.classList.contains('active')) {
+            modeInputBtn.click();
+        }
+
+        // 预填时间下拉框
+        var selY = document.getElementById('selYear');
+        var selM = document.getElementById('selMonth');
+        var selD = document.getElementById('selDay');
+        var selH = document.getElementById('selHour');
+
+        // 等待下拉框填充完成后设置选中值
+        setTimeout(function() {
+            if (ti.nianGanZhi && selY) {
+                // 在六十甲子中找到匹配项
+                for (var i = 0; i < selY.options.length; i++) {
+                    if (selY.options[i].value === ti.nianGanZhi) {
+                        selY.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+            if (ti.yueJian && selM) {
+                for (var i = 0; i < selM.options.length; i++) {
+                    if (selM.options[i].value === ti.yueJian) {
+                        selM.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+            if (ti.riChen && selD) {
+                for (var i = 0; i < selD.options.length; i++) {
+                    if (selD.options[i].value === ti.riChen) {
+                        selD.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+            if (ti.shiChen && selH) {
+                for (var i = 0; i < selH.options.length; i++) {
+                    if (selH.options[i].value === ti.shiChen) {
+                        selH.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            // 消费后删除
+            try { localStorage.removeItem('tstj_timeInfo'); } catch (e) {}
+
+            // 显示提示
+            var hint = document.createElement('div');
+            hint.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#2d7a3d;color:#fff;padding:10px 24px;border-radius:30px;font-size:14px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);letter-spacing:1px;';
+            hint.textContent = '✅ 已从天时通鉴载入时间参数：' + ti.riChen + '日 ' + ti.shiChen + '时';
+            document.body.appendChild(hint);
+            setTimeout(function() { hint.style.transition = 'opacity 0.5s'; hint.style.opacity = '0'; }, 3000);
+            setTimeout(function() { if (hint.parentNode) hint.parentNode.removeChild(hint); }, 3600);
+
+            console.log('✅ 天时通鉴 timeInfo 已载入:', ti);
+        }, 100);
+    }
+
+    // 页面加载后执行接收逻辑（等 zhukong.js 初始化完成）
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() { setTimeout(receiveTstjTimeInfo, 200); });
+    } else {
+        setTimeout(receiveTstjTimeInfo, 200);
+    }
 })();
 </script>
 </body>
