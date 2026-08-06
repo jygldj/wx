@@ -1385,6 +1385,12 @@ ${mdToPlain(result)}
         const guaData = loadGuaData();
         displayGuaInfo(guaData);
 
+        // rw9bd 后续加固：一次性 ?id= 票据读取成功后立即清理 URL，
+        // 防止用户再次点击「释卦」时因票据已删而报「数据失效」。
+        if (guaData && new URLSearchParams(window.location.search).get('id')) {
+            try { window.history.replaceState({}, '', window.location.pathname); } catch(e) {}
+        }
+
         // ⭐ rw7.2：内联角标注入——将 rw7 标记（月破/日破暗动/真空假空）直接注入每爻行旁
         // 不改 zhukong.js 渲染逻辑，仅做 DOM 后处理
         try { injectInlineRw7Marks(guaData); } catch(e) { console.warn('rw7 内联角标注入失败:', e); }

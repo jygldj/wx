@@ -149,6 +149,28 @@
             white-space: pre-wrap; word-break: break-all; line-height: 1.5;
         }
 
+        /* ===== 中栏：今日/日历/应期 三卡片 ===== */
+        .today-card {
+            background: #f6efe6; border: 1px solid #d5c6b4; border-radius: 14px;
+            padding: 14px 16px; margin-bottom: 12px; text-align: center;
+        }
+        .btn-today {
+            background: #b33a2a; border: none; color: #fff;
+            padding: 10px 28px; border-radius: 30px; font-size: 15px; font-weight: bold;
+            cursor: pointer; font-family: inherit; transition: 0.2s;
+            box-shadow: 0 2px 6px rgba(179,58,42,0.25);
+        }
+        .btn-today:hover { background: #c94a38; transform: translateY(-1px); }
+        .today-hint { font-size: 12px; color: #7a6652; margin-top: 6px; }
+        .calendar-card {
+            background: #fcf8f0; border: 1px solid #d5c6b4; border-radius: 14px; padding: 12px;
+            margin-bottom: 12px;
+        }
+        .calendar-card .calendar-header {
+            background: transparent; border: none; border-radius: 0;
+            padding: 0 4px 10px;
+        }
+
         /* ===== 中栏：日历网格 ===== */
         .calendar-header {
             display: flex; align-items: center; justify-content: space-between;
@@ -356,17 +378,20 @@
             <button class="btn-qigua" id="btnQigua">⚔ 以此时间起卦</button>
         </div>
 
-        <!-- ===== 中栏：日历网格 ===== -->
+        <!-- ===== 中栏：今日/日历/应期 三卡片 ===== -->
         <div class="tstj-center">
-            <div class="calendar-header">
-                <button class="cal-nav-btn" id="calPrev">◀ 上月</button>
-                <span class="cal-title" id="calTitle">—</span>
-                <div>
-                    <button class="cal-nav-btn" id="calToday" style="margin-right:6px;">今日</button>
+            <div class="today-card">
+                <button class="btn-today" id="calToday">📅 回到今日</button>
+                <div class="today-hint">点击跳转至今天，全页数据联动更新</div>
+            </div>
+            <div class="calendar-card">
+                <div class="calendar-header">
+                    <button class="cal-nav-btn" id="calPrev">◀ 上月</button>
+                    <span class="cal-title" id="calTitle">—</span>
                     <button class="cal-nav-btn" id="calNext">下月 ▶</button>
                 </div>
+                <div class="calendar-grid" id="calendarGrid"></div>
             </div>
-            <div class="calendar-grid" id="calendarGrid"></div>
             <div class="yingqi-section" id="yingqiSection" style="display:none;">
                 <div class="yingqi-title" id="yingqiTitle">应期反查结果</div>
                 <div class="yingqi-list" id="yingqiList"></div>
@@ -1156,8 +1181,16 @@
     });
     calToday.addEventListener('click', function(){
         var now = new Date();
-        calView.y = now.getFullYear();
-        calView.m = now.getMonth()+1;
+        var y = now.getFullYear(), m = now.getMonth()+1, d = now.getDate();
+        var h = now.getHours(), mi = now.getMinutes();
+        // 同步状态与左栏输入
+        state.y = y; state.m = m; state.d = d; state.h = h; state.mi = mi;
+        inpYear.value = y; inpMonth.value = m; inpDay.value = d;
+        selHour.value = h; selMin.value = mi;
+        // 同步日历视图
+        calView.y = y; calView.m = m;
+        // 全页联动渲染：左侧结果、右侧黄历、中间日历
+        render();
         renderCalendar();
     });
 
