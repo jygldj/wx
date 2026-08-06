@@ -209,6 +209,11 @@
             box-shadow: 0 0 8px rgba(212,160,23,0.3);
         }
         .cal-cell.yingqi-match.selected { border: 2px solid #6b4f39; background: #f6efe6; box-shadow: 0 0 8px rgba(212,160,23,0.4); }
+        .cal-cell.zeji-match {
+            border: 2px solid #2980b9; background: #eff7fc;
+            box-shadow: 0 0 6px rgba(41,128,185,0.2);
+        }
+        .cal-cell.zeji-match.selected { border: 2px solid #6b4f39; background: #f6efe6; }
         .cal-solar { font-size: 15px; font-weight: bold; color: #3f2e1e; line-height: 1; }
         .cal-lunar { font-size: 11px; color: #8a765d; line-height: 1.2; }
         .cal-jieqi { font-size: 10px; color: #2d7a3d; font-weight: bold; line-height: 1.2; }
@@ -396,6 +401,10 @@
                 <div class="yingqi-title" id="yingqiTitle">应期反查结果</div>
                 <div class="yingqi-list" id="yingqiList"></div>
             </div>
+            <div class="yingqi-section" id="zejiResultSection" style="display:none;">
+                <div class="yingqi-title" id="zejiResultTitle">择吉结果</div>
+                <div class="yingqi-list" id="zejiResultList"></div>
+            </div>
         </div>
 
         <!-- ===== 右栏：黄历通书 ===== -->
@@ -404,22 +413,32 @@
                 <div class="hl-placeholder">点击日历中任意一日<br>查看当日黄历通书</div>
             </div>
             <div class="zeji-section" id="zejiSection">
-                <div class="zeji-title">🔮 择吉助手（二期）</div>
+                <div class="zeji-title">🔮 择吉助手</div>
                 <div class="zeji-row">
                     <select id="zejiCategory">
                         <option value="">选择事项…</option>
                         <option value="嫁娶">嫁娶</option>
-                        <option value="出行">出行</option>
                         <option value="搬家">搬家</option>
                         <option value="开业">开业</option>
-                        <option value="祭祀">祭祀</option>
-                        <option value="祈福">祈福</option>
+                        <option value="出行">出行</option>
                         <option value="动土">动土</option>
                         <option value="安葬">安葬</option>
+                        <option value="祭祀">祭祀</option>
+                        <option value="求医">求医</option>
+                        <option value="交易">交易</option>
+                        <option value="入学">入学</option>
+                        <option value="会友">会友</option>
+                        <option value="置产">置产</option>
                     </select>
-                    <button class="btn" id="btnZeji">查找吉日</button>
+                    <select id="zejiDays">
+                        <option value="30">30天</option>
+                        <option value="90" selected>90天</option>
+                        <option value="180">180天</option>
+                        <option value="365">365天</option>
+                    </select>
+                    <button class="btn btn-primary" id="btnZeji">查找吉日</button>
                 </div>
-                <div class="zeji-hint">此功能将在二期上线，敬请期待</div>
+                <div class="zeji-hint" id="zejiHint" style="display:none;"></div>
             </div>
         </div>
     </div>
@@ -427,7 +446,9 @@
     <div class="footer-note">📜 月建遵节气 · 时辰用真太阳时 · 子时（23-24）日柱归本日 · 仅供研究参考</div>
 </div>
 
-<script src="ly/lunar.js"></script>
+    <script src="ly/lunar.js"></script>
+    <script src="ly/shuju.js"></script>
+    <script src="ly/suanfa.js"></script>
 <script>
 (function(){
     'use strict';
@@ -463,6 +484,11 @@
     var yingqiList    = document.getElementById('yingqiList');
     var btnZeji  = document.getElementById('btnZeji');
     var zejiCategory = document.getElementById('zejiCategory');
+    var zejiDays = document.getElementById('zejiDays');
+    var zejiHint = document.getElementById('zejiHint');
+    var zejiResultSection = document.getElementById('zejiResultSection');
+    var zejiResultTitle   = document.getElementById('zejiResultTitle');
+    var zejiResultList    = document.getElementById('zejiResultList');
 
     // ============ 状态 ============
     var state = {
@@ -475,6 +501,62 @@
     // 扫描窗口（起止公历日），高亮仅在此范围内生效
     var yingqiScanStart = null; // {y, m, d}
     var yingqiScanEnd   = null;
+
+    // 择吉状态
+    var zejiMode = null;        // 'plain' 纯事项 | 'liangua' 联卦
+    var zejiParam = null;      // { category, useShenWang, yongShenDizhi?, ... }
+    var zejiMatches = [];
+    var zejiScanStart = null;
+    var zejiScanEnd   = null;
+
+    // ============ 择吉常量 ============
+    // 事项库：yi=目标事项词(getDayYi匹配)，ji=相冲忌词(getDayJi匹配)
+    // yi 与 ji 不可填同一数组（云长批注修正）
+    var ZEJI_CATEGORIES = {
+        '嫁娶': { yi: ['嫁娶', '订婚', '纳采', '问名'],          ji: [],             desc: '结婚、订婚' },
+        '搬家': { yi: ['移徙', '入宅'],                           ji: [],             desc: '搬家、入宅' },
+        '开业': { yi: ['开市', '挂匾'],                           ji: [],             desc: '开业、开张' },
+        '出行': { yi: ['出行'],                                  ji: [],             desc: '出差、旅行' },
+        '动土': { yi: ['动土', '修造', '起基'],                   ji: [],             desc: '建房、装修' },
+        '安葬': { yi: ['安葬', '破土', '入殓', '移柩'],            ji: [],             desc: '下葬、立碑' },
+        '祭祀': { yi: ['祭祀', '祈福'],                           ji: [],             desc: '祭祖、祈福' },
+        '求医': { yi: ['求医疗病', '求医', '治病'],               ji: ['针灸'],       desc: '看病、求医' },
+        '交易': { yi: ['立券交易', '交易', '立券', '纳财'],        ji: [],             desc: '签合同、买卖' },
+        '入学': { yi: ['入学', '习艺'],                           ji: [],             desc: '开学、入学' },
+        '会友': { yi: ['会亲友', '会友'],                         ji: [],             desc: '会客、聚友' },
+        '置产': { yi: ['置产', '纳财', '买车'],                   ji: ['出货财'],     desc: '买房、购车' }
+    };
+    // 事项→questionType 映射（联卦模式自动选中事项）
+    var QUESTION_TO_CATEGORY = {
+        '婚姻': '嫁娶', '感情': '嫁娶',
+        '财运': '交易', '求财': '交易', '失物': '交易',
+        '事业': '开业', '工作': '开业', '功名': '入学',
+        '健康': '求医', '病': '求医',
+        '出行': '出行', '旅行': '出行',
+        '学业': '入学', '考试': '入学', '文书': '交易',
+        '子孙': '祭祀'
+    };
+    // 建除分数映射表
+    var JIANCHU_SCORE = {
+        '建': 10, '除': 15, '满': 25, '平': 10,
+        '定': 25, '执': 15, '破': 0,  '危': 15,
+        '成': 25, '收': 10, '开': 25, '闭': 0
+    };
+    // 吉神权重表（核心项）
+    var JI_SHEN_WEIGHT = {
+        '天德': 5, '月德': 5, '天德合': 5, '天赦': 5,
+        '天愿': 4, '青龙': 4, '金匮': 4, '玉堂': 4,
+        '司命': 3, '三合': 3, '六合': 3, '生气': 3,
+        '天喜': 3, '天医': 3, '驿马': 2,
+        '福德': 2, '时德': 2, '民日': 2, '临日': 2
+    };
+    // 凶煞权重表（核心项）
+    var XIONG_SHA_WEIGHT = {
+        '月破': -5, '月厌': -3, '月刑': -3, '四废': -3,
+        '大耗': -3, '劫煞': -2, '灾煞': -2, '天火': -2,
+        '血支': -2, '月煞': -2, '天贼': -2,
+        '月建': -1, '土符': -1, '土府': -1
+    };
 
     // ============ 工具：真太阳时 ============
     function equationOfTime(dayOfYear){
@@ -895,10 +977,15 @@
         // 应期高亮仅在扫描窗口（今日起365天）内生效
         var isYqMatch = yingqiParam && isWithinScanWindow(y, m, d) && isYingqiMatch(lunar);
         if(isYqMatch) cls += ' yingqi-match';
+        // 择吉高亮（蓝色标记"吉"，区别于应期金色）
+        var isZjMatch = isZejiMatch(y, m, d);
+        if(isZjMatch && !isYqMatch) cls += ' zeji-match';
 
         var badge = '';
         if(isYqMatch){
             badge = '<span class="cal-badge">应</span>';
+        } else if(isZjMatch){
+            badge = '<span class="cal-badge" style="background:#2980b9;">吉</span>';
         }
         var jieqiHtml = jieQi ? '<span class="cal-jieqi">'+jieQi+'</span>' : '';
 
@@ -1321,15 +1408,292 @@
         }
     });
 
-    // ============ 择吉助手（二期预留） ============
+    // ============ 择吉助手 ============
+    // 军师令：URL判模式，zeji=嫁娶 为纯事项，zeji=tstj 为卦理联动
+    
+    // URL ?zeji= 参数解析
+    function parseZejiParam(){
+        var search = location.search;
+        if(!search) return;
+        var params = new URLSearchParams(search);
+        var zj = params.get('zeji');
+        if(!zj) return;
+
+        if(zj === 'tstj'){
+            // 联卦模式：从 localStorage.tstj_zeji 读取
+            var raw = null;
+            try { raw = localStorage.getItem('tstj_zeji'); } catch(e) { return; }
+            if(!raw){
+                zejiHint.textContent = '联卦数据已失效，请从释卦页重新发起。';
+                zejiHint.style.display = '';
+                return;
+            }
+            var ti = null;
+            try { ti = JSON.parse(raw); } catch(e) { return; }
+            if(!ti || !ti.yongShenDizhi){
+                zejiHint.textContent = '联卦数据缺少 yongShenDizhi，无法计算用神旺衰。';
+                zejiHint.style.display = '';
+                return;
+            }
+            // 自动选中事项
+            var cat = QUESTION_TO_CATEGORY[ti.questionType] || '';
+            if(cat){
+                for(var i = 0; i < zejiCategory.options.length; i++){
+                    if(zejiCategory.options[i].value === cat){
+                        zejiCategory.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+            zejiParam = {
+                category: cat,
+                useShenWang: true,
+                yongShenDizhi: ti.yongShenDizhi,
+                yongShenLiuqin: ti.yongShenLiuqin || '',
+                guaName: ti.guaName || '',
+                question: ti.question || '',
+                wangShuaiScore: ti.wangShuaiScore || 0
+            };
+            zejiMode = 'liangua';
+            // 消费后删除
+            try { localStorage.removeItem('tstj_zeji'); } catch(e) {}
+            // 显示联卦信息
+            zejiHint.innerHTML = '🔮 联卦模式：' + (ti.guaName||'') + ' · 用神 ' + (ti.yongShenLiuqin||'') +
+                '（' + ti.yongShenDizhi + '）· 卦象旺衰 ' + (ti.wangShuaiScore||0) + '分';
+            zejiHint.style.display = '';
+            // 自动扫描
+            if(cat) setTimeout(function(){ doScanZeji(cat); }, 100);
+        } else if(ZEJI_CATEGORIES[zj]){
+            // 纯事项模式
+            for(var i = 0; i < zejiCategory.options.length; i++){
+                if(zejiCategory.options[i].value === zj){
+                    zejiCategory.selectedIndex = i;
+                    break;
+                }
+            }
+            zejiParam = { category: zj, useShenWang: false };
+            zejiMode = 'plain';
+            setTimeout(function(){ doScanZeji(zj); }, 100);
+        }
+    }
+
+    function doScanZeji(category){
+        var cat = ZEJI_CATEGORIES[category];
+        if(!cat) return;
+        var days = parseInt(zejiDays.value, 10) || 90;
+        scanZeji(category, days, zejiParam && zejiParam.useShenWang);
+    }
+
     btnZeji.addEventListener('click', function(){
         var cat = zejiCategory.value;
         if(!cat){
             alert('请先选择事项');
             return;
         }
-        alert('「' + cat + '」择吉功能将在二期上线，敬请期待');
+        doScanZeji(cat);
     });
+
+    // 扫描引擎
+    function scanZeji(category, scanDays, useShenWang){
+        var cat = ZEJI_CATEGORIES[category];
+        if(!cat) return;
+        var yiWords = cat.yi;
+        var jiWords = cat.ji;
+
+        var today = new Date();
+        var todayY = today.getFullYear(), todayM = today.getMonth()+1, todayD = today.getDate();
+        zejiScanStart = { y: todayY, m: todayM, d: todayD };
+        var endDate = new Date(todayY, todayM-1, todayD + scanDays);
+        zejiScanEnd = { y: endDate.getFullYear(), m: endDate.getMonth()+1, d: endDate.getDate() };
+
+        var matches = [];
+        for(var i = 0; i <= scanDays; i++){
+            var d = new Date(todayY, todayM-1, todayD + i);
+            var y = d.getFullYear(), m = d.getMonth()+1, dd = d.getDate();
+            var lunar = lunarOf(y, m, dd);
+            var dayYi = lunar.getDayYi();
+            var dayJi = lunar.getDayJi();
+
+            // 检查宜含目标词
+            var yiMatch = false;
+            for(var j = 0; j < yiWords.length; j++){
+                if(dayYi.indexOf(yiWords[j]) >= 0){ yiMatch = true; break; }
+            }
+            if(!yiMatch) continue; // 不入围则跳过
+
+            // 检查忌含冲词
+            var jiMatch = false;
+            for(var j = 0; j < jiWords.length; j++){
+                if(dayJi.indexOf(jiWords[j]) >= 0){ jiMatch = true; break; }
+            }
+
+            // 评分
+            var score = scoreZeji(lunar, dayYi, dayJi, jiMatch, useShenWang, y, m, dd);
+            matches.push({
+                y: y, m: m, d: dd,
+                week: WEEKDAYS[d.getDay()],
+                lunar: lunar.getMonthInChinese()+'月'+lunar.getDayInChinese(),
+                dayGZ: lunar.getDayInGanZhi(),
+                jianChu: getJianChu(lunar.getMonthZhiExact(), lunar.getDayInGanZhi().charAt(1)),
+                yiList: dayYi.slice(0, 5),
+                jiList: dayJi.slice(0, 3),
+                chong: lunar.getDayChongDesc(),
+                jiShenCount: lunar.getDayJiShen().length,
+                score: score.score,
+                grade: score.grade,
+                detail: score.detail
+            });
+        }
+        // 按分数降序
+        matches.sort(function(a, b){ return b.score - a.score; });
+        zejiMatches = matches;
+        renderZejiResults(category, scanDays, useShenWang);
+        renderCalendar(); // 刷新日历高亮
+    }
+
+    // 评分模型
+    function scoreZeji(lunar, dayYi, dayJi, jiMatch, useShenWang, y, m, d){
+        var monthZhi = lunar.getMonthZhiExact();
+        var dayZhi = lunar.getDayInGanZhi().charAt(1);
+        var jc = getJianChu(monthZhi, dayZhi);
+
+        // 维度1：建除
+        var jcScore = JIANCHU_SCORE[jc] || 0;
+
+        // 维度2：吉神
+        var jiShen = lunar.getDayJiShen();
+        var jsScore = 0;
+        for(var i = 0; i < jiShen.length; i++){
+            jsScore += JI_SHEN_WEIGHT[jiShen[i]] || 1;
+        }
+        jsScore = Math.min(jsScore, 25); // 封顶25
+
+        // 维度3：凶煞
+        var xiongSha = lunar.getDayXiongSha();
+        var xsScore = 0;
+        for(var i = 0; i < xiongSha.length; i++){
+            xsScore += XIONG_SHA_WEIGHT[xiongSha[i]] || 0;
+        }
+        xsScore = Math.max(xsScore, -20); // 底线-20，转正后为0
+
+        // 维度4：冲煞（本命生肖）
+        var dayChong = lunar.getDayChong(); // 冲某地支
+        var chongScore = 15; // 默认不冲
+        // 若用户有生肖（从 state 或 zejiParam）
+        var userZhi = '';
+        if(state.userZhi) userZhi = state.userZhi;
+        if(userZhi && dayChong === userZhi) chongScore = 0;
+
+        // 维度5：宜忌
+        var yiScore = 15; // 目标事项在宜
+        if(jiMatch) yiScore = 5; // 宜忌并存扣分
+
+        // 维度6：用神旺衰（仅联卦模式）
+        var wsScore = 0;
+        if(useShenWang && zejiParam && zejiParam.yongShenDizhi){
+            // 构造虚拟爻对象，调用 suanfa.js 的 jiWangShuaiScore
+            var fakeYao = { dizhi: zejiParam.yongShenDizhi, isDong: false, kongType: 'none', yuePo: false };
+            var fakeGuaInfo = {
+                timeInfo: {
+                    yueJian: lunar.getMonthZhiExact(),
+                    riChen: lunar.getDayInGanZhi()
+                },
+                yaoDetail: [fakeYao]
+            };
+            var ws = jiWangShuaiScore(fakeYao, fakeGuaInfo);
+            // 原始分约 -60~60，映射为 0~20
+            wsScore = Math.round(((ws.score || 0) + 60) / 120 * 20);
+            wsScore = Math.max(0, Math.min(20, wsScore));
+        }
+
+        // 合计
+        var total;
+        if(useShenWang){
+            // 联卦模式：六维，各维度等比压缩至80%+用神20%
+            total = Math.round(
+                jcScore * 0.8 + jsScore * 0.8 + (xsScore + 20) * 0.8 +
+                chongScore * 0.8 + yiScore * 0.8 + wsScore
+            );
+        } else {
+            // 纯事项模式：五维满分100
+            total = Math.round(jcScore + jsScore + (xsScore + 20) + chongScore + yiScore);
+        }
+        total = Math.max(0, Math.min(100, total));
+
+        // 分档
+        var grade = total >= 80 ? '🌟🌟🌟' : (total >= 60 ? '🌟🌟' : '🌟');
+
+        return { score: total, grade: grade, detail: '建除:' + jc + ' 吉神:' + jiShen.length + ' 凶煞:' + xiongSha.length + ' 冲:' + dayChong };
+    }
+
+    // 择吉结果列表渲染
+    function renderZejiResults(category, scanDays, useShenWang){
+        var cat = ZEJI_CATEGORIES[category];
+        zejiResultSection.style.display = '';
+        var modeStr = useShenWang ? '联卦择吉' : '纯事项择吉';
+        zejiResultTitle.textContent = '择吉结果：' + category + '（' + cat.desc + '）' +
+            ' · ' + modeStr + ' · 扫描' + scanDays + '天 · 共' + zejiMatches.length + '个入围日';
+
+        if(zejiMatches.length === 0){
+            zejiResultList.innerHTML = '<div style="color:#9a8876;text-align:center;padding:16px;">' + scanDays + '天内未找到宜' + category + '之日期</div>';
+            return;
+        }
+
+        var html = '';
+        var showCount = Math.min(zejiMatches.length, 15); // 最多展示15个
+        for(var i = 0; i < showCount; i++){
+            var item = zejiMatches[i];
+            var diffDays = Math.round((new Date(item.y, item.m-1, item.d) - new Date(zejiScanStart.y, zejiScanStart.m-1, zejiScanStart.d)) / 86400000);
+            var diffText = diffDays === 0 ? '今天' : '+' + diffDays + '天';
+            html += '<div class="yingqi-item" data-y="'+item.y+'" data-m="'+item.m+'" data-d="'+item.d+'" style="grid-template-columns: 30px 30px 1fr 44px 1fr 44px 50px;">' +
+                '<span class="yi-idx">'+(i+1)+'</span>' +
+                '<span style="font-size:11px;">'+item.grade+'</span>' +
+                '<span class="yi-date">'+item.y+'-'+p2(item.m)+'-'+p2(item.d)+'</span>' +
+                '<span class="yi-week">星期'+item.week+'</span>' +
+                '<span class="yi-lunar">'+item.lunar+' '+item.jianChu+' '+item.dayGZ+'</span>' +
+                '<span class="yi-gz">'+item.score+'分</span>' +
+                '<span class="yi-diff">'+diffText+'</span>' +
+            '</div>';
+        }
+        if(zejiMatches.length > showCount){
+            html += '<div style="font-size:12px;color:#a48d78;text-align:center;padding:8px;">还有 ' + (zejiMatches.length - showCount) + ' 个日期未展示（已按分数排序）</div>';
+        }
+        zejiResultList.innerHTML = html;
+
+        // 绑定点击
+        zejiResultList.querySelectorAll('.yingqi-item').forEach(function(item){
+            item.addEventListener('click', function(){
+                var y = parseInt(item.dataset.y, 10);
+                var m = parseInt(item.dataset.m, 10);
+                var d = parseInt(item.dataset.d, 10);
+                state.y = y; state.m = m; state.d = d;
+                calView.y = y; calView.m = m;
+                inpYear.value = String(y);
+                inpMonth.value = m < 10 ? '0'+m : ''+m;
+                inpDay.value = d < 10 ? '0'+d : ''+d;
+                render();
+                renderCalendar();
+                renderHuangli(y, m, d);
+            });
+        });
+    }
+
+    // 择吉日历高亮检查
+    function isZejiMatch(y, m, d){
+        if(!zejiMatches || zejiMatches.length === 0) return false;
+        if(!isWithinZejiScanWindow(y, m, d)) return false;
+        for(var i = 0; i < zejiMatches.length; i++){
+            if(zejiMatches[i].y === y && zejiMatches[i].m === m && zejiMatches[i].d === d) return true;
+        }
+        return false;
+    }
+    function isWithinZejiScanWindow(y, m, d){
+        if(!zejiScanStart || !zejiScanEnd) return false;
+        var date = y * 10000 + m * 100 + d;
+        var start = zejiScanStart.y * 10000 + zejiScanStart.m * 100 + zejiScanStart.d;
+        var end   = zejiScanEnd.y * 10000 + zejiScanEnd.m * 100 + zejiScanEnd.d;
+        return date >= start && date <= end;
+    }
 
     // ============ 初始化 ============
     function init(){
@@ -1352,6 +1716,7 @@
         inpDay.value = state.d < 10 ? '0' + state.d : '' + state.d;
 
         parseYingqiParam();
+        parseZejiParam();
 
         render();
         renderCalendar();
