@@ -1204,16 +1204,27 @@
                 // 以【专业详解】为切割点，但标记本身不渲染，仅保留折叠按钮
                 const PRO_MARK = '【专业详解】';
                 const proIdx = result.indexOf(PRO_MARK);
+                // 去除 AI 可能残留的强调标签（加粗/倾斜/变色），样式统一由前端容器控制
+                const stripEmphasis = function(html) {
+                    return html
+                        .replace(/<\/?(strong|b|em|i)>/gi, '')
+                        .replace(/<font[^>]*>/gi, '').replace(/<\/font>/gi, '')
+                        .replace(/<span[^>]*>/gi, '').replace(/<\/span>/gi, '');
+                };
                 let resultHtml;
                 if (proIdx !== -1) {
                     const plainPart = result.slice(0, proIdx).trim();
                     const proPart = result.slice(proIdx + PRO_MARK.length).trim();
-                    resultHtml = mdToHtml(plainPart)
-                        + '<details class="pro-details"><summary>▼ 专业详解</summary>'
-                        + mdToHtml(proPart)
+                    resultHtml = '<div class="duan-yu" style="font-weight:bold;color:#c0392b;line-height:1.9;margin-bottom:12px;">'
+                        + stripEmphasis(mdToHtml(plainPart))
+                        + '</div>'
+                        + '<details class="pro-details"><summary style="font-weight:bold;color:#2d241c;font-size:15px;">▼ 专业详解</summary>'
+                        + '<div class="pro-body" style="margin-top:10px;">' + stripEmphasis(mdToHtml(proPart)) + '</div>'
                         + '</details>';
                 } else {
-                    resultHtml = mdToHtml(result);
+                    resultHtml = '<div class="duan-yu" style="font-weight:bold;color:#c0392b;line-height:1.9;margin-bottom:12px;">'
+                        + stripEmphasis(mdToHtml(result))
+                        + '</div>';
                 }
 
                 resultArea.innerHTML = `
