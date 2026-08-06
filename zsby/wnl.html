@@ -1191,6 +1191,7 @@
         calView.y = y; calView.m = m;
         // 全页联动渲染：左侧结果、右侧黄历、中间日历
         render();
+        renderHuangli(y, m, d);
         renderCalendar();
     });
 
