@@ -1172,11 +1172,23 @@
         autoExpandSheet('yingqi');
         // 显示底部栏应期按钮
         if(mobileBarYingqi) mobileBarYingqi.style.display = '';
+        // 桌面端：自动滚动到应期卡片，给出明确反馈（手机端由 Bottom Sheet 弹出承担）
+        if (window.matchMedia && window.matchMedia('(min-width: 901px)').matches) {
+            setTimeout(function(){
+                try { yingqiSection.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+                catch(e) { yingqiSection.scrollIntoView(); }
+            }, 120);
+        }
     }
 
     function renderYingqiResults(){
         if(!yingqiParam) return;
-        yingqiSection.style.display = '';
+        // 桌面端（>900px）强制显示应期卡片；手机端交由 Bottom Sheet 逻辑接管，勿用 important 覆盖
+        if (window.matchMedia && window.matchMedia('(min-width: 901px)').matches) {
+            yingqiSection.style.setProperty('display', 'block', 'important');
+        } else {
+            yingqiSection.style.display = '';
+        }
         var paramStr = '';
         if(yingqiParam.yueZhi) paramStr += yingqiParam.yueZhi + '月';
         if(yingqiParam.riZhi) paramStr += yingqiParam.riZhi + '日';
@@ -1856,7 +1868,12 @@
     // 择吉结果列表渲染
     function renderZejiResults(category, scanDays, useShenWang){
         var cat = ZEJI_CATEGORIES[category];
-        zejiResultSection.style.display = '';
+        // 桌面端（>900px）强制显示择吉结果卡片；手机端交由 Bottom Sheet 逻辑接管
+        if (window.matchMedia && window.matchMedia('(min-width: 901px)').matches) {
+            zejiResultSection.style.setProperty('display', 'block', 'important');
+        } else {
+            zejiResultSection.style.display = '';
+        }
         var modeStr = useShenWang ? '联卦择吉' : '纯事项择吉';
         zejiResultTitle.textContent = '择吉结果：' + category + '（' + cat.desc + '）' +
             ' · ' + modeStr + ' · 扫描' + scanDays + '天 · 共' + zejiMatches.length + '个入围日';
@@ -1903,6 +1920,13 @@
                 renderHuangli(y, m, d);
             });
         });
+        // 桌面端：自动滚动到择吉结果卡片，给出明确反馈（手机端由 Bottom Sheet 弹出承担）
+        if (window.matchMedia && window.matchMedia('(min-width: 901px)').matches) {
+            setTimeout(function(){
+                try { zejiResultSection.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+                catch(e) { zejiResultSection.scrollIntoView(); }
+            }, 120);
+        }
     }
 
     // 择吉日历高亮检查

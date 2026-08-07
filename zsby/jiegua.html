@@ -1161,6 +1161,9 @@
                     guaData.yongShen = guaInfo.yongShen || null;
                     guaData.jiShenState = guaInfo.jiShenState || null;
                     guaData.chouShenState = guaInfo.chouShenState || null;
+                    // ⭐ rw9：把 yaoDetail / fuShenList 一并并入 currentGua，供 goZejiForGua 取用神真实地支（含伏神支路）
+                    guaData.yaoDetail = guaInfo.yaoDetail || [];
+                    guaData.fuShenList = guaInfo.fuShenList || [];
                     (guaInfo.yaoDetail || []).forEach((y, idx) => {
                         const by = (guaData.benYao || [])[idx];
                         if (!by) return;
@@ -1422,9 +1425,25 @@ ${cleanResult}
                 }
                 // 取用神地支（严禁以六亲反推地支）
                 var yaoDetail = gd.yaoDetail || (gd.guaInfo && gd.guaInfo.yaoDetail) || [];
+                var benYao = gd.benYao || [];
+                var fuList = gd.fuShenList || (gd.guaInfo && gd.guaInfo.fuShenList) || [];
                 var yongYao = null;
-                if (typeof ys.primaryIndex === 'number' && yaoDetail[ys.primaryIndex - 1]) {
-                    yongYao = yaoDetail[ys.primaryIndex - 1];
+                if (typeof ys.primaryIndex === 'number') {
+                    // 本卦用神：primaryIndex 为 1-based 爻位
+                    var entry = yaoDetail[ys.primaryIndex - 1] || benYao[ys.primaryIndex - 1];
+                    if (entry && entry.dizhi) yongYao = entry;
+                } else if (typeof ys.primaryIndex === 'string' && ys.primaryIndex.indexOf('伏') === 0) {
+                    // 伏神用神：primaryIndex 形如「伏N」，从伏神列表取真实地支
+                    var fuItem = null;
+                    for (var fi = 0; fi < fuList.length; fi++) {
+                        if (('伏' + (fuList[fi].伏神爻位 || '')) === ys.primaryIndex) { fuItem = fuList[fi]; break; }
+                    }
+                    if (!fuItem) {
+                        for (var fi2 = 0; fi2 < fuList.length; fi2++) {
+                            if (fuList[fi2].六亲 === ys.liuqin) { fuItem = fuList[fi2]; break; }
+                        }
+                    }
+                    if (fuItem && fuItem.地支) yongYao = { dizhi: fuItem.地支, liuqin: fuItem.六亲 };
                 }
                 if (!yongYao || !yongYao.dizhi) {
                     alert('用神地支数据缺失');
