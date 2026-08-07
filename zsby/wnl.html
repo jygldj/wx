@@ -517,17 +517,17 @@
     </div>
 
     <div class="footer-note">📜 月建遵节气 · 时辰用真太阳时 · 子时（23-24）日柱归本日 · 仅供研究参考</div>
+    <!-- 遮罩层（保留在 .container 内，与 .mobile-sheet 坐标系一致，维持已验证表现） -->
+    <div class="sheet-backdrop" id="sheetBackdrop"></div>
+</div>
 
-    <!-- 手机端底部浮动栏 -->
+    <!-- 手机端底部浮动栏：移出 .container，避免其 backdrop-filter 创建包含块使 position:fixed 相对容器而非视口（表现为随页面联动滚动） -->
     <div class="mobile-bar" id="mobileBar">
         <button class="mobile-bar-btn" data-sheet="paipan">📊 排盘</button>
         <button class="mobile-bar-btn" data-sheet="huangli">📜 黄历</button>
         <button class="mobile-bar-btn" data-sheet="zeji">🔮 择吉</button>
-        <button class="mobile-bar-btn" data-sheet="yingqi" id="mobileBarYingqi" style="display:none;">🗓️ 应期</button>
+        <button class="mobile-bar-btn" data-sheet="yingqi" id="mobileBarYingqi">🗓️ 应期</button>
     </div>
-    <!-- 遮罩层 -->
-    <div class="sheet-backdrop" id="sheetBackdrop"></div>
-</div>
 
     <script src="ly/lunar.js"></script>
     <script src="ly/shuju.js"></script>
@@ -1554,6 +1554,19 @@
         });
         activeSheet = name;
         sheetBackdrop.onclick = function(){ closeSheet(); };
+
+        // 应期空态引导：未携参且无数据时的使用提示
+        if(name === 'yingqi' && !yingqiParam){
+            var yt = document.getElementById('yingqiTitle');
+            var yl = document.getElementById('yingqiList');
+            if(yt) yt.textContent = '应期反查';
+            if(yl) yl.innerHTML = '<div style="color:#7a6652;text-align:center;line-height:1.9;padding:24px 12px;font-size:14px;">' +
+                '本栏用于「应期反查」——依卦中用神地支，反推未来 365 天内的应事之日。<br><br>' +
+                '获取方式：在<b>释卦页</b>求得卦象后，点击结果中的「应期」入口，将自动携参跳入此处并列出匹配日；<br>' +
+                '或直接于网址后附加参数访问，例如：<br>' +
+                '<code style="background:#f0e6d8;padding:2px 6px;border-radius:6px;">?yingqi=寅月寅日</code>　<code style="background:#f0e6d8;padding:2px 6px;border-radius:6px;">?yingqi=午月</code>　<code style="background:#f0e6d8;padding:2px 6px;border-radius:6px;">?yingqi=卯日</code>' +
+                '</div>';
+        }
     }
 
     function closeSheet(){
