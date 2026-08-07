@@ -34,18 +34,24 @@
             background: linear-gradient(90deg, #f6efe6, #fcf8f0, #f6efe6);
             border: 1px solid #e0d3c4;
             border-radius: 14px;
-            padding: 10px 16px;
+            padding: 10px 8px;
             text-align: center;
-            font-size: 14px;
+            font-size: 13px;
             color: #5a4632;
             margin-bottom: 0;
-            letter-spacing: 1px;
+            letter-spacing: 0;
             min-height: 40px;
             display: flex; align-items: center; justify-content: center;
-            flex-wrap: wrap; gap: 4px;
+            flex-wrap: nowrap; white-space: nowrap;
+            gap: 2px;
+            overflow: hidden;
         }
         .jieqi-bar .jq-name { color: #b33a2a; font-weight: bold; }
         .jieqi-bar .jq-sub { color: #8a765d; font-size: 12px; }
+        @media (max-width: 400px) {
+            .jieqi-bar { font-size: 11px; padding: 10px 4px; }
+            .jieqi-bar .jq-sub { font-size: 10px; }
+        }
 
         .date-input-wrapper {
             background: #fcf8f0;
@@ -296,13 +302,20 @@
         .sheet-backdrop { display: none; }
 
         @media (max-width: 900px) {
-            /* 底部浮动栏 */
+            /* 底部悬浮栏：始终可见 */
             .mobile-bar {
-                display: flex; position: fixed; bottom: 0; left: 0; right: 0;
-                background: rgba(246, 239, 230, 0.98); backdrop-filter: blur(12px);
-                border-top: 1px solid #d5c6b4; padding: 8px 6px; gap: 4px;
-                z-index: 1002; box-shadow: 0 -4px 16px rgba(0,0,0,0.12);
-                padding-bottom: max(8px, env(safe-area-inset-bottom));
+                display: flex; position: fixed; bottom: 0; left: 50%;
+                transform: translateX(-50%) translateZ(0);
+                width: calc(100% - 16px); max-width: 560px;
+                background: rgba(253, 249, 243, 0.98); backdrop-filter: blur(12px);
+                border: 1px solid #d5c6b4; border-bottom: none;
+                border-radius: 20px 20px 0 0;
+                padding: 8px 8px;
+                padding-bottom: max(10px, env(safe-area-inset-bottom), constant(safe-area-inset-bottom));
+                gap: 6px;
+                z-index: 9999;
+                box-shadow: 0 -6px 22px rgba(0,0,0,0.16);
+                will-change: transform;
             }
             .mobile-bar-btn {
                 flex: 1; padding: 10px 2px; border: 1px solid #d5c6b4;
@@ -891,7 +904,7 @@
             var curDate = new Date(y, m-1, d, h, mi, 0);
             var diff = arrDiffDaysHours(curDate, nextDate);
             jqText += '　下节：'+nextJq.getName();
-            jqText += '<br>还有 '+diff.days+'天'+diff.hours+'小时'+diff.mins+'分';
+            jqText += '　还有 '+diff.days+'天'+diff.hours+'小时'+diff.mins+'分';
         }
         jieqiBar.innerHTML = jqText;
 
