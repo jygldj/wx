@@ -1035,7 +1035,7 @@
             resultArea.innerHTML = `
                 <div class="loading-text">
                     <div class="spinner">☯</div>
-                    <div style="margin-top:10px;">正在与野鹤老人沟通，大约需要一分钟...</div>
+                    <div style="margin-top:10px;">正在为您解读卦象，大约需要一分钟...</div>
                     <div style="font-size:13px;color:#9a8876;margin-top:4px;">模型：${model === 'qwen' ? '千问 3.7' : '千问备选'}</div>
                 </div>
             `;
@@ -1200,10 +1200,19 @@
                 const questionText = userInfo.question || '未提供具体问题，请综合解读';
                 const modelName = model === 'qwen' ? '千问 3.7' : '千问备选';
 
+                // 首句校正：无论 AI 返回何种前缀（含偶发"野鹤老人曰"套语），一律强制以固定首句开头
+                const expectedOpen = `君有疑惑，询问${userInfo.question || '此事'}，求得《${guaData.benGuaName}》之《${guaData.bianGuaName}》，今老夫为你释疑：`;
+                if (!result.startsWith(expectedOpen)) {
+                    const m = result.match(/今老夫为你释疑[:：]/);
+                    result = m ? (expectedOpen + result.slice(m.index + m[0].length).trim())
+                              : (expectedOpen + '\n' + result.trim());
+                }
+
                 // rw10：AI 释文折叠——通俗默认显示 + 专业详解默认折叠
-                // 以【专业详解】为切割点，但标记本身不渲染，仅保留折叠按钮
-                const PRO_MARK = '【专业详解】';
-                const proIdx = result.indexOf(PRO_MARK);
+                // 鲁棒匹配【专业详解】多种写法（标准/带空格/无括号/带冒号），标记本身不渲染
+                const proRe = /【\s*专业详解\s*】|专业详解\s*[:：]/;
+                const proMatch = result.match(proRe);
+                const proIdx = proMatch ? proMatch.index : -1;
                 // 去除 AI 可能残留的强调标签（加粗/倾斜/变色），样式统一由前端容器控制
                 const stripEmphasis = function(html) {
                     return html
@@ -1214,7 +1223,7 @@
                 let resultHtml;
                 if (proIdx !== -1) {
                     const plainPart = result.slice(0, proIdx).trim();
-                    const proPart = result.slice(proIdx + PRO_MARK.length).trim();
+                    const proPart = result.slice(proIdx + proMatch[0].length).trim();
                     resultHtml = '<div class="duan-yu" style="font-weight:bold;color:#c0392b;line-height:1.9;margin-bottom:12px;">'
                         + stripEmphasis(mdToHtml(plainPart))
                         + '</div>'
@@ -1252,21 +1261,21 @@
                             <div class="user-row">
                                 <span>🌙 月建：${timeInfo.yueJian || '未知'}月　☀️ 日辰：${timeInfo.riChen || '未知'}日　🌀 旬空：${timeInfo.xunKong || '—'}</span>
                             </div>
-                            ${timeInfo && timeInfo.yueJian ? `
-                            <div class="user-row" style="margin-top:6px;">
-                                <a href="wnl.html?yingqi=${timeInfo.yueJian}月${(timeInfo.riChen||'').charAt(1)||''}日" style="display:inline-block;background:#b09a84;color:#2d241c;padding:5px 16px;border-radius:30px;font-size:13px;text-decoration:none;border:1px solid #c9b49e;transition:0.2s;" onmouseover="this.style.background='#c0aa94'" onmouseout="this.style.background='#b09a84'">🗓️ 查干支对应公历（应期反查）</a>
-                                ${guaInfo && guaInfo.yongShen && guaInfo.yongShen.primaryIndex != null && guaInfo.yongShen.liuqin ? `
-                                <button onclick="goZejiForGua()" style="display:inline-block;background:#2980b9;color:#fff;padding:5px 16px;border-radius:30px;font-size:13px;border:1px solid #2471a3;cursor:pointer;font-family:inherit;transition:0.2s;" onmouseover="this.style.background='#2471a3'" onmouseout="this.style.background='#2980b9'">🔮 为此卦择吉（${guaInfo.yongShen.liuqin}旺衰注入）</button>
-                                ` : ''}
-                            </div>
-                            ` : ''}
                             <div class="user-row">
                                 <span>❓ 所问：${questionText}</span>
                             </div>
                         </div>
+                        ${timeInfo && timeInfo.yueJian ? `
+                        <div class="user-row" style="margin-top:12px;padding-top:12px;border-top:1px dashed #e0d3c4;">
+                            <a href="wnl.html?yingqi=${timeInfo.yueJian}月${(timeInfo.riChen||'').charAt(1)||''}日" style="display:inline-block;background:#b09a84;color:#2d241c;padding:5px 16px;border-radius:30px;font-size:13px;text-decoration:none;border:1px solid #c9b49e;transition:0.2s;" onmouseover="this.style.background='#c0aa94'" onmouseout="this.style.background='#b09a84'">🗓️ 查干支对应公历（应期反查）</a>
+                            ${guaInfo && guaInfo.yongShen && guaInfo.yongShen.primaryIndex != null && guaInfo.yongShen.liuqin ? `
+                            <button onclick="goZejiForGua()" style="display:inline-block;background:#2980b9;color:#fff;padding:5px 16px;border-radius:30px;font-size:13px;border:1px solid #2471a3;cursor:pointer;font-family:inherit;transition:0.2s;margin-left:8px;" onmouseover="this.style.background='#2471a3'" onmouseout="this.style.background='#2980b9'">🔮 为此卦择吉（${guaInfo.yongShen.liuqin}旺衰注入）</button>
+                            ` : ''}
+                        </div>
+                        ` : ''}
                         <div class="body">${resultHtml}</div>
                         <div style="margin-top:14px;font-size:12px;color:#9a8876;border-top:1px solid #e0d3c4;padding-top:12px;">
-                            🗨️ 野鹤老人的时空对话　${new Date().toLocaleString('zh-CN')}
+                            🗨️ 卦象解读 · 时空对话　${new Date().toLocaleString('zh-CN')}
                         </div>
                     </div>
                 `;
@@ -1294,7 +1303,7 @@
 ${cleanResult}
 
 ---
-野鹤老人的时空对话　${new Date().toLocaleString('zh-CN')}`;
+卦象解读 · 时空对话　${new Date().toLocaleString('zh-CN')}`;
 
                 // 回写最新一条历史记录的 result（按本卦/变卦/起卦时间匹配）
                 try {
