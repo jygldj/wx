@@ -302,6 +302,10 @@
         .sheet-backdrop { display: none; }
 
         @media (max-width: 900px) {
+            /* 解除 .container 对 fixed 子元素（遮罩/浮层）的包含块捕获：
+               原 .container 带 backdrop-filter，会令内部 fixed 浮层相对容器而非视口，
+               导致遮罩覆盖整页、内容Sheet被推到页底视口外。仅手机端取消，桌面玻璃感不变。 */
+            .container { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
             /* 底部悬浮栏：始终可见 */
             .mobile-bar {
                 display: flex; position: fixed; bottom: 0; left: 50%;
