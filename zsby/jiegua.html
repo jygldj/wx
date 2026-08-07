@@ -1268,9 +1268,9 @@
                                 <span>❓ 所问：${questionText}</span>
                             </div>
                         </div>
-                        ${timeInfo && timeInfo.yueJian ? `
+                        ${window.getYongShenDizhi() ? `
                         <div class="user-row" style="margin-top:12px;padding-top:12px;border-top:1px dashed #e0d3c4;">
-                            <a href="wnl.html?yingqi=${timeInfo.yueJian}月${(timeInfo.riChen||'').charAt(1)||''}日" style="display:inline-block;background:#b09a84;color:#2d241c;padding:5px 16px;border-radius:30px;font-size:13px;text-decoration:none;border:1px solid #c9b49e;transition:0.2s;" onmouseover="this.style.background='#c0aa94'" onmouseout="this.style.background='#b09a84'">🗓️ 查干支对应公历（应期反查）</a>
+                            <a href="wnl.html?yingqi=${window.getYongShenDizhi()}日" style="display:inline-block;background:#b09a84;color:#2d241c;padding:5px 16px;border-radius:30px;font-size:13px;text-decoration:none;border:1px solid #c9b49e;transition:0.2s;" onmouseover="this.style.background='#c0aa94'" onmouseout="this.style.background='#b09a84'">🗓️ 用神应期反查（查临值公历日）</a>
                             ${guaInfo && guaInfo.yongShen && guaInfo.yongShen.primaryIndex != null && guaInfo.yongShen.liuqin ? `
                             <button onclick="goZejiForGua()" style="display:inline-block;background:#2980b9;color:#fff;padding:5px 16px;border-radius:30px;font-size:13px;border:1px solid #2471a3;cursor:pointer;font-family:inherit;transition:0.2s;margin-left:8px;" onmouseover="this.style.background='#2471a3'" onmouseout="this.style.background='#2980b9'">🔮 为此卦择吉（${guaInfo.yongShen.liuqin}旺衰注入）</button>
                             ` : ''}
@@ -1413,6 +1413,35 @@ ${cleanResult}
         window.saveResult = saveResult;
 
         // 天时通鉴·择吉联动：从释卦页发起联卦择吉
+        window.getYongShenDizhi = function() {
+            try {
+                var raw = localStorage.getItem('currentGua');
+                if (!raw) return '';
+                var gd = JSON.parse(raw);
+                var ys = gd.yongShen || (gd.guaInfo && gd.guaInfo.yongShen);
+                if (!ys || ys.primaryIndex == null || !ys.liuqin) return '';
+                var yaoDetail = gd.yaoDetail || (gd.guaInfo && gd.guaInfo.yaoDetail) || [];
+                var benYao = gd.benYao || [];
+                var fuList = gd.fuShenList || (gd.guaInfo && gd.guaInfo.fuShenList) || [];
+                var yongYao = null;
+                if (typeof ys.primaryIndex === 'number') {
+                    var entry = yaoDetail[ys.primaryIndex - 1] || benYao[ys.primaryIndex - 1];
+                    if (entry && entry.dizhi) yongYao = entry;
+                } else if (typeof ys.primaryIndex === 'string' && ys.primaryIndex.indexOf('伏') === 0) {
+                    var fuItem = null;
+                    for (var fi = 0; fi < fuList.length; fi++) {
+                        if (('伏' + (fuList[fi].伏神爻位 || '')) === ys.primaryIndex) { fuItem = fuList[fi]; break; }
+                    }
+                    if (!fuItem) {
+                        for (var fi2 = 0; fi2 < fuList.length; fi2++) {
+                            if (fuList[fi2].六亲 === ys.liuqin) { fuItem = fuList[fi2]; break; }
+                        }
+                    }
+                    if (fuItem && fuItem.地支) yongYao = { dizhi: fuItem.地支 };
+                }
+                return (yongYao && yongYao.dizhi) ? yongYao.dizhi : '';
+            } catch(e) { return ''; }
+        };
         window.goZejiForGua = function() {
             try {
                 var raw = localStorage.getItem('currentGua');
@@ -1423,29 +1452,9 @@ ${cleanResult}
                     alert('用神信息不完整，无法发起联卦择吉');
                     return;
                 }
-                // 取用神地支（严禁以六亲反推地支）
-                var yaoDetail = gd.yaoDetail || (gd.guaInfo && gd.guaInfo.yaoDetail) || [];
-                var benYao = gd.benYao || [];
-                var fuList = gd.fuShenList || (gd.guaInfo && gd.guaInfo.fuShenList) || [];
-                var yongYao = null;
-                if (typeof ys.primaryIndex === 'number') {
-                    // 本卦用神：primaryIndex 为 1-based 爻位
-                    var entry = yaoDetail[ys.primaryIndex - 1] || benYao[ys.primaryIndex - 1];
-                    if (entry && entry.dizhi) yongYao = entry;
-                } else if (typeof ys.primaryIndex === 'string' && ys.primaryIndex.indexOf('伏') === 0) {
-                    // 伏神用神：primaryIndex 形如「伏N」，从伏神列表取真实地支
-                    var fuItem = null;
-                    for (var fi = 0; fi < fuList.length; fi++) {
-                        if (('伏' + (fuList[fi].伏神爻位 || '')) === ys.primaryIndex) { fuItem = fuList[fi]; break; }
-                    }
-                    if (!fuItem) {
-                        for (var fi2 = 0; fi2 < fuList.length; fi2++) {
-                            if (fuList[fi2].六亲 === ys.liuqin) { fuItem = fuList[fi2]; break; }
-                        }
-                    }
-                    if (fuItem && fuItem.地支) yongYao = { dizhi: fuItem.地支, liuqin: fuItem.六亲 };
-                }
-                if (!yongYao || !yongYao.dizhi) {
+                // 取用神地支（严禁以六亲反推地支）——复用与应期反查同源的取支逻辑
+                var yongShenDizhi = window.getYongShenDizhi();
+                if (!yongShenDizhi) {
                     alert('用神地支数据缺失');
                     return;
                 }
@@ -1453,7 +1462,7 @@ ${cleanResult}
                 var userInfo = gd.userInfo || {};
                 var zejiData = {
                     yongShenLiuqin: ys.liuqin,
-                    yongShenDizhi: yongYao.dizhi,
+                    yongShenDizhi: yongShenDizhi,
                     wangShuaiScore: (ys.wangShuaiScore && ys.wangShuaiScore.index) || 0,
                     questionType: ti.questionType || userInfo.question || '',
                     guaName: (gd.benGuaName || '') + (gd.bianGuaName ? ' → ' + gd.bianGuaName : ''),
