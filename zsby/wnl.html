@@ -291,12 +291,70 @@
 
         .footer-note { margin-top: 16px; font-size: 12px; color: #a48d78; text-align: center; border-top: 1px solid #e0d3c4; padding-top: 12px; letter-spacing: 1px; }
 
+        /* ===== 手机端 Bottom Sheet ===== */
+        .mobile-bar { display: none; }
+        .sheet-backdrop { display: none; }
+
+        @media (max-width: 900px) {
+            /* 底部浮动栏 */
+            .mobile-bar {
+                display: flex; position: fixed; bottom: 0; left: 0; right: 0;
+                background: rgba(246, 239, 230, 0.98); backdrop-filter: blur(12px);
+                border-top: 1px solid #d5c6b4; padding: 8px 6px; gap: 4px;
+                z-index: 1002; box-shadow: 0 -4px 16px rgba(0,0,0,0.12);
+                padding-bottom: max(8px, env(safe-area-inset-bottom));
+            }
+            .mobile-bar-btn {
+                flex: 1; padding: 10px 2px; border: 1px solid #d5c6b4;
+                border-radius: 14px; background: #fffdf9; font-size: 13px;
+                cursor: pointer; font-family: inherit; color: #3f2e1e;
+                transition: 0.15s; text-align: center;
+            }
+            .mobile-bar-btn:active { transform: scale(0.95); }
+            .mobile-bar-btn.active { background: #6b4f39; color: #f5ede4; border-color: #6b4f39; }
+
+            /* 遮罩层 */
+            .sheet-backdrop {
+                display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.45); z-index: 1000; animation: fadeInBg 0.2s ease;
+            }
+            .sheet-backdrop.active { display: block; }
+            @keyframes fadeInBg { from { opacity: 0; } to { opacity: 1; } }
+
+            /* Sheet 通用样式：默认隐藏，激活时从底部滑出 */
+            .mobile-sheet {
+                display: none !important; /* 手机端默认隐藏，不占空间 */
+            }
+            .mobile-sheet.sheet-active {
+                display: block !important;
+                position: fixed; bottom: 0; left: 0; right: 0;
+                max-height: 78vh; overflow-y: auto; overflow-x: hidden;
+                background: #fcf8f0; border-radius: 20px 20px 0 0;
+                box-shadow: 0 -8px 30px rgba(0,0,0,0.25);
+                z-index: 1001; padding: 16px 14px;
+                border: 1px solid #d5c6b4; border-bottom: none;
+                animation: sheetSlideUp 0.28s ease;
+                padding-bottom: max(16px, calc(env(safe-area-inset-bottom) + 60px));
+            }
+            @keyframes sheetSlideUp {
+                from { transform: translateY(100%); }
+                to { transform: translateY(0); }
+            }
+
+            /* 关闭按钮样式 */
+            .sheet-close-btn {
+                text-align: right; font-size: 13px; color: #7a6652;
+                margin-bottom: 8px; cursor: pointer; padding: 2px 8px;
+            }
+        }
+
         /* ===== 响应式：平板 ===== */
         @media (max-width: 900px) {
             .tstj-layout { grid-template-columns: 1fr; }
             .tstj-left { order: 1; }
             .tstj-center { order: 2; }
             .tstj-right { order: 3; }
+            .container.tstj-container { padding-bottom: 76px; } /* 防底部浮动栏遮挡内容 */
         }
 
         /* ===== 响应式：手机 ===== */
@@ -378,7 +436,7 @@
                 ⚠️ 为计算真太阳时，自动定位可能向服务商发送您的 IP 地址（仅 IP，不含卦象或个人信息）。定位失败时默认使用北京基准（116.46°E）。
             </div>
 
-            <div class="result-area" id="resultArea">—</div>
+            <div class="result-area mobile-sheet" data-sheet="paipan" id="resultArea">—</div>
 
             <button class="btn-qigua" id="btnQigua">⚔ 以此时间起卦</button>
         </div>
@@ -397,11 +455,11 @@
                 </div>
                 <div class="calendar-grid" id="calendarGrid"></div>
             </div>
-            <div class="yingqi-section" id="yingqiSection" style="display:none;">
+            <div class="yingqi-section mobile-sheet" data-sheet="yingqi" id="yingqiSection" style="display:none;">
                 <div class="yingqi-title" id="yingqiTitle">应期反查结果</div>
                 <div class="yingqi-list" id="yingqiList"></div>
             </div>
-            <div class="yingqi-section" id="zejiResultSection" style="display:none;">
+            <div class="yingqi-section mobile-sheet" data-sheet="zeji" id="zejiResultSection" style="display:none;">
                 <div class="yingqi-title" id="zejiResultTitle">择吉结果</div>
                 <div class="yingqi-list" id="zejiResultList"></div>
             </div>
@@ -409,10 +467,10 @@
 
         <!-- ===== 右栏：黄历通书 ===== -->
         <div class="tstj-right">
-            <div class="huangli-panel" id="huangliPanel">
+            <div class="huangli-panel mobile-sheet" data-sheet="huangli" id="huangliPanel">
                 <div class="hl-placeholder">点击日历中任意一日<br>查看当日黄历通书</div>
             </div>
-            <div class="zeji-section" id="zejiSection">
+            <div class="zeji-section mobile-sheet" data-sheet="zeji" id="zejiSection">
                 <div class="zeji-title">🔮 择吉助手</div>
                 <div class="zeji-row">
                     <select id="zejiCategory">
@@ -444,6 +502,16 @@
     </div>
 
     <div class="footer-note">📜 月建遵节气 · 时辰用真太阳时 · 子时（23-24）日柱归本日 · 仅供研究参考</div>
+
+    <!-- 手机端底部浮动栏 -->
+    <div class="mobile-bar" id="mobileBar">
+        <button class="mobile-bar-btn" data-sheet="paipan">📊 排盘</button>
+        <button class="mobile-bar-btn" data-sheet="huangli">📜 黄历</button>
+        <button class="mobile-bar-btn" data-sheet="zeji">🔮 择吉</button>
+        <button class="mobile-bar-btn" data-sheet="yingqi" id="mobileBarYingqi" style="display:none;">🗓️ 应期</button>
+    </div>
+    <!-- 遮罩层 -->
+    <div class="sheet-backdrop" id="sheetBackdrop"></div>
 </div>
 
     <script src="ly/lunar.js"></script>
@@ -489,6 +557,10 @@
     var zejiResultSection = document.getElementById('zejiResultSection');
     var zejiResultTitle   = document.getElementById('zejiResultTitle');
     var zejiResultList    = document.getElementById('zejiResultList');
+    var mobileBar = document.getElementById('mobileBar');
+    var mobileBarYingqi = document.getElementById('mobileBarYingqi');
+    var sheetBackdrop = document.getElementById('sheetBackdrop');
+    var activeSheet = null; // 当前打开的 sheet 名
 
     // ============ 状态 ============
     var state = {
@@ -1076,6 +1148,10 @@
         }
         yingqiMatches = matches;
         renderYingqiResults();
+        // 手机端自动展开应期 Sheet
+        autoExpandSheet('yingqi');
+        // 显示底部栏应期按钮
+        if(mobileBarYingqi) mobileBarYingqi.style.display = '';
     }
 
     function renderYingqiResults(){
@@ -1408,6 +1484,122 @@
         }
     });
 
+    // ============ 手机端 Bottom Sheet 管理 ============
+    // 军师令：手机端功能按钮绑定卡片，默认隐藏，点击滑出
+    // 带参自动展开：URL 含 yingqi= 或 zeji= 时进场即展开对应 Sheet
+    
+    function openSheet(name){
+        // 先关闭当前 sheet
+        if(activeSheet){ closeSheet(); }
+        // 找到所有 data-sheet=name 的元素
+        var sheets = document.querySelectorAll('.mobile-sheet[data-sheet="'+name+'"]');
+        if(sheets.length === 0) return;
+        // 显示遮罩
+        sheetBackdrop.classList.add('active');
+        // 第一个 sheet 作为主容器激活
+        var mainSheet = sheets[0];
+        if(mainSheet.style.display === 'none') mainSheet.style.display = '';
+        mainSheet.classList.add('sheet-active');
+        // 插入关闭按钮
+        if(!mainSheet.querySelector('.sheet-close-btn')){
+            var closeBtn = document.createElement('div');
+            closeBtn.className = 'sheet-close-btn';
+            closeBtn.textContent = '✕ 关闭';
+            closeBtn.style.cssText = 'text-align:right;font-size:13px;color:#7a6652;margin-bottom:8px;cursor:pointer;padding:2px 8px;';
+            closeBtn.onclick = function(){ closeSheet(); };
+            mainSheet.insertBefore(closeBtn, mainSheet.firstChild);
+        }
+            // 若有多个同 name sheet（如 zeji 控制区+结果区），将后续的移入主 sheet 内
+            for(var i = 1; i < sheets.length; i++){
+                var sub = sheets[i];
+                // 记录原始父容器 DOM 引用（关闭时归还；父容器无 id 时也能正确归位）
+                if(!sub._origParentEl){
+                    sub._origParentEl = sub.parentElement;
+                }
+                sub.classList.remove('sheet-active'); // 子 sheet 不单独激活
+                // 强制显示：用 inline !important 覆盖 .mobile-sheet 的 display:none !important
+                sub.style.setProperty('display', 'block', 'important');
+                sub.style.position = 'relative';
+                sub.style.bottom = 'auto';
+                sub.style.maxHeight = 'none';
+                sub.style.border = 'none';
+                sub.style.borderTop = '1px solid #d5c6b4';
+                sub.style.boxShadow = 'none';
+                sub.style.borderRadius = '0';
+                sub.style.padding = '12px 0 0';
+                sub.style.marginTop = '12px';
+                mainSheet.appendChild(sub);
+            }
+        // 高亮对应按钮
+        var btns = mobileBar.querySelectorAll('.mobile-bar-btn');
+        btns.forEach(function(b){
+            if(b.dataset.sheet === name) b.classList.add('active');
+            else b.classList.remove('active');
+        });
+        activeSheet = name;
+        sheetBackdrop.onclick = function(){ closeSheet(); };
+    }
+
+    function closeSheet(){
+        if(!activeSheet) return;
+        var sheets = document.querySelectorAll('.mobile-sheet.sheet-active');
+        sheets.forEach(function(s){
+            s.classList.remove('sheet-active');
+        });
+        // 归还被移入的子 sheet 到原父容器
+        var allSheets = document.querySelectorAll('.mobile-sheet[data-sheet="'+activeSheet+'"]');
+        for(var i = 1; i < allSheets.length; i++){
+            var sub = allSheets[i];
+            var origEl = sub._origParentEl;
+            if(origEl && origEl.parentNode){
+                origEl.appendChild(sub);
+            }
+            // 清除 inline 样式（含 important 的 display）
+            sub.style.display = '';
+            sub.style.position = '';
+            sub.style.bottom = '';
+            sub.style.maxHeight = '';
+            sub.style.border = '';
+            sub.style.borderTop = '';
+            sub.style.boxShadow = '';
+            sub.style.borderRadius = '';
+            sub.style.padding = '';
+            sub.style.marginTop = '';
+        }
+        // 恢复 yingqi/zeji 结果区的 display:none
+        allSheets.forEach(function(s){
+            if(s.id === 'yingqiSection' || s.id === 'zejiResultSection'){
+                s.style.display = 'none';
+            }
+        });
+        sheetBackdrop.classList.remove('active');
+        var btns = mobileBar.querySelectorAll('.mobile-bar-btn');
+        btns.forEach(function(b){ b.classList.remove('active'); });
+        activeSheet = null;
+    }
+
+    // 绑定底部栏按钮
+    if(mobileBar){
+        mobileBar.querySelectorAll('.mobile-bar-btn').forEach(function(btn){
+            btn.addEventListener('click', function(){
+                var name = btn.dataset.sheet;
+                if(activeSheet === name){
+                    closeSheet(); // 再点一次关闭
+                } else {
+                    openSheet(name);
+                }
+            });
+        });
+    }
+
+    // 自动展开（带参直达）：应期/择吉有结果时自动弹出
+    function autoExpandSheet(name){
+        // 仅手机端（mobileBar 可见时）才自动展开
+        if(mobileBar && getComputedStyle(mobileBar).display !== 'none'){
+            setTimeout(function(){ openSheet(name); }, 300);
+        }
+    }
+
     // ============ 择吉助手 ============
     // 军师令：URL判模式，zeji=嫁娶 为纯事项，zeji=tstj 为卦理联动
     
@@ -1549,6 +1741,8 @@
         zejiMatches = matches;
         renderZejiResults(category, scanDays, useShenWang);
         renderCalendar(); // 刷新日历高亮
+        // 手机端自动展开择吉 Sheet
+        autoExpandSheet('zeji');
     }
 
     // 评分模型
