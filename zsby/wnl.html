@@ -180,10 +180,10 @@
         .cal-nav-btn {
             background: #b09a84; border: 1px solid #c9b49e; color: #2d241c;
             padding: 6px 14px; border-radius: 30px; font-size: 14px; cursor: pointer;
-            font-family: inherit; transition: 0.2s;
+            font-family: inherit; transition: 0.2s; white-space: nowrap;
         }
         .cal-nav-btn:hover { background: #c0aa94; }
-        .cal-title { font-size: 18px; font-weight: bold; color: #3f2e1e; letter-spacing: 2px; }
+        .cal-title { font-size: 18px; font-weight: bold; color: #3f2e1e; letter-spacing: 2px; white-space: nowrap; flex: 1; text-align: center; min-width: 0; }
         .calendar-grid {
             display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
             background: #fcf8f0; border: 1px solid #d5c6b4; border-radius: 14px; padding: 10px;
@@ -308,7 +308,7 @@
                 flex: 1; padding: 10px 2px; border: 1px solid #d5c6b4;
                 border-radius: 14px; background: #fffdf9; font-size: 13px;
                 cursor: pointer; font-family: inherit; color: #3f2e1e;
-                transition: 0.15s; text-align: center;
+                transition: 0.15s; text-align: center; font-weight: 600;
             }
             .mobile-bar-btn:active { transform: scale(0.95); }
             .mobile-bar-btn.active { background: #6b4f39; color: #f5ede4; border-color: #6b4f39; }
@@ -385,6 +385,8 @@
             .cal-jieqi { font-size: 9px; }
             .yingqi-item { grid-template-columns: 24px 1fr 44px 1fr 44px 50px; gap: 4px; font-size: 12px; }
             .hl-position-table { grid-template-columns: 1fr; }
+            .cal-title { font-size: 15px; letter-spacing: 1px; }
+            .cal-nav-btn { font-size: 12px; padding: 5px 10px; }
         }
     </style>
 </head>
@@ -888,7 +890,8 @@
             var nextDate = new Date(ns.getYear(), ns.getMonth()-1, ns.getDay(), ns.getHour(), ns.getMinute(), ns.getSecond());
             var curDate = new Date(y, m-1, d, h, mi, 0);
             var diff = arrDiffDaysHours(curDate, nextDate);
-            jqText += '<span class="jq-sub">　下节：'+nextJq.getName()+' 还有 '+diff.days+'天'+diff.hours+'小时'+diff.mins+'分</span>';
+            jqText += '　下节：'+nextJq.getName();
+            jqText += '<br>还有 '+diff.days+'天'+diff.hours+'小时'+diff.mins+'分';
         }
         jieqiBar.innerHTML = jqText;
 
@@ -1733,11 +1736,11 @@
                 jiShenCount: lunar.getDayJiShen().length,
                 score: score.score,
                 grade: score.grade,
-                detail: score.detail
+                detail: score.detail, diffDays: i
             });
         }
-        // 按分数降序
-        matches.sort(function(a, b){ return b.score - a.score; });
+        // 按距离今日天数升序（最近优先）
+        matches.sort(function(a, b){ return a.diffDays - b.diffDays; });
         zejiMatches = matches;
         renderZejiResults(category, scanDays, useShenWang);
         renderCalendar(); // 刷新日历高亮
@@ -1850,7 +1853,7 @@
             '</div>';
         }
         if(zejiMatches.length > showCount){
-            html += '<div style="font-size:12px;color:#a48d78;text-align:center;padding:8px;">还有 ' + (zejiMatches.length - showCount) + ' 个日期未展示（已按分数排序）</div>';
+            html += '<div style="font-size:12px;color:#a48d78;text-align:center;padding:8px;">还有 ' + (zejiMatches.length - showCount) + ' 个日期未展示（已按距离今日天数排序，最近优先）</div>';
         }
         zejiResultList.innerHTML = html;
 
@@ -1935,6 +1938,22 @@
         resultArea.innerHTML = '<div style="color:#b33;text-align:center;padding:20px;">⚠️ lunar.js 未加载，无法排盘</div>';
         huangliPanel.innerHTML = '<div class="hl-placeholder">⚠️ lunar.js 未加载</div>';
     }
+
+    // 移动端：将"回到今日"卡片移至公历日期输入上方（桌面零改动，仅 ≤900px 生效）
+    (function(){
+        var todayCard = document.querySelector('.today-card');
+        var tstjLeft = document.querySelector('.tstj-left');
+        var tstjCenter = document.querySelector('.tstj-center');
+        if(!todayCard || !tstjLeft || !tstjCenter) return;
+        var mq = window.matchMedia('(max-width: 900px)');
+        function placeToday(){
+            if(mq.matches){ tstjLeft.insertBefore(todayCard, tstjLeft.firstChild); }
+            else { tstjCenter.insertBefore(todayCard, tstjCenter.firstChild); }
+        }
+        if(mq.addEventListener) mq.addEventListener('change', placeToday);
+        else if(mq.addListener) mq.addListener(placeToday);
+        placeToday();
+    })();
 })();
 </script>
 </body>
