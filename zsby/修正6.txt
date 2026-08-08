@@ -1,0 +1,117 @@
+WorkBuddy 手把手清单
+第 1 步 · zsby/api/qwen.js（2 处替换）
+1a. 查找：
+
+
+async function callQwen(guaInfo) {
+    const config = CONFIG.qwen;
+替换为：
+
+
+async function callQwen(guaInfo, modelKey) {
+    const config = CONFIG[modelKey || 'qwen'] || CONFIG.qwen;
+1b. 查找：
+
+
+        console.error('千问 API 调用失败:', error);
+替换为：
+
+
+        console.error('释卦 API 调用失败:', error);
+第 2 步 · zsby/jiegua.html（3 处）
+2a. 查找（整段两行）：
+
+
+<script src="../config.js"></script>
+<script src="api/qwen2.js"></script>
+<script src="api/qwen.js"></script>
+替换为：
+
+
+<script src="../config.js"></script>
+<script src="api/qwen.js"></script>
+2b. 查找（整段）：
+
+
+                // 调用对应模型的API
+                      let result = '';
+                      if (model === 'qwen') {
+                           result = await callQwen(guaInfo);
+                       } else if (model === 'qwen2') {
+                           result = await callQwen2(guaInfo);
+                       }
+替换为：
+
+
+                // 调用对应模型的API（双模型共用 callQwen，modelKey 取 radio 值）
+                let result = '';
+                result = await callQwen(guaInfo, model);
+2c. 查找（整段 fuShenRelation 函数，含其上方定义）：
+
+
+        const DIZHI_WUXING_LOCAL = {
+            '子':'水','丑':'土','寅':'木','卯':'木','辰':'土','巳':'火',
+            '午':'火','未':'土','申':'金','酉':'金','戌':'土','亥':'水'
+        };
+        const WX_SHENG = { '木':'火', '火':'土', '土':'金', '金':'水', '水':'木' }; // 我生者
+        const WX_KE = { '木':'土', '土':'水', '水':'火', '火':'金', '金':'木' };    // 我克者
+        function fuShenRelation(feiWx, fuWx) {
+            if (!feiWx || !fuWx) return '未知';
+            if (feiWx === fuWx) return '比和（伏神与飞神五行相同，力量相当）';
+            if (WX_SHENG[feiWx] === fuWx) return '飞生伏（吉，暗中有人相助，隐藏的机遇）';
+            if (WX_SHENG[fuWx] === feiWx) return '伏生飞（凶，付出多回报少，精力被消耗）';
+            if (WX_KE[feiWx] === fuWx) return '飞克伏（凶，外部压制，隐藏的阻碍）';
+            if (WX_KE[fuWx] === feiWx) return '伏克飞（吉，能克服困难，反客为主）';
+            return '比和';
+        }
+替换为：
+
+
+        function fuShenRelation(feiWx, fuWx) {
+            if (!feiWx || !fuWx) return '未知';
+            if (feiWx === fuWx) return '比和（伏神与飞神五行相同，力量相当）';
+            if (WX_SHENG_RW7[feiWx] === fuWx) return '飞生伏（吉，暗中有人相助，隐藏的机遇）';
+            if (WX_SHENG_RW7[fuWx] === feiWx) return '伏生飞（凶，付出多回报少，精力被消耗）';
+            if (WX_KE_RW7[feiWx] === fuWx) return '飞克伏（凶，外部压制，隐藏的阻碍）';
+            if (WX_KE_RW7[fuWx] === feiWx) return '伏克飞（吉，能克服困难，反客为主）';
+            return '比和';
+        }
+2d. 查找（两处）：
+
+
+const feiWx = feiDiZhi ? (DIZHI_WUXING_LOCAL[feiDiZhi] || '') : '';
+const fuWx = f.fuShenDizhi ? (DIZHI_WUXING_LOCAL[f.fuShenDizhi] || '') : '';
+替换为（LOCAL 去掉）：
+
+
+const feiWx = feiDiZhi ? (DIZHI_WUXING[feiDiZhi] || '') : '';
+const fuWx = f.fuShenDizhi ? (DIZHI_WUXING[f.fuShenDizhi] || '') : '';
+说明：DIZHI_WUXING、WX_SHENG_RW7、WX_KE_RW7 已由 suanfa.js 提供（页面已引用，表值与原 LOCAL 版本完全一致）。
+
+第 3 步 · zsby/jiegou.html（1 处）
+查找：
+
+
+<script src="ly/lunar.js"></script>
+替换为：
+
+
+<script src="../lunar.js"></script>
+第 4 步 · zsby/wnl.html（1 处）
+查找：
+
+
+    <script src="ly/lunar.js"></script>
+替换为：
+
+
+    <script src="../lunar.js"></script>
+第 5 步 · 删除 2 个文件（已无任何引用）
+zsby/api/qwen2.js（已合并进 qwen.js）
+zsby/ly/lunar.js（与根目录 lunar.js 内容完全相同，三页已统一引用 ../lunar.js）
+在 GitHub Desktop 里右键这两个文件选"删除"即可，提交时会显示为 deleted。
+
+完成后实测点
+起卦（铜钱/手动）→ 释卦：两个模型（千问 3.7 / 千问备选）都能正常出解读
+起卦页、万年历页（wnl.html）排盘、真太阳时正常——验证 lunar.js 新路径
+释卦页伏神关系显示正常——验证五行表收敛

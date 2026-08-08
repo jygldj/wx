@@ -636,7 +636,6 @@
 <!-- ========== 引入 lunar-javascript 库 ========== -->
 <script src="../lunar.js"></script>
 <script src="../config.js"></script>
-<script src="api/qwen2.js"></script>
 <script src="api/qwen.js"></script>
 <!-- rw7：引入算法层，供释卦页计算月破/日破暗动/真空假空/原神空伏 -->
 <script src="ly/shuju.js"></script>
@@ -709,19 +708,13 @@
         // 1.4 伏神关系判定（仅用于展示，非核心排盘）
         //     伏神为隐藏之人事物，其吉凶由伏神与飞神（同爻位之本卦爻）的五行关系决定
         // ============================================================
-        const DIZHI_WUXING_LOCAL = {
-            '子':'水','丑':'土','寅':'木','卯':'木','辰':'土','巳':'火',
-            '午':'火','未':'土','申':'金','酉':'金','戌':'土','亥':'水'
-        };
-        const WX_SHENG = { '木':'火', '火':'土', '土':'金', '金':'水', '水':'木' }; // 我生者
-        const WX_KE = { '木':'土', '土':'水', '水':'火', '火':'金', '金':'木' };    // 我克者
         function fuShenRelation(feiWx, fuWx) {
             if (!feiWx || !fuWx) return '未知';
             if (feiWx === fuWx) return '比和（伏神与飞神五行相同，力量相当）';
-            if (WX_SHENG[feiWx] === fuWx) return '飞生伏（吉，暗中有人相助，隐藏的机遇）';
-            if (WX_SHENG[fuWx] === feiWx) return '伏生飞（凶，付出多回报少，精力被消耗）';
-            if (WX_KE[feiWx] === fuWx) return '飞克伏（凶，外部压制，隐藏的阻碍）';
-            if (WX_KE[fuWx] === feiWx) return '伏克飞（吉，能克服困难，反客为主）';
+            if (WX_SHENG_RW7[feiWx] === fuWx) return '飞生伏（吉，暗中有人相助，隐藏的机遇）';
+            if (WX_SHENG_RW7[fuWx] === feiWx) return '伏生飞（凶，付出多回报少，精力被消耗）';
+            if (WX_KE_RW7[feiWx] === fuWx) return '飞克伏（凶，外部压制，隐藏的阻碍）';
+            if (WX_KE_RW7[fuWx] === feiWx) return '伏克飞（吉，能克服困难，反客为主）';
             return '比和';
         }
 
@@ -1052,8 +1045,8 @@
                             const fei = (guaData.benYao && guaData.benYao[yaoWei - 1]) ? guaData.benYao[yaoWei - 1] : null;
                             const feiDiZhi = fei ? fei.地支 : '';
                             const feiLiuQin = fei ? fei.六亲 : '';
-                            const feiWx = feiDiZhi ? (DIZHI_WUXING_LOCAL[feiDiZhi] || '') : '';
-                            const fuWx = f.fuShenDizhi ? (DIZHI_WUXING_LOCAL[f.fuShenDizhi] || '') : '';
+                            const feiWx = feiDiZhi ? (DIZHI_WUXING[feiDiZhi] || '') : '';
+                            const fuWx = f.fuShenDizhi ? (DIZHI_WUXING[f.fuShenDizhi] || '') : '';
                             return {
                                 六亲: f.fuShenLiuQin,
                                 天干: f.fuShenTianGan,
@@ -1180,13 +1173,9 @@
                     console.log('✅ rw7 字段已 merge 进 currentGua（供 qwen.js 增强版使用）');
                 } catch(e) { console.warn('rw7 字段回写 currentGua 失败:', e); }
 
-                // 调用对应模型的API
-                      let result = '';
-                      if (model === 'qwen') {
-                           result = await callQwen(guaInfo);
-                       } else if (model === 'qwen2') {
-                           result = await callQwen2(guaInfo);
-                       }
+                // 调用对应模型的API（双模型共用 callQwen，modelKey 取 radio 值）
+                let result = '';
+                result = await callQwen(guaInfo, model);
 
                 // 显示结果
                 // 构建简洁干支年月日（去掉"手动输入"/时辰/"（公历）""（农历）"等冗余信息）

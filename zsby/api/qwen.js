@@ -3,8 +3,8 @@
 // rw10 精炼版：锁死首句、取消段落标题、只留通俗断语 + 专业详解
 // ============================================================
 
-async function callQwen(guaInfo) {
-    const config = CONFIG.qwen;
+async function callQwen(guaInfo, modelKey) {
+    const config = CONFIG[modelKey || 'qwen'] || CONFIG.qwen;
 
     const userInfo = {
         name: guaInfo.userName || '',
@@ -132,7 +132,7 @@ ${yaoLines}
         return data.choices[0].message.content;
 
     } catch(error) {
-        console.error('千问 API 调用失败:', error);
+        console.error('释卦 API 调用失败:', error);
         throw error;
     }
 }
