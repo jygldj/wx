@@ -3,8 +3,9 @@
 // rw10 精炼版：锁死首句、取消段落标题、只留通俗断语 + 专业详解
 // ============================================================
 
+// 支持双模型：callQwen(guaInfo, 'qwen') 主力；callQwen(guaInfo, 'qwen2') 备选
+// 密钥已移入服务端（functions/api/ai.js 代理），本文件不再包含任何密钥
 async function callQwen(guaInfo, modelKey) {
-    const config = CONFIG[modelKey || 'qwen'] || CONFIG.qwen;
 
     const userInfo = {
         name: guaInfo.userName || '',
@@ -106,30 +107,29 @@ ${yaoLines}
 请严格按 systemPrompt 格式输出：以固定首句开头，紧接通俗断语，再写【专业详解】标记并展开六步专业分析。`;
 
     try {
-        const response = await fetch(`${config.baseUrl}/chat/completions`, {
+        const response = await fetch('/api/ai', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${config.apiKey}`
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: config.model,
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: userPrompt }
-                ],
-                temperature: 0.5,
-                max_tokens: 2048
+                modelKey: modelKey || 'qwen',
+                systemPrompt: systemPrompt,
+                userPrompt: userPrompt
             })
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error?.message || `HTTP ${response.status}`);
+            let message = 'HTTP ' + response.status;
+            try {
+                const errorData = await response.json();
+                if (errorData && errorData.error) message = errorData.error;
+            } catch (e2) { /* 非 JSON 错误体则用状态码 */ }
+            throw new Error(message);
         }
 
         const data = await response.json();
-        return data.choices[0].message.content;
+        return data.content;
 
     } catch(error) {
         console.error('释卦 API 调用失败:', error);
