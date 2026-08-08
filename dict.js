@@ -162,7 +162,7 @@
     function showMobileHint(word, x, y) {
         var url = SITE_BASE + '/dict.html?word=' + encodeURIComponent(word);
         var html = '<div class="dx-dict-word">' + escapeHtml(word) + '</div>' +
-            '<div class="dx-dict-exp"><a class="dx-dict-link" href="' + url + '">请到字典页面查看 ›</a></div>';
+            '<div class="dx-dict-exp"><a class="dx-dict-link" href="' + url + '">点击查看释义 ›</a></div>';
         showPopup(html, x, y);
     }
 
@@ -259,7 +259,7 @@
             'word-break:break-word;pointer-events:auto;' +
             'font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;}' +
             '#' + POPUP_ID + ' .dx-dict-body{max-height:70vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}' +
-            '#' + POPUP_ID + ' .dx-dict-link{display:inline-block;margin-top:4px;color:#9a6b3f;font-weight:600;text-decoration:none;border-bottom:1px solid #d8c4a6;}' +
+            '#' + POPUP_ID + ' .dx-dict-link{display:block;text-align:center;margin-top:8px;padding:10px 12px;font-size:16px;color:#9a6b3f;font-weight:600;text-decoration:none;background:#fbf3e3;border:1px solid #d8c4a6;border-radius:8px;}' +
             '#' + POPUP_ID + ' .dx-dict-link:hover{color:#5a3921;}' +
             '#' + POPUP_ID + ' .dx-dict-close{' +
             'position:absolute;top:4px;right:6px;width:22px;height:22px;' +
