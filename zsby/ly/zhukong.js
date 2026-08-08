@@ -368,23 +368,31 @@ try {
 // 追加历史记录
 try {
     const history = JSON.parse(localStorage.getItem('guaHistory') || '[]');
-    history.push({
-        benGua: guaData.benGuaName,
-        bianGua: guaData.bianGuaName,
-        dongYao: guaData.dongYao,
-        question: (userInfo.name ? '【' + userInfo.name + '】' : '') + (userInfo.question || ''),
-        time: guaData.time,
-        userInfo: { 
-            name: userInfo.name, 
-            gender: userInfo.gender, 
-            birth: userInfo.birth, 
-            question: userInfo.question 
-        },
-        timeInfo: null,
-        result: '',
-        modelName: ''
-    });
-    localStorage.setItem('guaHistory', JSON.stringify(history));
+    // 去重：同一秒内重复排盘（同卦同变卦同时刻）不重复追加，防止历史膨胀
+    const dup = history.some(h =>
+        h.benGua === guaData.benGuaName
+        && h.bianGua === guaData.bianGuaName
+        && h.time === guaData.time
+    );
+    if (!dup) {
+        history.push({
+            benGua: guaData.benGuaName,
+            bianGua: guaData.bianGuaName,
+            dongYao: guaData.dongYao,
+            question: (userInfo.name ? '【' + userInfo.name + '】' : '') + (userInfo.question || ''),
+            time: guaData.time,
+            userInfo: { 
+                name: userInfo.name, 
+                gender: userInfo.gender, 
+                birth: userInfo.birth, 
+                question: userInfo.question 
+            },
+            timeInfo: null,
+            result: '',
+            modelName: ''
+        });
+        localStorage.setItem('guaHistory', JSON.stringify(history));
+    }
 } catch(e) {
     console.warn('保存历史记录失败:', e);
         }
