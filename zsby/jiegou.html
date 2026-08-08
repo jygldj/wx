@@ -128,15 +128,14 @@
         return { nianGanZhi: nianGanZhi, yueJian: yueJian, riChen: riChen, shiChen: shiChen };
     }
 
-    // 由日干支推旬空（复刻 wnl.html getXunKong 算法）
+    // 由日干支推旬空（统一走 lunar.js LunarUtil.getXunKong，与 wnl.html 同源）
     function xunKongOf(riChen) {
         if (!riChen || riChen.length < 2) return '';
-        const ganIdx = GAN.indexOf(riChen.charAt(0));
-        const zhiIdx = ZHI.indexOf(riChen.charAt(1));
-        if (ganIdx < 0 || zhiIdx < 0) return '';
-        const xs = ((zhiIdx - (ganIdx % 10)) % 12 + 12) % 12;
-        const k1 = (xs + 10) % 12, k2 = (xs + 11) % 12;
-        return ZHI[k1] + ZHI[k2];
+        try {
+            return LunarUtil.getXunKong(riChen);
+        } catch (e) {
+            return '';
+        }
     }
 
     function assembleTimeInfo(y, m, d, h) {

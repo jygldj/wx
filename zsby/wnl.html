@@ -792,14 +792,14 @@
     }
 
     // ============ 断卦参数函数 ============
+    // 由日干支推旬空（统一走 lunar.js LunarUtil.getXunKong，与 jiegou.html 同源）
     function getXunKong(dayGanZhi) {
-        var ganIdx = GAN.indexOf(dayGanZhi.charAt(0));
-        var zhiIdx = ZHI.indexOf(dayGanZhi.charAt(1));
-        var xunShouZhiIdx = zhiIdx - (ganIdx % 10);
-        xunShouZhiIdx = ((xunShouZhiIdx % 12) + 12) % 12;
-        var k1 = (xunShouZhiIdx + 10) % 12;
-        var k2 = (xunShouZhiIdx + 11) % 12;
-        return ZHI[k1] + ZHI[k2];
+        if (!dayGanZhi || dayGanZhi.length < 2) return '—';
+        try {
+            return LunarUtil.getXunKong(dayGanZhi);
+        } catch (e) {
+            return '—';
+        }
     }
     var CHONG_MAP = {'寅':'申','卯':'酉','辰':'戌','巳':'亥','午':'子','未':'丑',
                      '申':'寅','酉':'卯','戌':'辰','亥':'巳','子':'午','丑':'未'};
@@ -810,14 +810,12 @@
                    '巳':'亥','酉':'亥','丑':'亥','亥':'巳','卯':'巳','未':'巳'};
         return map[nianZhi] || '—';
     }
+    // 排六神（统一走 suanfa.js paiLiuShen 单源，与排盘同口径；未知天干回退 —）
     function getLiuShen(dayGan) {
-        var liushen = ['青龙','朱雀','勾陈','螣蛇','白虎','玄武'];
-        var dayGanMap = {'甲':0,'乙':0,'丙':1,'丁':1,'戊':2,'己':3,'庚':4,'辛':4,'壬':5,'癸':5};
-        var start = dayGanMap[dayGan];
-        if(start === undefined) return ['—','—','—','—','—','—'];
-        var result = [];
-        for(var i=0; i<6; i++) result.push(liushen[(start+i)%6]);
-        return result;
+        if (['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'].indexOf(dayGan) === -1) {
+            return ['—','—','—','—','—','—'];
+        }
+        return paiLiuShen(dayGan);
     }
     function getLiuQin(dayGan, otherGan) {
         var wuxing = {'甲':'木','乙':'木','丙':'火','丁':'火','戊':'土','己':'土','庚':'金','辛':'金','壬':'水','癸':'水'};
