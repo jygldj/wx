@@ -842,3 +842,32 @@ html.dark .loading {
 html.dark .article-nav {
     color: #8A9B8B;
 }
+
+/* 错误提示（加载失败） */
+.error-hint {
+    text-align: center;
+    padding: 20px;
+    color: #c0392b;
+}
+
+/* 错误文字（仅改色，复用 loading 布局） */
+.error-text {
+    color: #c0392b;
+}
+
+/* 空结果提示 */
+.empty-hint {
+    text-align: center;
+    padding: 15px;
+    color: #7A8B7B;
+}
+
+/* 导航重点按钮（增删卜易） */
+.page-link.nav-important {
+    color: #e74c3c;
+    font-weight: bold;
+    background: #fdf2f2;
+    border: 1px solid #e74c3c;
+    padding: 6px 14px;
+    border-radius: 6px;
+}

@@ -65,7 +65,7 @@
                 <a href="search.html" class="page-link">全文搜索</a>
                 <a href="dict.html" class="page-link">新华字典</a>
                 <a href="build.html"  class="page-link">更新工具</a>
-                <a href="zsby/jiegou.html" class="page-link" style="color: #e74c3c; font-weight: bold; background: #fdf2f2; border: 1px solid #e74c3c; padding: 6px 14px; border-radius: 6px;">增删卜易</a>
+                <a href="zsby/jiegou.html" class="page-link nav-important">增删卜易</a>
             </nav>
 
             <div role="search" class="search-bar">
@@ -235,12 +235,12 @@
             } catch (error) {
                 console.error('❌ 加载失败:', error);
                 document.getElementById('articleList').innerHTML =
-                    '<li style="text-align: center; padding: 20px; color: #c0392b;">' +
+                    '<li class="error-hint">' +
                         '⚠️ 加载失败：' + error.message + '<br>' +
                         '<small>请确保 articles.js 文件存在于同一目录下</small>' +
                     '</li>';
                 document.getElementById('articleText').innerHTML =
-                    '<div class="loading" style="color: #c0392b;">' +
+                    '<div class="loading error-text">' +
                         '⚠️ 数据加载失败<br>' +
                         '<small>' + error.message + '</small>' +
                     '</div>';
@@ -302,7 +302,7 @@
                 });
             } else {
                 const li = document.createElement('li');
-                li.innerHTML = `<div style="text-align:center;padding:15px;color:#7A8B7B;">没有找到符合条件的文章</div>`;
+                li.innerHTML = `<div class="empty-hint">没有找到符合条件的文章</div>`;
                 fragment.appendChild(li);
             }
 
@@ -431,7 +431,7 @@
 
             const listContainer = document.getElementById('articleList');
             if (filtered.length === 0) {
-                listContainer.innerHTML = `<li style="text-align:center;padding:15px;color:#7A8B7B;">在当前卷中未找到包含"${currentSearchKeyword}"的文章</li>`;
+                listContainer.innerHTML = `<li class="empty-hint">在当前卷中未找到包含"${currentSearchKeyword}"的文章</li>`;
                 return;
             }
 
