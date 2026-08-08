@@ -24,7 +24,8 @@ var CORE = [
     './render.js',
     './build-core.js',
     './articles.js',
-    './site-config.js'
+    './site-config.js',
+    './reader.js'
 ];
 
 self.addEventListener('install', function (e) {
