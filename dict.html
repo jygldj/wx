@@ -7,6 +7,7 @@
     <title>新华字典 · 道玄文集</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' fill='%235a3921'>📜</text></svg>">
     <link rel="stylesheet" href="style.css">
+    <script src="site-config.js"></script>
     <style>
         .dict-page{max-width:680px;margin:0 auto;padding:24px 18px 60px;}
         .dict-main{max-width:680px;margin:0 auto;}
@@ -93,7 +94,7 @@
             word = (word || '').trim();
             if (!word) return;
             box.innerHTML = '<div class="dx-loading">查询中…</div>';
-            fetch('https://dxwj.pages.dev/api/dict?word=' + encodeURIComponent(word), { mode: 'cors' })
+            fetch(SITE_BASE + '/api/dict?word=' + encodeURIComponent(word), { mode: 'cors' })
                 .then(function (r) { return r.json(); })
                 .then(function (d) { render(d, word); })
                 .catch(function () {

@@ -18,7 +18,7 @@
 
     // ====== 配置区 ======
     // Pages Functions 与静态站点共享 pages.dev 域名，国内访问友好；不再使用 workers.dev 子域。
-    var WORKER_URL = 'https://dxwj.pages.dev/api/dict';
+    var WORKER_URL = SITE_BASE + '/api/dict';
     var MAX_LEN = 4;          // 最多查 4 个字（成语正好 4 字）
     var POPUP_ID = 'dx-dict-popup';
     // 是否为移动端（触摸设备）：移动端选词不灵敏，改为“选词后延迟 4 秒再弹轻量提示”
@@ -160,7 +160,7 @@
 
     // 移动端：选词后弹“轻量提示”，点链接去字典页看完整释义
     function showMobileHint(word, x, y) {
-        var url = 'https://dxwj.pages.dev/dict.html?word=' + encodeURIComponent(word);
+        var url = SITE_BASE + '/dict.html?word=' + encodeURIComponent(word);
         var html = '<div class="dx-dict-word">' + escapeHtml(word) + '</div>' +
             '<div class="dx-dict-exp"><a class="dx-dict-link" href="' + url + '">请到字典页面查看 ›</a></div>';
         showPopup(html, x, y);

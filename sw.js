@@ -24,8 +24,7 @@ var CORE = [
     './render.js',
     './build-core.js',
     './articles.js',
-    './wsf.jpg',
-    './wsf.webp'
+    './site-config.js'
 ];
 
 self.addEventListener('install', function (e) {

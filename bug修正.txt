@@ -1,0 +1,88 @@
+任务：
+
+只改这 7 个文件，其他一律不动：
+新建 site-config.js
+修改 index.html、sw.js、dict.js、index1.html、search.html、dict.html
+所有文件保存保持 UTF-8 编码，与仓库其他文件一致。
+用「查找 → 替换」精确执行，别用整行删除重写，避免误伤格式。
+改完按我第 1-7 步核对一遍，确认替换都命中（没有「找不到内容」的情况）。
+
+
+第 1 步：新建 1 个文件 site-config.js
+在 F:\github-dx\wx 文件夹里，右键 → 新建 → 文本文档
+改名为 site-config.js（扩展名要改成 .js）
+用记事本打开，粘贴下面内容：
+
+var SITE_BASE = 'https://dxwj.pages.dev';
+保存（记事本点「文件 → 保存」就行，编码保持默认的 UTF-8）
+第 2 步：改 index.html（1 处）
+用记事本打开 index.html，按 Ctrl+H 查找替换：
+
+查找：道选文集
+替换为：道玄文集
+点「全部替换」，保存。
+第 3 步：改 sw.js（1 处）
+打开 sw.js，Ctrl+H：
+
+查找：
+
+    './articles.js',
+    './wsf.jpg',
+    './wsf.webp'
+];
+替换为：
+
+    './articles.js',
+    './site-config.js'
+];
+保存。
+第 4 步：改 dict.js（2 处）
+打开 dict.js，Ctrl+H 依次改两处：
+
+第 1 处：查找 var WORKER_URL = 'https://dxwj.pages.dev/api/dict'; → 替换为 var WORKER_URL = SITE_BASE + '/api/dict';
+
+第 2 处：查找 var url = 'https://dxwj.pages.dev/dict.html?word=' + encodeURIComponent(word); → 替换为 var url = SITE_BASE + '/dict.html?word=' + encodeURIComponent(word);
+
+保存。
+
+第 5 步：改 index1.html（2 处）
+打开 index1.html，Ctrl+H 依次改两处：
+
+第 1 处：查找 https://dxwj.pages.dev/dict.html" → 替换为 dict.html"
+
+第 2 处（这是两行代码，查找下面整段）：
+
+查找：
+
+    <link rel="stylesheet" href="style.css">
+    <!-- 文章数据（结构化格式，兼容本地 file:// 协议） -->
+替换为：
+
+    <link rel="stylesheet" href="style.css">
+    <!-- 站点配置（SITE_BASE，须在 dict.js 之前加载） -->
+    <script src="site-config.js"></script>
+    <!-- 文章数据（结构化格式，兼容本地 file:// 协议） -->
+保存。
+
+第 6 步：改 search.html（1 处）
+打开 search.html，Ctrl+H：
+
+查找：
+
+    <script src="render.js"></script>
+替换为：
+
+    <script src="render.js"></script>
+    <script src="site-config.js"></script>
+保存。
+第 7 步：改 dict.html（2 处）
+打开 dict.html，Ctrl+H 依次改两处：
+
+第 1 处：查找 https://dxwj.pages.dev/api/dict?word= → 替换为 SITE_BASE + '/api/dict?word=
+
+第 2 处：查找 <link rel="stylesheet" href="style.css"> → 替换为：
+
+
+<link rel="stylesheet" href="style.css">
+    <script src="site-config.js"></script>
+保存。
