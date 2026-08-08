@@ -921,58 +921,6 @@
             return '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">' + parts.join('') + '</div>';
         }
 
-        // ⭐ rw7.2：内联角标注入——将 rw7 标记直接注入每爻行(.yao-row)内
-        // zhukong.js 的 buildGuaHtml 渲染爻行后，本函数做 DOM 后处理
-        // 从 guaData.benYao[].{yuePo,riPoOrAnDong,kongType} 读取已算好的 rw7 结果
-        function injectInlineRw7Marks(guaData) {
-            if (!guaData || !guaData.benYao) return;
-            const rows = document.querySelectorAll('.yao-row');
-            if (!rows || rows.length === 0) return;
-
-            // 角标样式：高对比度、肉眼清晰、紧凑
-            const style = 'display:inline-block;margin-left:6px;padding:1px 7px;border-radius:8px;font-size:11px;font-weight:bold;vertical-align:middle;letter-spacing:0.5px;';
-
-            const markDefs = {
-                yuePo:     { text: '月破', css: style + 'background:#c0392b;color:#fff;border:1px solid #e6b0aa;' },
-                riPo:      { text: '日破', css: style + 'background:#2471a3;color:#fff;border:1px solid #aed6f1;' },
-                anDong:    { text: '暗动', css: style + 'background:#1abc9c;color:#fff;border:1px solid #a3e4d7;' },
-                zhenKong:  { text: '真空', css: style + 'background:#7f8c8d;color:#fff;border:1px solid #bdc3c7;' },
-                jiaKong:   { text: '假空', css: style + 'background:#d4ac0d;color:#fff;border:1px solid #f9e79f;' }
-            };
-
-            // 角标优先级（高→低）：月破 > 日破 > 暗动 > 真空 > 假空
-            // 每爻只挂最高优先级的一个标，禁止双标并存
-            const PRIORITY = ['yuePo','riPo','anDong','zhenKong','jiaKong'];
-
-            (guaData.benYao || []).forEach((yao, i) => {
-                if (i >= rows.length) return;
-                const row = rows[i];
-                const marks = [];
-
-                // 按优先级遍历，命中第一个即停止
-                for (let pi = 0; pi < PRIORITY.length; pi++) {
-                    const key = PRIORITY[pi];
-                    if (key === 'yuePo' && yao.yuePo) { marks.push(markDefs.yuePo); break; }
-                    if (key === 'riPo' && yao.riPoOrAnDong && yao.riPoOrAnDong === '日破') { marks.push(markDefs.riPo); break; }
-                    if (key === 'anDong' && yao.riPoOrAnDong && yao.riPoOrAnDong === '暗动') { marks.push(markDefs.anDong); break; }
-                    if (key === 'zhenKong' && yao.kongType && yao.kongType === '真空') { marks.push(markDefs.zhenKong); break; }
-                    if (key === 'jiaKong' && yao.kongType && yao.kongType === '假空') { marks.push(markDefs.jiaKong); break; }
-                }
-
-                // 注入到该爻行的末尾（世应标签之后）
-                if (marks.length > 0) {
-                    const html = marks.map(m => '<span style="' + m.css + '">' + m.text + '</span>').join('');
-                    // 找到 .yao-shiying 或 .yao-dong-mark，在其后插入
-                    const anchor = row.querySelector('.yao-dong-mark') || row.querySelector('.yao-shiying') || row.lastElementChild;
-                    if (anchor) {
-                        anchor.insertAdjacentHTML('afterend', html);
-                    } else {
-                        row.insertAdjacentHTML('beforeend', html);
-                    }
-                }
-            });
-        }
-
         jieGuaBtn.addEventListener('click', async function() {
             const guaData = loadGuaData();
             // 守卫：确保 guaData 完整（防止跳转/缓存导致的数据缺失）
@@ -1475,10 +1423,6 @@ ${cleanResult}
         if (guaData && new URLSearchParams(window.location.search).get('id')) {
             try { window.history.replaceState({}, '', window.location.pathname); } catch(e) {}
         }
-
-        // ⭐ rw7.2：内联角标注入——将 rw7 标记（月破/日破暗动/真空假空）直接注入每爻行旁
-        // 不改 zhukong.js 渲染逻辑，仅做 DOM 后处理
-        try { injectInlineRw7Marks(guaData); } catch(e) { console.warn('rw7 内联角标注入失败:', e); }
 
         // 填充求卦者信息到输入框（从 localStorage/sessionStorage 读取，让用户可确认/补充）
         (function initUserInfoFields() {
