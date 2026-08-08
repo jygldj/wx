@@ -320,27 +320,27 @@
                         <button class="btn-delete-item" title="删除此条记录" aria-label="删除">🗑️</button>
                         <div class="header" onclick="toggleHistoryDetail(this)">
                             <span class="gua-name">
-                                ${item.benGua} <span class="arrow">→</span> ${item.bianGua}
+                                ${escapeHtml(item.benGua)} <span class="arrow">→</span> ${escapeHtml(item.bianGua)}
                             </span>
                             <span style="display:flex;align-items:center;gap:6px;">
-                                <span class="time">${item.time || '未知时间'}</span>
+                                <span class="time">${escapeHtml(item.time || '未知时间')}</span>
                                 <button type="button" class="toggle-btn">查看</button>
                             </span>
                         </div>
-                        <div class="question">📌 ${item.question || '未输入个人资料'}</div>
+                        <div class="question">📌 ${escapeHtml(item.question || '未输入个人资料')}</div>
                         <div class="detail">
                             <div class="user-block">
                                 <div class="user-title">🧘 求卦者资料</div>
-                                <div class="user-line">👤 姓名：${userInfo.name || '匿名'}　性别：${userInfo.gender || '未知'}</div>
-                                <div class="user-line">⏰ 出生时辰：${userInfo.birth || '未输入个人资料'}</div>
-                                <div class="user-line">📅 起卦时间：${timeInfo.solarTime || item.time || '—'}（公历）${timeInfo.lunarTime || '—'}（农历）</div>
-                                <div class="user-line">🌙 月建：${timeInfo.yueJian || '—'}月　☀️ 日辰：${timeInfo.riChen || '—'}日　🌀 旬空：${timeInfo.xunKong || '—'}</div>
-                                <div class="user-line">⚡ 动爻：${item.dongYao && item.dongYao.length > 0 ? item.dongYao.join('、') : '无动爻（静卦）'}</div>
-                                <div class="user-line">❓ 所问：${userInfo.question || item.question || '未输入个人资料'}</div>
+                                <div class="user-line">👤 姓名：${escapeHtml(userInfo.name || '匿名')}　性别：${escapeHtml(userInfo.gender || '未知')}</div>
+                                <div class="user-line">⏰ 出生时辰：${escapeHtml(userInfo.birth || '未输入个人资料')}</div>
+                                <div class="user-line">📅 起卦时间：${escapeHtml(timeInfo.solarTime || item.time || '—')}（公历）${escapeHtml(timeInfo.lunarTime || '—')}（农历）</div>
+                                <div class="user-line">🌙 月建：${escapeHtml(timeInfo.yueJian || '—')}月　☀️ 日辰：${escapeHtml(timeInfo.riChen || '—')}日　🌀 旬空：${escapeHtml(timeInfo.xunKong || '—')}</div>
+                                <div class="user-line">⚡ 动爻：${item.dongYao && item.dongYao.length > 0 ? escapeHtml(item.dongYao.join('、')) : '无动爻（静卦）'}</div>
+                                <div class="user-line">❓ 所问：${escapeHtml(userInfo.question || item.question || '未输入个人资料')}</div>
                             </div>
                             ${hasResult
                                 ? `<div class="result-body">${escapeHtml(item.result)}</div>
-                                   <div class="model-tag">🤖 AI 解读（${item.modelName || '千问/GLM'}） · 仅供娱乐参考</div>`
+                                   <div class="model-tag">🤖 AI 解读（${escapeHtml(item.modelName || '千问/GLM')}） · 仅供娱乐参考</div>`
                                 : '<div class="no-result">📜 尚未释卦（可点击本条回起卦页排盘后回到「释卦」页生成 AI 解读）</div>'}
                         </div>
                     </div>

@@ -13,14 +13,27 @@
 //     Pages 项目 dxwj → Settings → Environment variables → Add variable：
 //       QWEN_API_KEY   = 主力千问（qwen3.7-flash-2026-07-15）的 apiKey
 //       QWEN2_API_KEY  = 备选千问（qwen3.7-flash）的 apiKey
+//       AI_GATE_TOKEN  = 可选。配置后请求需携带 x-ai-token 请求头，用于防止
+//                        未授权脚本盗用本代理消耗额度。
 //     GET /api/ai 可作健康检查。
+// 安全防护：来源白名单校验（Origin/Referer），第三方站点无法伪造浏览器来源，
+//           无来源头的直连请求（curl 调试）仍放行。
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, x-ai-token',
   'Access-Control-Max-Age': '86400',
 };
+
+// 允许的来源白名单（浏览器跨站请求由 Origin 头判定，第三方站点无法伪造）
+// 未命中时返回 403，防止他人盗用本代理消耗 API 额度。
+// 无 Origin/Referer 的请求（如 curl 直连调试、同源发起）视为可信，放行。
+const ALLOWED_ORIGINS = [
+  'https://dxwj.pages.dev',
+  'http://localhost',
+  'http://127.0.0.1',
+];
 
 const BASE_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1';
 
@@ -39,6 +52,28 @@ function json(body, status, extra) {
   return new Response(JSON.stringify(body), { status: status || 200, headers });
 }
 
+// 判定请求来源是否可信：
+// - 有 Origin 头（浏览器跨站请求）：须命中白名单前缀（含端口）
+// - 有 Referer 头：取源（scheme+host）校验
+// - 均无（curl 直连 / 同源）：放行，保留调试能力
+function isAllowedOrigin(request) {
+  const origin = request.headers.get('Origin');
+  if (origin) {
+    return ALLOWED_ORIGINS.some((o) => origin === o || origin.startsWith(o + ':') || origin.startsWith(o + '/'));
+  }
+  const referer = request.headers.get('Referer');
+  if (referer) {
+    try {
+      const url = new URL(referer);
+      const key = url.origin;
+      return ALLOWED_ORIGINS.some((o) => key === o || key.startsWith(o + ':') || key.startsWith(o + '/'));
+    } catch (e) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export async function onRequestOptions() {
   return new Response(null, { headers: CORS });
 }
@@ -52,6 +87,20 @@ export async function onRequestPost(context) {
 }
 
 async function handle(request, env) {
+  // 来源校验：第三方站点（含其他域名下嵌入的前端）一律拒绝
+  if (!isAllowedOrigin(request)) {
+    return json({ error: '禁止的请求来源' }, 403);
+  }
+
+  // 可选令牌防护（纵深防御）：配置 AI_GATE_TOKEN 后需请求头携带 x-ai-token
+  // 未配置该环境变量时跳过此校验，保持向后兼容
+  if (env.AI_GATE_TOKEN) {
+    const token = request.headers.get('x-ai-token');
+    if (token !== env.AI_GATE_TOKEN) {
+      return json({ error: '未授权访问' }, 403);
+    }
+  }
+
   let body;
   try {
     body = await request.json();
