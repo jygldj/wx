@@ -160,10 +160,24 @@
 
     // 移动端：选词后弹“轻量提示”，点链接去字典页看完整释义
     function showMobileHint(word, x, y) {
+        // 关键修复：弹窗前清除文本选区，结束手机浏览器的“选区编辑”状态，
+        // 否则用户对悬浮窗的第一次点击会被当成“取消选区”，需要点两次才能跳转。
+        try { window.getSelection().removeAllRanges(); } catch (err) { /* 忽略 */ }
+
         var url = SITE_BASE + '/dict.html?word=' + encodeURIComponent(word);
         var html = '<div class="dx-dict-word">' + escapeHtml(word) + '</div>' +
             '<div class="dx-dict-exp"><a class="dx-dict-link" href="' + url + '">点击查看释义 ›</a></div>';
         showPopup(html, x, y);
+
+        // 触摸设备双保险：手指抬起立即跳转，不依赖合成 click（避免个别浏览器吞掉点击）
+        var popup = document.getElementById(POPUP_ID);
+        var link = popup && popup.querySelector('.dx-dict-link');
+        if (link && IS_MOBILE) {
+            link.addEventListener('touchend', function (ev) {
+                ev.preventDefault();
+                location.href = link.href;
+            });
+        }
     }
 
     // 移动端去重：多次选词只弹最后一次（4 秒计时内重置）
