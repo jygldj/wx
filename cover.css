@@ -15,28 +15,20 @@ html, body {
 
 body {
     font-family: "楷体", "STKaiti", serif;
-    /*
-     * 封面背景：主色为仿古宣纸色(#FFFEFC)，叠加渐变模拟水墨效果。
-     * 若要使用图片背景，请取消下方注释并将 URL 替换为本地图片路径
-     * （如 wsf.jpg 改名为 cover-bg.jpg，或下载自己喜欢的水墨背景图）。
-     *
-     * 注意：img.zcool.cn 域名有防盗链限制，直接用网络图片在本地 file://
-     * 协议下会无法显示。建议使用本地图片，或在部署后使用相对路径图片。
-     */
-    background: var(--paper-color) fixed;
-    /* background-image: url('cover-bg.jpg');  ← 如需图片背景，取消此行注释 */
+    background: var(--paper-color);
+    /* 纯 CSS 水墨渐变，去除站外背景图依赖（zcool 返回 403 且移动端加载慢） */
     color: var(--ink-color);
     min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    /* 水墨渐变叠加层（与背景图可二选一） */
+    /* 水墨渐变叠加层 */
     background-image:
         radial-gradient(ellipse at 20% 30%, rgba(200, 220, 240, 0.5) 0%, transparent 50%),
         radial-gradient(ellipse at 80% 70%, rgba(180, 200, 220, 0.4) 0%, transparent 45%),
         linear-gradient(160deg, #E8F1F2 0%, #D5E3E8 40%, #C8D8E0 100%);
     background-size: cover;
-    background-attachment: fixed;
+    background-attachment: scroll;
     background-blend-mode: normal;
     background-repeat: no-repeat;
     background-position: center;

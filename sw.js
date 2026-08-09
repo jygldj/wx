@@ -5,10 +5,9 @@
  *   - 页面与文章数据：网络优先 + 3 秒超时竞速——刷新即见新内容，
  *     网络卡顿/断网时 3 秒内回退缓存，保证永远可打开；
  *   - 样式/脚本/图片：缓存优先 + 后台静默更新，秒开省流量；
- *   - 后台检测到内容更新时，通知页面提示读者刷新。
  * 兼容性：不支持 Service Worker 的浏览器自动静默跳过，不影响正常访问。
  */
-var CACHE = 'dxwj-v4';   // ← 版本升至 v4，替换旧缓存（迁移到 Cloudflare Pages 后清掉旧 github.io 缓存）
+var CACHE = 'dxwj-v5';   // ← 版本升至 v5：修复预缓存键后清掉旧缓存（flush 旧 ?v=4 键条目）
 var RACE_TIMEOUT = 3000;
 
 /* 预缓存清单：网站骨架与文章数据 */
@@ -31,9 +30,13 @@ var CORE = [
 self.addEventListener('install', function (e) {
     e.waitUntil(
         caches.open(CACHE).then(function (cache) {
-            // 加 ?v=4 时间戳参数，绕过 CDN 边缘缓存、强制重新拉取
-            var bust = cache.addAll(CORE.map(function (u) { return u + '?v=4'; }));
-            return bust;
+            // 加 ?v=4 绕过 CDN 边缘缓存强制拉新，但按【原始 URL】存盘：
+            // 否则预缓存键带参、运行时请求无参，caches.match 永远对不上，离线首开失效。
+            return Promise.all(CORE.map(function (u) {
+                return fetch(u + '?v=4').then(function (resp) {
+                    return cache.put(u, resp);
+                });
+            }));
         })
     );
 });

@@ -40,9 +40,12 @@
 
     <script>
         // 离线缓存（Service Worker）：成功打开一次后，网络卡顿/断网也能进入文集
-        if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-            navigator.serviceWorker.register('sw.js').catch(function(){});
-        }
+        // 注册延后到 load，避免预缓存下载抢占首屏带宽（移动端首次打开更快）
+        window.addEventListener('load', function () {
+            if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+                navigator.serviceWorker.register('sw.js').catch(function(){});
+            }
+        });
 
         // 翻页动画导航
         function navigateWithAnimation() {
