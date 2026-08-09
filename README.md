@@ -1,11 +1,43 @@
 # 道玄文集 · 网站说明（README）
 
-> 最后更新：2026-07-28
+> 最后更新：2026-08-09
 > 维护人：jygldj ｜ 本地工作目录：`F:\github-dx\wx`
 
 ---
 
-## 一、项目简介
+## 一、目录结构（本仓库根目录 F:\github-dx\wx\）
+
+> 维护要点：纯静态站点，无构建命令，Cloudflare Pages 直接托管；后端仅一个 Pages Function（`functions/api/dict.js`，划词查字典）；文章正文在 `articles/`，索引由工具生成于 `articles.js`；`articles.js` 禁止手改。
+
+```
+F:\github-dx\wx\                                # 道玄文集主站（Cloudflare Pages 项目 dxwj）
+├── index.html            # 扉页（封面）
+├── index1.html           # 阅读主页：文章目录 + 正文渲染 + 导航栏（含「新华字典」入口）
+├── search.html           # 全文搜索页（已注入 dict.js，支持划词查字）
+├── build.html            # 文章更新工具页（由 更新网站.bat 打开）
+├── jianjie.html          # 关于作者 / 版权页
+├── dict.html             # 独立查字页：输入框直查 + 支持 ?word= 自动查词
+├── articles.js           # 文章索引数据（由更新工具自动生成，禁止手改）
+├── build-core.js         # 更新工具核心逻辑（build.html 调用）
+├── dict.js               # 划词查字典前端脚本（桌面即时弹卡 / 移动端 4 秒后提示）
+├── render.js             # 正文渲染器 + 夜间模式 / 字号 / 分享工具条
+├── reader.js             # 阅读器主控：目录渲染 / 搜索 / 文章导航 / 侧边栏
+├── site-config.js        # 站点配置（SITE_BASE 等，须在 dict.js 之前加载）
+├── style.css             # 站点主样式（宣纸底 + 青瓷色系）
+├── cover.css             # 封面样式
+├── sw.js                 # Service Worker（离线缓存；版本号 dxwj-v4）
+├── functions/
+│   └── api/
+│       └── dict.js       # 字典查询后端（Pages Function，读 KV DICT_KV）
+├── articles/             # 文章正文 Markdown 源（001-*.md … 105-*.md，共 105 篇）
+├── images/               # 文章配图（.webp / .jpg）
+├── 改动说明.md            # 历次重要改动记录
+├── 更新网站.bat           # 双击打开 build.html 更新工具（Edge）
+├── push-now.bat          # 一键提交并推送 GitHub（已配 schannel 后端）
+└── wsf.jpg / wsf.png / wsf.webp   # 旧版站点配图（OG 分享卡片已移除，未使用）
+```
+
+## 二、项目简介
 
 - **性质**：个人文集网站（诗 / 词 / 散文 / 其它），自娱自乐，朋友圈分享。
 - **类型**：纯静态站点，无构建命令（Cloudflare Pages 直接托管）。
@@ -16,7 +48,7 @@
 
 ---
 
-## 二、文件地图
+## 三、文件地图
 
 | 文件 / 目录 | 作用 |
 |---|---|
@@ -42,7 +74,7 @@
 
 ---
 
-## 三、技术架构
+## 四、技术架构
 
 ```
 浏览器
@@ -63,7 +95,7 @@ GitHub (jygldj/wx) ──push──> Cloudflare Pages（`dxwj`）自动部署
 
 ---
 
-## 四、本地工作目录
+## 五、本地工作目录
 
 - **当前目录**：`F:\github-dx\wx`（从 `github.com/jygldj/wx` 克隆，含最新提交）
 - 旧工作副本 `F:\WorkBuddy\wx2` 已归档到 `F:\WorkBuddy\_archive_2026-07-25\`，日常不再使用。
@@ -71,7 +103,7 @@ GitHub (jygldj/wx) ──push──> Cloudflare Pages（`dxwj`）自动部署
 
 ---
 
-## 五、日常工作流（更新网站）
+## 六、日常工作流（更新网站）
 
 ### 1. 写 / 改文章
 - 在 `articles/` 下新增 / 编辑 `.md` 文件；或在 `build.html` 工具里操作。
@@ -91,7 +123,7 @@ GitHub (jygldj/wx) ──push──> Cloudflare Pages（`dxwj`）自动部署
 
 ---
 
-## 六、划词查字典
+## 七、划词查字典
 
 - **启用范围**：`index1.html`、`search.html` 已引入 `dict.js`。
 - **桌面端**：鼠标划中 1–4 个汉字（单字 / 词语 / 成语）→ 即时弹出释义卡片；右上角 `×` 关闭。长释义可在卡片内**滚动**查看。
@@ -101,7 +133,7 @@ GitHub (jygldj/wx) ──push──> Cloudflare Pages（`dxwj`）自动部署
 
 ---
 
-## 七、dict.html（独立查字页）
+## 八、dict.html（独立查字页）
 
 - **入口**：`index1.html` 导航栏「新华字典」；或文章页移动端提示链接。
 - **功能**：
@@ -110,7 +142,7 @@ GitHub (jygldj/wx) ──push──> Cloudflare Pages（`dxwj`）自动部署
 
 ---
 
-## 八、故障排查
+## 九、故障排查
 
 ### ① 推送失败 / SSL 证书错误
 - **现象**：`git push` 报 `SSL peer certificate or SSH remote key was not OK`；或 GitHub Desktop 报 `unable to get local issuer certificate`。
@@ -133,7 +165,7 @@ GitHub (jygldj/wx) ──push──> Cloudflare Pages（`dxwj`）自动部署
 
 ---
 
-## 九、清理记录
+## 十、清理记录
 
 ### 2026-07-25 · 首次归档（Workers → Pages Functions 迁移）
 - **废弃独立 Cloudflare Worker 方案**（`dict-worker`）：因国内运营商封锁 `*.workers.dev` 子域，改为 **Pages Functions 同域部署**（`daoxuanwenji.pages.dev/api/dict`，后改为 `dxwj.pages.dev/api/dict`）。
@@ -152,14 +184,14 @@ GitHub (jygldj/wx) ──push──> Cloudflare Pages（`dxwj`）自动部署
 
 ---
 
-## 十、后续可扩展（暂未实施）
+## 十一、后续可扩展（暂未实施）
 
 - **前端提交新文章**：用 Cloudflare **D1**（SQLite）存文章元数据 + **R2** 存配图，配合 Pages Functions 接收提交，Cloudflare Access 做鉴权。架构可行，但因写作频率低、现有 `更新网站.bat` 流程已够用，暂未做。
 - 详情见开发对话记录。
 
 ---
 
-## 十一、修改域名的避坑指南（daoxuanwenji.pages.dev → dxwj.pages.dev）
+## 十二、修改域名的避坑指南（daoxuanwenji.pages.dev → dxwj.pages.dev）
 
 > 背景：2026-07-28 将站点从 `daoxuanwenji.pages.dev` 迁移到新建的 `dxwj.pages.dev`，踩了以下坑，记录备查。
 
