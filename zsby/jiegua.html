@@ -1194,9 +1194,9 @@
                         </div>
                         ${window.getYongShenDizhi() ? `
                         <div class="user-row" style="margin-top:12px;padding-top:12px;border-top:1px dashed #e0d3c4;">
-                            <a href="wnl.html?yingqi=${window.getYongShenDizhi()}日" style="display:inline-block;background:#b09a84;color:#2d241c;padding:5px 16px;border-radius:30px;font-size:13px;text-decoration:none;border:1px solid #c9b49e;transition:0.2s;" onmouseover="this.style.background='#c0aa94'" onmouseout="this.style.background='#b09a84'">🗓️ 用神应期反查（查临值公历日）</a>
+                            <a href="wnl.html?yingqi=${window.getYongShenDizhi()}日" class="zeji-btn" style="display:inline-block;background:#b09a84;color:#2d241c;padding:5px 16px;border-radius:30px;font-size:13px;text-decoration:none;border:1px solid #c9b49e;transition:0.2s;" onmouseover="this.style.background='#c0aa94'" onmouseout="this.style.background='#b09a84'">🗓️ 用神应期反查（查临值公历日）</a>
                             ${guaInfo && guaInfo.yongShen && guaInfo.yongShen.primaryIndex != null && guaInfo.yongShen.liuqin ? `
-                            <button onclick="goZejiForGua()" style="display:inline-block;background:#2980b9;color:#fff;padding:5px 16px;border-radius:30px;font-size:13px;border:1px solid #2471a3;cursor:pointer;font-family:inherit;transition:0.2s;margin-left:8px;" onmouseover="this.style.background='#2471a3'" onmouseout="this.style.background='#2980b9'">🔮 为此卦择吉（${guaInfo.yongShen.liuqin}旺衰注入）</button>
+                            <button onclick="goZejiForGua()" class="zeji-btn" style="display:inline-block;background:#2980b9;color:#fff;padding:5px 16px;border-radius:30px;font-size:13px;border:1px solid #2471a3;cursor:pointer;font-family:inherit;transition:0.2s;margin-left:8px;" onmouseover="this.style.background='#2471a3'" onmouseout="this.style.background='#2980b9'">🔮 为此卦择吉（${guaInfo.yongShen.liuqin}旺衰注入）</button>
                             ` : ''}
                         </div>
                         ` : ''}

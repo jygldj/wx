@@ -479,12 +479,14 @@ h1 {
     .coin { width: 56px; height: 56px; font-size: 24px; }
     .primary-btn { padding: 10px 24px; font-size: 16px; }
 
-    .mode-switch-bar { gap: 8px; }
+    .mode-switch-bar { gap: 8px; flex-wrap: wrap; }
     .mode-btn {
         padding: 7px 18px;
         font-size: 13px;
         font-weight: 500;
+        min-height: 44px;
     }
+    .reset-btn { min-height: 44px; }
 
     .user-info-area { padding: 10px 8px; }
     .user-info-title { font-size: 14px; margin-bottom: 8px; }
@@ -514,6 +516,7 @@ h1 {
         justify-content: center;
         padding: 14px 20px;
         font-size: 18px;
+        min-height: 48px;
     }
 
     .gua-title {
@@ -574,6 +577,22 @@ h1 {
     .yao-najia { font-size: 13px; }
     .yao-dong-mark { font-size: 16px; }
     .fu-shen { font-size: 9px; }
+
+    /* 窄屏：释卦页「应期反查 / 为此卦择吉」内联按钮纳管，全宽堆叠、触摸目标≥44px */
+    .zeji-btn {
+        display: inline-block;
+        width: 100%;
+        box-sizing: border-box;
+        margin: 8px 0 0 0;
+        min-height: 44px;
+        text-align: center;
+        font-size: 14px;
+    }
+    .action-btn {
+        min-height: 44px;
+        padding: 10px 14px;
+        font-size: 14px;
+    }
 }
 
 /* ====== 响应式：小屏手机（≤ 400px） ====== */
