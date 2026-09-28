@@ -196,7 +196,12 @@ textarea#body{
     </div>
 
     <div id="form" style="display:none">
-      <!-- 写作格式说明：新建文章时默认展开 -->
+      <div class="field">
+        <label>文稿</label>
+        <textarea id="body" spellcheck="false" placeholder="# 标题&#10;> 分类 | 日期&#10;&#10;正文……"></textarea>
+      </div>
+
+      <!-- 写作格式说明：置于编辑区下方，默认收起；编辑已发布文章时整卡隐藏 -->
       <details class="fmt" id="fmt">
         <summary>写作格式 · 文稿首两行与正文标记</summary>
         <div class="fmt-body">
@@ -225,11 +230,6 @@ textarea#body{
         </div>
       </details>
 
-      <div class="field">
-        <label>文稿（首行「# 标题」，第二行「&gt; 分类 | 日期」，其余为正文）</label>
-        <textarea id="body" spellcheck="false" placeholder="# 标题&#10;> 分类 | 日期&#10;&#10;正文……"></textarea>
-      </div>
-
       <div class="toolbar">
         <button class="btn" id="btnLocal">本地缓存</button>
         <button class="btn" id="btnClear">清空</button>
@@ -245,8 +245,9 @@ textarea#body{
 
     <div class="empty" id="welcome">
       左侧选择一篇文章进行编辑，或点右上角「新建文章」。<br><br>
-      文稿首行写「# 标题」，第二行写「&gt; 分类 | 日期」，其余为正文。<br>
-      输入两秒后自动缓存到本机浏览器；「存为草稿」「发布」「保存修改」均直接写入数据库，前台刷新即可见效。
+      文稿首行写「# 标题」，第二行写「&gt; 分类 | 日期」，其余为正文（点开编辑区下方的「写作格式」可看明细）。<br>
+      新建与草稿：输入两秒后自动缓存到本机浏览器，「存为草稿」「发布」直接写入数据库；<br>
+      已发布文章：只显示「保存修改」「删除本文」，改完即存，不做本机缓存。
     </div>
   </section>
 </main>
@@ -285,9 +286,10 @@ textarea#body{
   function api(path, opts) {
     opts = opts || {};
     var init = { method: opts.method || 'GET', credentials: 'same-origin', headers: {} };
+    /* 所有写动作（POST/PUT/DELETE）一律带校验头，无请求体的 DELETE 也不例外 */
+    if (init.method !== 'GET') init.headers['X-DX-Admin'] = '1';
     if (opts.body !== undefined) {
       init.headers['Content-Type'] = 'application/json';
-      init.headers['X-DX-Admin'] = '1';
       init.body = JSON.stringify(opts.body);
     }
     return fetch(path, init).then(function (r) {
@@ -365,18 +367,20 @@ textarea#body{
     return p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
   }
 
-  /** 写入本机缓存。silent=true 时不弹提示（自动缓存用） */
+  /** 写入本机缓存（仅新建/草稿；编辑已发布文章不缓存）。silent=true 不弹提示 */
   function localCommit(aid, silent) {
+    if (currentAid !== null && currentStatus === 'published') return;   // 已发布编辑：不缓存
     var ok = lsSet(aid, { text: $('body').value, at: Date.now() });
     if (!ok && !silent) { toast('本机浏览器无法缓存（可能禁用了本地存储）', true); return; }
     if (!silent) toast('已缓存到本机浏览器 · ' + fmtTime(Date.now()));
     updateMeta();
   }
 
-  /** 当前编辑内容与本机缓存比对，决定是否显示提示条 */
+  /** 当前编辑内容与本机缓存比对，决定是否显示提示条（已发布编辑不显示） */
   function refreshLocalBar() {
-    var snap = lsGet(currentAid);
     var bar = $('localbar');
+    if (currentAid !== null && currentStatus === 'published') { bar.style.display = 'none'; return; }
+    var snap = lsGet(currentAid);
     if (!snap) { bar.style.display = 'none'; return; }
     if (snap.text === $('body').value) { bar.style.display = 'none'; return; }
     $('localtext').textContent = '本机浏览器存有一份缓存（' + fmtTime(snap.at) +
@@ -504,13 +508,20 @@ textarea#body{
     $('meta').textContent = parts.join(' · ');
   }
 
-  /** 按当前文章状态显隐按钮（主公钦定规矩） */
+  /** 按当前文章状态显隐按钮与格式卡（主公钦定规矩）：
+   *  新建        → 本地缓存 · 清空 · 存为草稿 · 发布
+   *  编辑已发布  → 保存修改 · 删除本文（无缓存、无清空、无格式卡）
+   *  编辑草稿    → 本地缓存 · 清空 · 存为草稿 · 发布 · 删除本文 */
   function refreshToolbar() {
     var isNew = !currentAid;
-    $('btnSave').style.display    = (!isNew && currentStatus === 'published') ? '' : 'none';
+    var isPub = !isNew && currentStatus === 'published';
+    $('btnSave').style.display    = isPub ? '' : 'none';
     $('btnDraft').style.display   = (isNew || currentStatus === 'draft') ? '' : 'none';
     $('btnPublish').style.display = (isNew || currentStatus === 'draft') ? '' : 'none';
     $('btnDelete').style.display  = isNew ? 'none' : '';
+    $('btnLocal').style.display   = isPub ? 'none' : '';
+    $('btnClear').style.display   = isPub ? 'none' : '';
+    $('fmt').style.display        = isPub ? 'none' : '';
   }
 
   function openArticle(aid) {
@@ -525,7 +536,7 @@ textarea#body{
         $('welcome').style.display = 'none';
         $('body').value = docFromArticle(a);
         $('localbar').style.display = 'none';
-        $('fmt').open = false;          // 编辑已有文章时收起格式说明
+        $('fmt').open = false;          // 格式说明始终默认收起
         updateMeta();
         refreshLocalBar();
         refreshToolbar();
@@ -543,7 +554,7 @@ textarea#body{
     $('welcome').style.display = 'none';
     $('body').value = skeleton();
     $('localbar').style.display = 'none';
-    $('fmt').open = true;             // 新建时展开写作格式说明
+    $('fmt').open = false;            // 格式说明默认收起（点击随时展开）
     updateMeta();
     refreshLocalBar();
     refreshToolbar();
