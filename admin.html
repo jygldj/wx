@@ -281,6 +281,7 @@ textarea#body{
   var currentStatus = null;      /* 当前打开文章的状态（published / draft；新建为 null） */
   var cache = [];
   var LS_PREFIX = 'dxwj.local.';
+  var ADMIN_VER = 'v09f';        /* 后台页面版本标记：显示于右上角徽章，用于核对浏览器拿到的是哪一版 */
 
   function $(id) { return document.getElementById(id); }
 
@@ -464,7 +465,7 @@ textarea#body{
     return api('/api/articles?all=1')
       .then(function (j) {
         cache = j.articles || [];
-        $('stat').textContent = '已登录 · 共 ' + cache.length + ' 篇';
+        $('stat').textContent = '已登录 · ' + ADMIN_VER + ' · 共 ' + cache.length + ' 篇';
         renderList();
       })
       .catch(function (e) { toast('读取列表失败：' + e.message, true); });
