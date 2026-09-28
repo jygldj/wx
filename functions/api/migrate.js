@@ -5,9 +5,14 @@
 //   GET /api/migrate?key=XXXX               → 建表 + 灌库（表非空则跳过）
 //   GET /api/migrate?key=XXXX&force=1       → 清空后重灌
 //   GET /api/migrate?key=XXXX&schema=1      → 只建表（IF NOT EXISTS）
+//   GET /api/migrate?key=XXXX&src=backup&force=1 → 改用 /backup/articles.json 作为数据源（灾难恢复）
+//
+// 数据源：
+//   默认 /articles.js            —— 建站初期的静态快照
+//   src=backup → /backup/articles.json —— 每日自动备份（同构 JSON）
 //
 // 设计要点：
-//   1) 数据源为本站静态资源 /articles.js，不依赖任何外部网络；
+//   1) 数据源为本站静态资源，不依赖任何外部网络；
 //   2) 只读取、解析、写入，不改动静态文件，随时可重跑；
 //   3) 表非空默认不覆盖，需显式 force=1，避免误操作毁库。
 
@@ -83,14 +88,23 @@ async function run(context) {
       return json({ ok: true, step: 'skip', rows: before, note: '表中已有数据，未改动；如需重灌请加 force=1' });
     }
 
-    // 取站内快照
+    // 取站内数据源：默认建站快照，src=backup 时改用每日备份
+    const useBackup = url.searchParams.get('src') === 'backup';
+    const srcPath = useBackup ? '/backup/articles.json' : '/articles.js';
     const origin = url.origin;
-    const res = await fetch(origin + '/articles.js', { cf: { cacheTtl: 0 } });
-    if (!res.ok) return json({ ok: false, error: '读取 articles.js 失败：HTTP ' + res.status }, 502);
+    const res = await fetch(origin + srcPath, { cf: { cacheTtl: 0 } });
+    if (!res.ok) return json({ ok: false, error: '读取 ' + srcPath + ' 失败：HTTP ' + res.status }, 502);
     const text = await res.text();
-    const data = parseArticlesData(text);
+
+    // 备份文件是纯 JSON，articles.js 是 JS 包装，两种格式都接受
+    let data;
+    try {
+      data = JSON.parse(text.replace(/^\uFEFF/, ''));
+    } catch (e) {
+      data = parseArticlesData(text);
+    }
     const list = (data && data.articles) || [];
-    if (!list.length) return json({ ok: false, error: '快照中文章列表为空' }, 422);
+    if (!list.length) return json({ ok: false, error: srcPath + ' 中文章列表为空' }, 422);
 
     if (before > 0) {
       await env.DB.prepare('DELETE FROM articles').run();
@@ -122,7 +136,7 @@ async function run(context) {
     return json({
       ok: true,
       step: 'migrated',
-      source: { version: data && data.version, generated: data && data.generated, count: list.length, bytes: text.length },
+      source: { path: srcPath, version: data && data.version, generated: data && data.generated, count: list.length, bytes: text.length },
       cleared: before,
       written,
       table: after,

@@ -26,7 +26,8 @@ export async function onRequestGet(context) {
   const full = url.searchParams.get('full') === '1';
   const wantAll = url.searchParams.get('all') === '1';
 
-  const admin = wantAll ? await isAdmin(request, env) : false;
+  // 注意：单篇查询（aid / id）同样要认管理员身份，否则登录后也取不到自己的草稿
+  const admin = (wantAll || aid || id) ? await isAdmin(request, env) : false;
   const where = admin ? '' : "WHERE status = 'published'";
 
   try {

@@ -1,0 +1,67 @@
+name: 文集备份
+
+# 目的：动态化之后，文章正文住在 D1 里，不再随 .md 提交，Git 历史失去「版本记录」。
+#       此任务每天把线上全量文章（已发布，含正文）拉回仓库一份，等于用 Git 提交历史继续留痕。
+#
+# 特性：
+#   * 内容无变化时不提交，仓库不会天天膨胀；
+#   * 同时产出 JSON 与 .json.gz，便于人工查看与快速恢复；
+#   * 如需从备份恢复：把 backup/articles.json 提交上去后，调用
+#     /api/migrate?key=…&src=backup&force=1 即可整库重灌。
+#
+# 前置设置：仓库 Settings → Actions → General → Workflow permissions →
+#          选择「Read and write permissions」，否则最后一步 push 会被拒。
+
+on:
+  schedule:
+    - cron: '17 3 * * *' # 每天 UTC 03:17（北京时间 11:17）
+  workflow_dispatch: # 支持手动触发
+
+permissions:
+  contents: write
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 拉取线上全量文章
+        run: |
+          set -e
+          curl -sS -f --retry 3 --retry-delay 5 --max-time 180 \
+            "https://dxwj.pages.dev/api/articles?full=1" -o /tmp/dump.json
+          echo "接口返回 $(wc -c < /tmp/dump.json) 字节"
+
+      - name: 生成备份文件
+        run: |
+          set -e
+          python3 - <<'PY'
+          import gzip, json, os
+          d = json.load(open('/tmp/dump.json', encoding='utf-8'))
+          arts = sorted(d.get('articles') or [], key=lambda a: a.get('id', 0))
+          # 只保留内容字段并排序，保证「内容不变 → 字节不变」，避免无谓提交
+          keys = ('id', 'title', 'category', 'date', 'body', 'status')
+          clean = [{k: a.get(k) for k in keys} for a in arts]
+          out = {'version': d.get('version'), 'count': len(clean), 'articles': clean}
+          raw = json.dumps(out, ensure_ascii=False, indent=2, sort_keys=True).encode('utf-8')
+          os.makedirs('backup', exist_ok=True)
+          open('backup/articles.json', 'wb').write(raw)
+          with gzip.open('backup/articles.json.gz', 'wb', compresslevel=9) as f:
+              f.write(raw)
+          print('已生成：%d 篇，%d 字节' % (len(clean), len(raw)))
+          PY
+
+      - name: 有变化才提交
+        run: |
+          set -e
+          git add backup
+          if git diff --cached --quiet; then
+            echo "内容与上次一致，无需提交。"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cnt=$(python3 -c "import json;print(json.load(open('backup/articles.json',encoding='utf-8'))['count'])")
+          git commit -m "备份 ${cnt} 篇 · $(date -u +%Y-%m-%d)"
+          git push
