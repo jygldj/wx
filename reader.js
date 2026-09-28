@@ -81,18 +81,40 @@
         // ============================================================
         // 3. 加载数据（结构化 articles.js）
         // ============================================================
+        // 数据源：优先从数据库接口取（/api/articles），失败时回退本地 articles.js 快照，
+        // 保证接口故障/离线时站点仍可打开（快照为迁移前的历史数据，仅作兜底，不再更新）。
         function loadArticles() {
-            try {
-                if (typeof articlesData === 'undefined' || !articlesData.articles) {
-                    throw new Error('articlesData 未定义，请确保 articles.js 已正确加载');
-                }
+            fetch('/api/articles?full=1', { credentials: 'same-origin' })
+                .then(function (resp) {
+                    if (!resp.ok) throw new Error('接口返回 HTTP ' + resp.status);
+                    return resp.json();
+                })
+                .then(function (data) {
+                    const list = (data && data.articles) || [];
+                    if (!list.length) throw new Error('接口返回空数据');
+                    console.log('✅ 已从数据库加载 ' + list.length + ' 篇文章');
+                    applyArticles(list);
+                })
+                .catch(function (err) {
+                    console.warn('⚠️ 数据库接口不可用，改用本地快照：', err && err.message);
+                    try {
+                        if (typeof articlesData === 'undefined' || !articlesData.articles) {
+                            throw new Error('接口与本地快照均不可用');
+                        }
+                        applyArticles(articlesData.articles);
+                    } catch (error) {
+                        showLoadError(error);
+                    }
+                });
+        }
 
-                articles = articlesData.articles;
-                if (articles.length === 0) {
+        function applyArticles(list) {
+            try {
+                articles = list;
+                if (!articles.length) {
                     throw new Error('文章数据为空');
                 }
                 isDataLoaded = true;
-                console.log('✅ 成功加载 ' + articles.length + ' 篇文章');
 
                 renderVolumeNav();
                 renderArticleList();
@@ -118,18 +140,22 @@
                 loadArticle(0);
 
             } catch (error) {
-                console.error('❌ 加载失败:', error);
-                document.getElementById('articleList').innerHTML =
-                    '<li class="error-hint">' +
-                        '⚠️ 加载失败：' + error.message + '<br>' +
-                        '<small>请确保 articles.js 文件存在于同一目录下</small>' +
-                    '</li>';
-                document.getElementById('articleText').innerHTML =
-                    '<div class="loading error-text">' +
-                        '⚠️ 数据加载失败<br>' +
-                        '<small>' + error.message + '</small>' +
-                    '</div>';
+                showLoadError(error);
             }
+        }
+
+        function showLoadError(error) {
+            console.error('❌ 加载失败:', error);
+            document.getElementById('articleList').innerHTML =
+                '<li class="error-hint">' +
+                    '⚠️ 加载失败：' + error.message + '<br>' +
+                    '<small>请检查网络后刷新重试</small>' +
+                '</li>';
+            document.getElementById('articleText').innerHTML =
+                '<div class="loading error-text">' +
+                    '⚠️ 数据加载失败<br>' +
+                    '<small>' + error.message + '</small>' +
+                '</div>';
         }
 
         // ============================================================

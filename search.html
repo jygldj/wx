@@ -480,20 +480,41 @@
     // ============================================================
     // 4. 加载数据
     // ============================================================
+    // 数据源：优先数据库接口，失败回退本地 articles.js 快照（与阅读页一致）
     function loadData() {
-        try {
-            if (typeof articlesData === 'undefined' || !articlesData.articles) {
-                throw new Error('articlesData 未定义，请确保 articles.js 已正确加载');
-            }
+        fetch('/api/articles?full=1', { credentials: 'same-origin' })
+            .then(resp => {
+                if (!resp.ok) throw new Error('接口返回 HTTP ' + resp.status);
+                return resp.json();
+            })
+            .then(data => {
+                const list = (data && data.articles) || [];
+                if (!list.length) throw new Error('接口返回空数据');
+                console.log('✅ 已从数据库加载 ' + list.length + ' 篇文章');
+                applyData(list);
+            })
+            .catch(err => {
+                console.warn('⚠️ 数据库接口不可用，改用本地快照：', err && err.message);
+                try {
+                    if (typeof articlesData === 'undefined' || !articlesData.articles) {
+                        throw new Error('接口与本地快照均不可用');
+                    }
+                    applyData(articlesData.articles);
+                } catch (error) {
+                    showDataError(error);
+                }
+            });
+    }
 
-            const parsed = adaptArticles(articlesData.articles);
+    function applyData(rawList) {
+        try {
+            const parsed = adaptArticles(rawList);
             if (parsed.length === 0) {
                 throw new Error('文章数据为空');
             }
 
             articles = parsed;
             isDataLoaded = true;
-            console.log('✅ 成功加载 ' + articles.length + ' 篇文章');
 
             const stats = { '诗': 0, '词': 0, '散文': 0, '其它': 0 };
             articles.forEach(a => {
@@ -504,14 +525,18 @@
                 '共 ' + articles.length + ' 篇文章，诗 ' + stats['诗'] + ' 篇，词 ' + stats['词'] + ' 篇，散文 ' + stats['散文'] + ' 篇，其他 ' + stats['其它'] + ' 篇';
 
         } catch (error) {
-            console.error('❌ 加载失败:', error);
-            document.getElementById('leftPanel').innerHTML =
-                '<div class="empty-state">' +
-                    '<div class="icon">⚠️</div>' +
-                    '<p>数据加载失败</p>' +
-                    '<p style="font-size:0.85em; color:#A8A59B; margin-top:6px;">' + error.message + '</p>' +
-                '</div>';
+            showDataError(error);
         }
+    }
+
+    function showDataError(error) {
+        console.error('❌ 加载失败:', error);
+        document.getElementById('leftPanel').innerHTML =
+            '<div class="empty-state">' +
+                '<div class="icon">⚠️</div>' +
+                '<p>数据加载失败</p>' +
+                '<p style="font-size:0.85em; color:#A8A59B; margin-top:6px;">' + error.message + '</p>' +
+            '</div>';
     }
 
     // ============================================================
