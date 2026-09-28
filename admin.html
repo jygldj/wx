@@ -79,7 +79,16 @@ aside .search input{
 #list li .no{color:var(--muted);font-size:14px;margin-right:6px}
 #list li small{color:var(--muted);font-size:14px}
 #list li .dtitle{color:var(--warn)}                     /* 草稿标题以黄色显示 */
-#list li .draft{color:var(--warn);font-size:12.5px;border:1px solid #DCC98A;border-radius:3px;padding:0 5px;margin-left:6px}
+#list li .draft{color:#6B5413;background:#F1E4B3;border:1px solid #D9BC55;border-radius:3px;padding:0 6px;margin-left:6px;font-size:12.5px}
+/* 草稿条目整条突出：淡黄底 + 黄竖线 */
+#list li.draftitem{background:#FBF6E6;border-left:4px solid #D9BC55;padding-left:12px}
+#list li.draftitem:hover{background:#F6EED4}
+#list li.draftitem.active{background:#F6EED4;border-left-color:var(--warn);color:var(--ink)}
+#list li.draftitem .dtitle{font-weight:700}
+/* 草稿区分隔行（不可点） */
+#list li.grp{cursor:default;color:var(--warn);font-size:13px;letter-spacing:2px;
+  background:transparent;border-bottom:none;padding:12px 16px 4px;text-align:center}
+#list li.grp:hover{background:transparent}
 
 section.editor{flex:1;overflow-y:auto;padding:20px 26px 80px}
 
@@ -470,19 +479,32 @@ textarea#body{
       if (a.status === 'draft') drafts.push(a); else pubs.push(a);
     });
     var n = 0;
-    pubs.concat(drafts).forEach(function (a) {
+    function add(a, isDraft) {
       if (kw && String(a.title).toLowerCase().indexOf(kw) < 0 &&
           String(a.category).toLowerCase().indexOf(kw) < 0) return;
       n++;
       var li = document.createElement('li');
-      if (currentAid && a.aid === currentAid) li.className = 'active';
+      if (isDraft) li.className = 'draftitem';
+      if (currentAid && a.aid === currentAid) li.className += ' active';
       li.innerHTML = '<span class="no">' + a.id + '.</span>' +
-        '<span class="' + (a.status === 'draft' ? 'dtitle' : '') + '">' + escapeHtml(a.title) + '</span>' +
+        '<span class="' + (isDraft ? 'dtitle' : '') + '">' + escapeHtml(a.title) + '</span>' +
         ' <small>(' + escapeHtml(a.category) + ')</small>' +
-        (a.status === 'draft' ? '<span class="draft">草稿</span>' : '');
+        (isDraft ? '<span class="draft">草稿</span>' : '');
       li.onclick = function () { openArticle(a.aid); };
       ul.appendChild(li);
+    }
+    pubs.forEach(function (a) { add(a, false); });
+    var dv = drafts.filter(function (a) {
+      return !kw || String(a.title).toLowerCase().indexOf(kw) >= 0 ||
+             String(a.category).toLowerCase().indexOf(kw) >= 0;
     });
+    if (dv.length) {
+      var g = document.createElement('li');
+      g.className = 'grp';
+      g.textContent = '— 草稿 · ' + dv.length + ' 篇（前台不可见）—';
+      ul.appendChild(g);
+      dv.forEach(function (a) { add(a, true); });
+    }
     if (!n) ul.innerHTML = '<div class="empty">没有匹配的文章</div>';
   }
 
