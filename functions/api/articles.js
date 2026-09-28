@@ -45,7 +45,7 @@ export async function onRequestGet(context) {
 
     const sql = full
       ? `SELECT aid, seq AS id, title, category, date, body, status, updated_at FROM articles ${where} ORDER BY seq ASC`
-      : `SELECT aid, seq AS id, title, category, date, updated_at FROM articles ${where} ORDER BY seq ASC`;
+      : `SELECT aid, seq AS id, title, category, date, status, updated_at FROM articles ${where} ORDER BY seq ASC`;
 
     const res = await env.DB.prepare(sql).all();
     const list = (res && res.results) || [];
