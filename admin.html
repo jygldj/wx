@@ -80,11 +80,6 @@ aside .search input{
 #list li small{color:var(--muted);font-size:14px}
 #list li .dtitle{color:var(--warn)}                     /* 草稿标题以黄色显示 */
 #list li .draft{color:#6B5413;background:#F1E4B3;border:1px solid #D9BC55;border-radius:3px;padding:0 6px;margin-left:6px;font-size:12.5px}
-/* 草稿条目整条突出：淡黄底 + 黄竖线 */
-#list li.draftitem{background:#FBF6E6;border-left:4px solid #D9BC55;padding-left:12px}
-#list li.draftitem:hover{background:#F6EED4}
-#list li.draftitem.active{background:#F6EED4;border-left-color:var(--warn);color:var(--ink)}
-#list li.draftitem .dtitle{font-weight:700}
 /* 草稿区分隔行（不可点） */
 #list li.grp{cursor:default;color:var(--warn);font-size:13px;letter-spacing:2px;
   background:transparent;border-bottom:none;padding:12px 16px 4px;text-align:center}
@@ -281,7 +276,6 @@ textarea#body{
   var currentStatus = null;      /* 当前打开文章的状态（published / draft；新建为 null） */
   var cache = [];
   var LS_PREFIX = 'dxwj.local.';
-  var ADMIN_VER = 'v09f';        /* 后台页面版本标记：显示于右上角徽章，用于核对浏览器拿到的是哪一版 */
 
   function $(id) { return document.getElementById(id); }
 
@@ -465,7 +459,7 @@ textarea#body{
     return api('/api/articles?all=1')
       .then(function (j) {
         cache = j.articles || [];
-        $('stat').textContent = '已登录 · ' + ADMIN_VER + ' · 共 ' + cache.length + ' 篇';
+        $('stat').textContent = '已登录 · 共 ' + cache.length + ' 篇';
         renderList();
       })
       .catch(function (e) { toast('读取列表失败：' + e.message, true); });
@@ -485,8 +479,7 @@ textarea#body{
           String(a.category).toLowerCase().indexOf(kw) < 0) return;
       n++;
       var li = document.createElement('li');
-      if (isDraft) li.className = 'draftitem';
-      if (currentAid && a.aid === currentAid) li.className += ' active';
+      li.className = (currentAid && a.aid === currentAid) ? 'active' : '';
       li.innerHTML = '<span class="no">' + a.id + '.</span>' +
         '<span class="' + (isDraft ? 'dtitle' : '') + '">' + escapeHtml(a.title) + '</span>' +
         ' <small>(' + escapeHtml(a.category) + ')</small>' +
