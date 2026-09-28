@@ -7,7 +7,7 @@
  *   - 样式/脚本/图片：缓存优先 + 后台静默更新，秒开省流量；
  * 兼容性：不支持 Service Worker 的浏览器自动静默跳过，不影响正常访问。
  */
-var CACHE = 'dxwj-v6';   // ← 版本升至 v6：数据源改为 /api/articles（D1），接口请求不缓存
+var CACHE = 'dxwj-v7';   // ← 版本升至 v7：admin.html 不再缓存（后台页永远走网络，杜绝旧版后台）
 var RACE_TIMEOUT = 3000;
 
 /* 预缓存清单：网站骨架与文章数据 */
@@ -64,8 +64,10 @@ self.addEventListener('fetch', function (e) {
     // 只处理同源请求；跨域（如 og:image 反代之类）一律放行，不缓存
     if (url.origin !== self.location.origin) return;
 
-    // 数据库接口（/api/）一律直连网络、不写入缓存：后台改完前台刷新即见最新数据
+    // 数据库接口（/api/）与后台页（/admin）一律直连网络、不写入缓存：
+    // 前台改完刷新即见最新数据，后台页永不落缓存、永不端旧版
     if (url.pathname.indexOf('/api/') === 0) return;
+    if (url.pathname === '/admin' || url.pathname === '/admin.html' || url.pathname.indexOf('/admin/') === 0) return;
 
     var accept = req.headers.get('accept') || '';
     var isHTML = req.mode === 'navigate' || accept.indexOf('text/html') !== -1;

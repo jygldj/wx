@@ -584,19 +584,12 @@ textarea#body{
     $('body').focus();
   }
 
-  $('btnNew').onclick = function () {
-    var doc = $('body').value;
-    if ($('form').style.display !== 'none' && doc.trim() && doc !== skeleton()) {
-      if (!confirm('当前编辑区已有内容（自动缓存已留底）。开始新建并清空？')) return;
-    }
-    newArticle();
-  };
+  $('btnNew').onclick = function () { newArticle(); };   /* 新建直接清空，不弹确认（草稿/新建内容有本机缓存兜底，可经「载入缓存」找回） */
 
   $('btnClear').onclick = function () {
     if ($('form').style.display === 'none') return;
     if (!$('body').value.trim()) return;
-    if (!confirm('确定清空编辑区？（本机缓存仍留有底稿，可经「载入缓存」找回）')) return;
-    newArticle();
+    newArticle();   /* 清空直接执行，不弹确认（本机缓存仍留有底稿，可经「载入缓存」找回） */
     toast('已清空，等同新建');
   };
 
