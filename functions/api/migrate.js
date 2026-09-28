@@ -13,19 +13,27 @@
 
 import { json } from '../_lib/auth.js';
 
-const DDL = `CREATE TABLE IF NOT EXISTS articles (
-  aid        INTEGER PRIMARY KEY AUTOINCREMENT,
-  seq        INTEGER NOT NULL DEFAULT 0,
-  title      TEXT    NOT NULL,
-  category   TEXT    NOT NULL DEFAULT '其它',
-  date       TEXT    NOT NULL DEFAULT '',
-  body       TEXT    NOT NULL DEFAULT '',
-  status     TEXT    NOT NULL DEFAULT 'published',
-  created_at TEXT    NOT NULL DEFAULT (datetime('now')),
-  updated_at TEXT    NOT NULL DEFAULT (datetime('now'))
-);
-CREATE INDEX IF NOT EXISTS idx_articles_seq    ON articles(seq);
-CREATE INDEX IF NOT EXISTS idx_articles_status ON articles(status, seq);`;
+// 注意：D1 的 exec() 按「换行」切句，多行 DDL 会被切碎报 incomplete input，
+// 故这里逐句 prepare().run()，每句自带 IF NOT EXISTS，可反复执行。
+const DDL_LIST = [
+  "CREATE TABLE IF NOT EXISTS articles (" +
+  " aid INTEGER PRIMARY KEY AUTOINCREMENT," +
+  " seq INTEGER NOT NULL DEFAULT 0," +
+  " title TEXT NOT NULL," +
+  " category TEXT NOT NULL DEFAULT '其它'," +
+  " date TEXT NOT NULL DEFAULT ''," +
+  " body TEXT NOT NULL DEFAULT ''," +
+  " status TEXT NOT NULL DEFAULT 'published'," +
+  " created_at TEXT NOT NULL DEFAULT (datetime('now'))," +
+  " updated_at TEXT NOT NULL DEFAULT (datetime('now'))" +
+  ")",
+  "CREATE INDEX IF NOT EXISTS idx_articles_seq ON articles(seq)",
+  "CREATE INDEX IF NOT EXISTS idx_articles_status ON articles(status, seq)"
+];
+
+async function ensureSchema(db) {
+  for (const stmt of DDL_LIST) await db.prepare(stmt).run();
+}
 
 // 从 JS 文本里取出 articlesData 对象并解析（括号配对，跳过字符串内的花括号）
 function parseArticlesData(text) {
@@ -66,7 +74,7 @@ async function run(context) {
   const force = url.searchParams.get('force') === '1';
 
   try {
-    await env.DB.exec(DDL);
+    await ensureSchema(env.DB);
     if (schemaOnly) return json({ ok: true, step: 'schema', note: '建表完成' });
 
     const cur = await env.DB.prepare('SELECT COUNT(*) AS n FROM articles').first();
