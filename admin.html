@@ -22,7 +22,7 @@
   --card:#FFFFFF;
   --err:#A8322D;
   --warn:#8A6D1F;
-  --fs:16px;            /* 全站基准字号（已整体放大） */
+  --fs:16px;            /* 全站基准字号 */
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
@@ -33,7 +33,7 @@ body{
   line-height:1.7;
 }
 button{font-family:inherit;cursor:pointer;font-size:15px}
-input,textarea,select{font-family:inherit;color:var(--ink)}
+input,textarea{font-family:inherit;color:var(--ink)}
 a{color:var(--accent)}
 
 header{
@@ -78,11 +78,12 @@ aside .search input{
 #list li.active{background:var(--hover);border-left:4px solid var(--accent);padding-left:12px;color:var(--accent)}
 #list li .no{color:var(--muted);font-size:14px;margin-right:6px}
 #list li small{color:var(--muted);font-size:14px}
+#list li .dtitle{color:var(--warn)}                     /* 草稿标题以黄色显示 */
 #list li .draft{color:var(--warn);font-size:12.5px;border:1px solid #DCC98A;border-radius:3px;padding:0 5px;margin-left:6px}
 
 section.editor{flex:1;overflow-y:auto;padding:20px 26px 80px}
 
-/* 本地暂存提示条 */
+/* 本机缓存提示条 */
 .localbar{
   display:flex;align-items:center;gap:12px;flex-wrap:wrap;
   border:1px solid #DCC98A;background:#FBF6E6;color:var(--warn);
@@ -92,19 +93,15 @@ section.editor{flex:1;overflow-y:auto;padding:20px 26px 80px}
 
 .field{margin-bottom:16px}
 .field label{display:block;font-size:14.5px;color:var(--muted);margin-bottom:6px;letter-spacing:.5px}
-.field input,.field textarea,.field select{
+.field textarea{
   width:100%;padding:10px 13px;border:1px solid var(--line2);border-radius:4px;
   background:var(--card);font-size:16px;
 }
-.field input:focus,.field textarea:focus,.field select:focus{
+.field textarea:focus{
   outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(58,99,81,.10);
 }
-.row{display:flex;gap:14px}
-.row .field{flex:1}
-.lablerow{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px}
-.lablerow label{margin-bottom:0}
 textarea#body{
-  min-height:46vh;line-height:1.95;font-size:17px;resize:vertical;
+  min-height:52vh;line-height:1.95;font-size:17px;resize:vertical;
   font-family:"楷体","STKaiti","Microsoft YaHei",serif;
 }
 
@@ -140,17 +137,6 @@ textarea#body{
 .toolbar .btn.danger{margin-left:28px}
 
 .meta{font-size:14px;color:var(--muted);margin:2px 0 14px}
-.hint{font-size:14.5px;color:var(--muted);line-height:1.9}
-
-.preview{
-  border:1px solid var(--line2);border-radius:6px;background:var(--card);
-  padding:22px 26px;line-height:2;font-size:18px;min-height:220px;
-}
-.preview p{margin:.65em 0}
-.preview h2,.preview h3{font-weight:normal;color:var(--accent);margin:.9em 0 .45em}
-.preview img{max-width:100%}
-.preview .note{color:#6B7A6B}
-.preview .annotation{border-top:1px dashed var(--line2);margin-top:14px;padding-top:10px;color:#6B7A6B;font-size:16px}
 
 #login{
   position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
@@ -177,7 +163,7 @@ textarea#body{
   main{flex-direction:column;height:auto;overflow:visible}
   aside{width:auto;flex:none;max-height:38vh;border-right:none;border-bottom:1px solid var(--line)}
   section.editor{padding:16px}
-  textarea#body{min-height:34vh}
+  textarea#body{min-height:40vh}
   .fmt-body td:first-child{white-space:normal;width:auto}
   .toolbar .btn.danger{margin-left:0}
 }
@@ -201,97 +187,66 @@ textarea#body{
   </aside>
 
   <section class="editor">
-    <!-- 本地暂存提示（有暂存且与当前内容不同时出现） -->
+    <!-- 本机缓存提示（有缓存且与当前内容不同时出现） -->
     <div class="localbar" id="localbar" style="display:none">
       <span id="localtext"></span>
       <span class="sp"></span>
-      <button class="btn small" id="btnLocalLoad">载入暂存</button>
+      <button class="btn small" id="btnLocalLoad">载入缓存</button>
       <button class="btn small" id="btnLocalDrop">丢弃</button>
     </div>
 
     <div id="form" style="display:none">
-      <div class="row">
-        <div class="field" style="flex:2">
-          <label>标题</label>
-          <input id="title" type="text" placeholder="文章标题">
-        </div>
-        <div class="field">
-          <label>分类</label>
-          <input id="category" type="text" list="cats" placeholder="散文">
-          <datalist id="cats">
-            <option value="散文"><option value="诗"><option value="词"><option value="其它">
-            <option value="文"><option value="疏"><option value="书信"><option value="忏悔录">
-          </datalist>
-        </div>
-      </div>
-      <div class="row">
-        <div class="field" style="flex:2">
-          <label>日期（沿用原有写法，如「乙巳年五月初一」）</label>
-          <input id="date" type="text" placeholder="乙巳年五月初一">
-        </div>
-        <div class="field">
-          <label>状态（由下方「存为草稿」「发布」按钮改写）</label>
-          <select id="status">
-            <option value="published">发布（前台可见）</option>
-            <option value="draft">草稿（前台不显示）</option>
-          </select>
-        </div>
-      </div>
-
       <!-- 写作格式说明：新建文章时默认展开 -->
       <details class="fmt" id="fmt">
-        <summary>写作格式 · 正文可用的标记</summary>
+        <summary>写作格式 · 文稿首两行与正文标记</summary>
         <div class="fmt-body">
-          <p class="fmt-note">标题、分类、日期已由上方字段承载，<b>正文里不必再写</b>「# 标题」与「&gt; 分类 | 日期」两行。从本机「📂 导入文件」时，这两行会被自动识别拆出填进字段。</p>
+          <p class="fmt-note">文稿首行写标题、第二行写分类与日期，<b>保存时自动拆入数据库</b>，正文部分与前台所见一致。打开旧文时会自动带出这两行。</p>
           <table>
+            <tr><td><code># 标题</code></td><td>首行，文章标题（必需）</td></tr>
+            <tr><td><code>&gt; 分类 | 日期</code></td><td>第二行，分类与日期；可只写其一，两样都无则删掉此行</td></tr>
             <tr><td><code>空一行</code></td><td>分段。分类为「散文」等时，段首自动缩进两字；分类为「诗 / 词」时整篇不缩进</td></tr>
             <tr><td><code>直接回车换行</code></td><td>同一段内换行（诗句逐行排版用这个，不要用空行）</td></tr>
             <tr><td><code>## 小标题</code></td><td>二级小标题，独占一行</td></tr>
             <tr><td><code>### 小标题</code></td><td>三级小标题，独占一行</td></tr>
             <tr><td><code>《题名》</code></td><td>整行只有书名号包住的题名时，渲染为诗题样式</td></tr>
-            <tr><td><code>![说明](images/图.jpg)</code></td><td>插图，独占一行；方括号内文字显示为图注</td></tr>
+            <tr><td><code>![说明](图)</code></td><td>插图，独占一行；方括号内文字显示为图注</td></tr>
             <tr><td><code>**加粗**</code></td><td>加粗</td></tr>
             <tr><td><code>注：……</code></td><td>以「注 / 注释 / 附 / 附记 / 附注」加冒号开头，其后的全部内容归入文末注释块</td></tr>
           </table>
           <p class="fmt-note">示例：</p>
-          <pre>## 其一
+          <pre># 鹧鸪天·道明镇小馆记
+&gt; 诗 | 丙午年八月十八
 
-白日依山尽，黄河入海流。
-欲穷千里目，更上一层楼。
+竹椅方桌申酉交，
+青椒腊肉釜中鏖。
 
-注：此诗为登楼所作。</pre>
+注：与友人六人游道明镇，见小馆夫妇五十载掌勺，
+感其情，作诗词一首以记。</pre>
         </div>
       </details>
 
       <div class="field">
-        <div class="lablerow">
-          <label>正文</label>
-          <button type="button" class="btn small" id="btnImport"
-                  title="从本机选择 .txt / .md 文件导入，自动识别标题行与「分类 | 日期」行">📂 导入文件（txt / md）</button>
-          <input type="file" id="fileImport" accept=".txt,.md,.markdown,text/plain" style="display:none">
-        </div>
-        <textarea id="body" spellcheck="false" placeholder="在此书写正文，或点上方「导入文件」从本机选入…"></textarea>
+        <label>文稿（首行「# 标题」，第二行「&gt; 分类 | 日期」，其余为正文）</label>
+        <textarea id="body" spellcheck="false" placeholder="# 标题&#10;> 分类 | 日期&#10;&#10;正文……"></textarea>
       </div>
 
-
       <div class="toolbar">
-        <button class="btn" id="btnLocal">本地提交</button>
+        <button class="btn" id="btnLocal">本地缓存</button>
+        <button class="btn" id="btnClear">清空</button>
         <button class="btn" id="btnDraft">存为草稿</button>
-        <button class="btn" id="btnSave">保存</button>
-        <button class="btn" id="btnPreview">预览 / 收起</button>
         <button class="btn primary" id="btnPublish">发布</button>
+        <button class="btn" id="btnSave">保存修改</button>
         <span class="sp"></span>
         <button class="btn danger" id="btnDelete">删除本文</button>
       </div>
 
       <div class="meta" id="meta"></div>
-
-      <div class="preview" id="preview" style="display:none"></div>
     </div>
 
     <div class="empty" id="welcome">
       左侧选择一篇文章进行编辑，或点右上角「新建文章」。<br><br>
-      保存后立即写入数据库，前台刷新即可看到改动，无需再跑批处理、也无需推送 GitHub。
+      文稿首行写「# 标题」，第二行写「&gt; 分类 | 日期」，其余为正文。<br>
+      输入两秒后自动缓存到本机浏览器；「存为草稿」「发布」「保存修改」均直接写入数据库，前台刷新即可见效。
     </div>
   </section>
 </main>
@@ -308,12 +263,12 @@ textarea#body{
 
 <div id="toast"></div>
 
-<script src="render.js"></script>
 <script>
 (function () {
   'use strict';
 
   var currentAid = null;
+  var currentStatus = null;      /* 当前打开文章的状态（published / draft；新建为 null） */
   var cache = [];
   var LS_PREFIX = 'dxwj.local.';
 
@@ -347,24 +302,61 @@ textarea#body{
     });
   }
 
-  /* ---------------- 本地暂存（浏览器 localStorage） ---------------- */
+  /* ---------------- 文稿 ⇄ 字段 拆拼 ---------------- */
 
-  function lsKey() { return LS_PREFIX + (currentAid === null ? 'new' : currentAid); }
+  /** 文稿 → {title, category, date, body}。首行「# 标题」，次行「> 分类 | 日期」 */
+  function parseDoc(text) {
+    var lines = String(text).replace(/\r\n?/g, '\n').split('\n');
+    var title = '', category = '', date = '';
+    var i = 0;
+    while (i < lines.length && !lines[i].trim()) i++;
+    if (i < lines.length) {
+      title = lines[i].trim().replace(/^#{1,6}\s*/, '').trim();
+      i++;
+    }
+    for (; i < lines.length; i++) {
+      var t = lines[i].trim();
+      if (!t) continue;
+      if (/^>[^>]*$/.test(t)) {
+        var parts = t.replace(/^>\s*/, '').split('|');
+        category = (parts[0] || '').trim();
+        date = (parts[1] || '').trim();
+        i++;
+      }
+      break;
+    }
+    var body = lines.slice(i).join('\n').replace(/^\n+/, '').replace(/\s+$/, '');
+    return { title: title, category: category, date: date, body: body };
+  }
+
+  /** 文章记录 → 整篇文稿（标题/分类日期两行拼回文首） */
+  function docFromArticle(a) {
+    var head = '# ' + (a.title || '');
+    var meta = [(a.category || ''), (a.date || '')].filter(Boolean).join(' | ');
+    if (meta) head += '\n> ' + meta;
+    return head + '\n\n' + (a.body || '');
+  }
+
+  function skeleton() { return '# \n> 散文 | \n\n'; }
+
+  /* ---------------- 本机缓存（浏览器 localStorage） ---------------- */
+
+  function lsKey(aid) { return LS_PREFIX + (aid === null ? 'new' : aid); }
 
   function lsGet(aid) {
     try {
-      var raw = localStorage.getItem(LS_PREFIX + (aid === null ? 'new' : aid));
+      var raw = localStorage.getItem(lsKey(aid));
       return raw ? JSON.parse(raw) : null;
     } catch (e) { return null; }
   }
 
   function lsSet(aid, obj) {
-    try { localStorage.setItem(LS_PREFIX + (aid === null ? 'new' : aid), JSON.stringify(obj)); return true; }
+    try { localStorage.setItem(lsKey(aid), JSON.stringify(obj)); return true; }
     catch (e) { return false; }
   }
 
   function lsDel(aid) {
-    try { localStorage.removeItem(LS_PREFIX + (aid === null ? 'new' : aid)); } catch (e) {}
+    try { localStorage.removeItem(lsKey(aid)); } catch (e) {}
   }
 
   function fmtTime(ts) {
@@ -373,50 +365,52 @@ textarea#body{
     return p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
   }
 
-  /** 当前编辑区内容与本地暂存比对，决定是否显示提示条 */
+  /** 写入本机缓存。silent=true 时不弹提示（自动缓存用） */
+  function localCommit(aid, silent) {
+    var ok = lsSet(aid, { text: $('body').value, at: Date.now() });
+    if (!ok && !silent) { toast('本机浏览器无法缓存（可能禁用了本地存储）', true); return; }
+    if (!silent) toast('已缓存到本机浏览器 · ' + fmtTime(Date.now()));
+    updateMeta();
+  }
+
+  /** 当前编辑内容与本机缓存比对，决定是否显示提示条 */
   function refreshLocalBar() {
     var snap = lsGet(currentAid);
     var bar = $('localbar');
     if (!snap) { bar.style.display = 'none'; return; }
-    var same = snap.title === $('title').value && snap.category === $('category').value &&
-               snap.date === $('date').value && snap.status === $('status').value &&
-               snap.body === $('body').value;
-    if (same) { bar.style.display = 'none'; return; }
-    $('localtext').textContent = '本机浏览器存有一份暂存（' + fmtTime(snap.at) +
-      '，' + (snap.body || '').length + ' 字），与当前内容不同。';
+    if (snap.text === $('body').value) { bar.style.display = 'none'; return; }
+    $('localtext').textContent = '本机浏览器存有一份缓存（' + fmtTime(snap.at) +
+      '，' + (snap.text || '').length + ' 字），与当前内容不同。';
     bar.style.display = 'flex';
   }
+
+  $('btnLocal').onclick = function () { localCommit(currentAid, false); refreshLocalBar(); };
 
   $('btnLocalLoad').onclick = function () {
     var snap = lsGet(currentAid);
     if (!snap) { $('localbar').style.display = 'none'; return; }
-    $('title').value = snap.title || '';
-    $('category').value = snap.category || '';
-    $('date').value = snap.date || '';
-    $('status').value = snap.status || 'published';
-    $('body').value = snap.body || '';
+    $('body').value = snap.text || '';
     $('localbar').style.display = 'none';
-    toast('已载入本地暂存（尚未入库）');
+    toast('已载入本机缓存（尚未入库）');
   };
 
   $('btnLocalDrop').onclick = function () {
     lsDel(currentAid);
     $('localbar').style.display = 'none';
-    toast('已丢弃本地暂存');
+    toast('已丢弃本机缓存');
   };
 
-  function localCommit() {
-    var ok = lsSet(currentAid, {
-      title: $('title').value, category: $('category').value, date: $('date').value,
-      status: $('status').value, body: $('body').value, at: Date.now()
-    });
-    if (!ok) { toast('本机浏览器无法暂存（可能禁用了本地存储）', true); return; }
-    $('localbar').style.display = 'none';
+  /* 自动缓存：停手 2 秒落盘；关页前强制落盘 */
+  var autoT = null;
+  $('body').addEventListener('input', function () {
     updateMeta();
-    toast('已暂存到本机浏览器 · ' + fmtTime(Date.now()));
-  }
-
-  $('btnLocal').onclick = localCommit;
+    if (autoT) clearTimeout(autoT);
+    var aidAtType = currentAid;
+    autoT = setTimeout(function () { localCommit(aidAtType, true); }, 2000);
+  });
+  window.addEventListener('beforeunload', function () {
+    if ($('form').style.display !== 'none') localCommit(currentAid, true);
+  });
 
   /* ---------------- 登录态 ---------------- */
 
@@ -451,7 +445,7 @@ textarea#body{
     api('/api/session', { method: 'POST' }).then(function () { location.reload(); });
   };
 
-  /* ---------------- 列表 ---------------- */
+  /* ---------------- 列表（已发布在前，草稿居末、黄字） ---------------- */
 
   function loadList() {
     return api('/api/articles?all=1')
@@ -467,14 +461,19 @@ textarea#body{
     var kw = ($('q').value || '').trim().toLowerCase();
     var ul = $('list');
     ul.innerHTML = '';
-    var n = 0;
+    var pubs = [], drafts = [];
     cache.forEach(function (a) {
+      if (a.status === 'draft') drafts.push(a); else pubs.push(a);
+    });
+    var n = 0;
+    pubs.concat(drafts).forEach(function (a) {
       if (kw && String(a.title).toLowerCase().indexOf(kw) < 0 &&
           String(a.category).toLowerCase().indexOf(kw) < 0) return;
       n++;
       var li = document.createElement('li');
       if (currentAid && a.aid === currentAid) li.className = 'active';
-      li.innerHTML = '<span class="no">' + a.id + '.</span>' + escapeHtml(a.title) +
+      li.innerHTML = '<span class="no">' + a.id + '.</span>' +
+        '<span class="' + (a.status === 'draft' ? 'dtitle' : '') + '">' + escapeHtml(a.title) + '</span>' +
         ' <small>(' + escapeHtml(a.category) + ')</small>' +
         (a.status === 'draft' ? '<span class="draft">草稿</span>' : '');
       li.onclick = function () { openArticle(a.aid); };
@@ -495,79 +494,98 @@ textarea#body{
   function updateMeta() {
     var parts = [];
     if (currentAid === null) parts.push('新建中（尚未入库）');
-    else parts.push('数据库主键 ' + currentAid + (updateMeta.updated ? ' · 更新于 ' + updateMeta.updated : ''));
+    else {
+      parts.push('数据库主键 ' + currentAid);
+      parts.push(currentStatus === 'draft' ? '状态：草稿' : '状态：已发布');
+      if (updateMeta.updated) parts.push('更新于 ' + updateMeta.updated);
+    }
     var snap = lsGet(currentAid);
-    if (snap) parts.push('本地暂存 ' + fmtTime(snap.at));
+    if (snap) parts.push('本机缓存 ' + fmtTime(snap.at));
     $('meta').textContent = parts.join(' · ');
+  }
+
+  /** 按当前文章状态显隐按钮（主公钦定规矩） */
+  function refreshToolbar() {
+    var isNew = !currentAid;
+    $('btnSave').style.display    = (!isNew && currentStatus === 'published') ? '' : 'none';
+    $('btnDraft').style.display   = (isNew || currentStatus === 'draft') ? '' : 'none';
+    $('btnPublish').style.display = (isNew || currentStatus === 'draft') ? '' : 'none';
+    $('btnDelete').style.display  = isNew ? 'none' : '';
   }
 
   function openArticle(aid) {
     api('/api/articles/' + aid)
       .then(function (j) {
         var a = j.article;
+        if (autoT) { clearTimeout(autoT); autoT = null; }
         currentAid = a.aid;
+        currentStatus = a.status || 'published';
+        updateMeta.updated = a.updated_at || '';
         $('form').style.display = 'block';
         $('welcome').style.display = 'none';
-        $('title').value = a.title || '';
-        $('category').value = a.category || '';
-        $('date').value = a.date || '';
-        $('status').value = a.status || 'published';
-        $('body').value = a.body || '';
-        updateMeta.updated = a.updated_at || '';
-        $('preview').style.display = 'none';
+        $('body').value = docFromArticle(a);
+        $('localbar').style.display = 'none';
         $('fmt').open = false;          // 编辑已有文章时收起格式说明
         updateMeta();
         refreshLocalBar();
+        refreshToolbar();
         renderList();
       })
       .catch(function (e) { toast('打开失败：' + e.message, true); });
   }
 
   function newArticle() {
+    if (autoT) { clearTimeout(autoT); autoT = null; }
     currentAid = null;
+    currentStatus = null;
     updateMeta.updated = '';
     $('form').style.display = 'block';
     $('welcome').style.display = 'none';
-    $('title').value = '';
-    $('category').value = '散文';
-    $('date').value = '';
-    $('status').value = 'published';
-    $('body').value = '';
-    $('preview').style.display = 'none';
+    $('body').value = skeleton();
+    $('localbar').style.display = 'none';
     $('fmt').open = true;             // 新建时展开写作格式说明
     updateMeta();
     refreshLocalBar();
+    refreshToolbar();
     renderList();
-    $('title').focus();
+    $('body').focus();
   }
 
-  $('btnNew').onclick = newArticle;
+  $('btnNew').onclick = function () {
+    var doc = $('body').value;
+    if ($('form').style.display !== 'none' && doc.trim() && doc !== skeleton()) {
+      if (!confirm('当前编辑区已有内容（自动缓存已留底）。开始新建并清空？')) return;
+    }
+    newArticle();
+  };
 
-  function payload() {
-    return {
-      title: $('title').value,
-      category: $('category').value,
-      date: $('date').value,
-      status: $('status').value,
-      body: $('body').value
-    };
-  }
-
-  var busy = false;
+  $('btnClear').onclick = function () {
+    if ($('form').style.display === 'none') return;
+    if (!$('body').value.trim()) return;
+    if (!confirm('确定清空编辑区？（本机缓存仍留有底稿，可经「载入缓存」找回）')) return;
+    newArticle();
+    toast('已清空，等同新建');
+  };
 
   /**
-   * 保存入库。
-   * mode = 'draft'   → 置为草稿后保存
-   *        'publish' → 置为发布后保存
-   *        'keep'    → 按状态框当前值保存
+   * 入库。mode：
+   *   'draft'   → 存为草稿（新建建档；编辑草稿时保持草稿）
+   *   'publish' → 发布（新建建档；草稿转正）
+   *   'keep'    → 保存修改（仅已发布文章，保持发布）
    */
+  var busy = false;
+
   function save(mode) {
     if (busy) return;
-    var p = payload();
-    if (!String(p.title).trim()) { toast('标题不能为空', true); $('title').focus(); return; }
+    var doc = parseDoc($('body').value);
+    if (!doc.title) { toast('文稿首行需写「# 标题」', true); return; }
+    if (!doc.body) { toast('正文不能为空', true); return; }
 
-    if (mode === 'draft') { $('status').value = 'draft'; p.status = 'draft'; }
-    else if (mode === 'publish') { $('status').value = 'published'; p.status = 'published'; }
+    var status = mode === 'draft' ? 'draft'
+               : mode === 'publish' ? 'published'
+               : (currentStatus || 'published');
+
+    var p = { title: doc.title, category: doc.category || '其它', date: doc.date, status: status, body: doc.body };
 
     var btn = mode === 'draft' ? $('btnDraft') : (mode === 'publish' ? $('btnPublish') : $('btnSave'));
     var label = btn.textContent;
@@ -584,10 +602,8 @@ textarea#body{
       btn.disabled = false;
       btn.textContent = label;
       if (!currentAid && j.article) { currentAid = j.article.aid; }
-      lsDel(currentAid);                       // 已入库，本地暂存使命完成
-      toast(mode === 'draft' ? '已存为草稿（前台不显示）' : (mode === 'publish' ? '已发布' : '已保存'));
-      updateMeta();
-      refreshLocalBar();
+      lsDel(currentAid);                       // 已入库，本机缓存使命完成
+      toast(mode === 'draft' ? '已存为草稿（前台不显示）' : (mode === 'publish' ? '已发布' : '已保存修改'));
       return loadList().then(function () { if (currentAid) openArticle(currentAid); });
     }).catch(function (e) {
       busy = false;
@@ -598,26 +614,30 @@ textarea#body{
     });
   }
 
-  $('btnSave').onclick = function () { save('keep'); };
   $('btnDraft').onclick = function () { save('draft'); };
   $('btnPublish').onclick = function () { save('publish'); };
+  $('btnSave').onclick = function () { save('keep'); };
 
   document.addEventListener('keydown', function (e) {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
       e.preventDefault();
-      if ($('form').style.display !== 'none') save('keep');
+      if ($('form').style.display !== 'none') {
+        if (currentAid && currentStatus === 'published') save('keep');
+        else save('draft');
+      }
     }
   });
 
   $('btnDelete').onclick = function () {
     if (!currentAid) { toast('当前是未保存的新文章', true); return; }
-    var t = $('title').value || '这篇文章';
+    var t = parseDoc($('body').value).title || '这篇文章';
     if (!confirm('确定删除《' + t + '》？此操作不可撤销。')) return;
     api('/api/articles/' + currentAid, { method: 'DELETE' })
       .then(function () {
         lsDel(currentAid);
         toast('已删除');
         currentAid = null;
+        currentStatus = null;
         $('form').style.display = 'none';
         $('localbar').style.display = 'none';
         $('welcome').style.display = 'block';
@@ -626,106 +646,7 @@ textarea#body{
       .catch(function (e) { toast('删除失败：' + e.message, true); });
   };
 
-  /* ---------------- 预览 ---------------- */
-
-  $('btnPreview').onclick = function () {
-    var pv = $('preview');
-    if (pv.style.display !== 'none') { pv.style.display = 'none'; return; }
-    var html;
-    try {
-      html = window.DXRender
-        ? window.DXRender.renderBody($('body').value, $('category').value)
-        : '<pre>' + escapeHtml($('body').value) + '</pre>';
-    } catch (e) {
-      html = '<pre>' + escapeHtml($('body').value) + '</pre>';
-    }
-    pv.innerHTML = html;
-    pv.style.display = 'block';
-  };
-
-  /* ---------------- 导入本机 txt / md 文件（纯本地解析，不联网） ---------------- */
-
-  /**
-   * 智能拆填规则：
-   *   1) 首个非空行为 Markdown 标题（# 开头）      → 标题，从正文剔除
-   *   2) 否则若首个非空行不超过 30 字              → 首行作标题，从正文剔除
-   *   3) 否则标题取文件名（去扩展名），首行留正文
-   *   4) 标题之后出现的「> 分类 | 日期」行          → 拆进分类/日期字段，从正文剔除
-   */
-  function parseImported(text, fileName) {
-    var lines = String(text).replace(/\r\n?/g, '\n').split('\n');
-    var title = '', category = '', date = '';
-    var i = 0;
-
-    while (i < lines.length && !lines[i].trim()) i++;
-    if (i < lines.length) {
-      var first = lines[i].trim();
-      if (/^#{1,6}\s+/.test(first)) {
-        title = first.replace(/^#{1,6}\s+/, '').trim();
-        i++;
-      } else if (first.length <= 30 && lines.length > 1) {
-        title = first;
-        i++;
-      } else if (fileName) {
-        title = String(fileName).replace(/\.(txt|md|markdown)$/i, '').trim();
-      } else {
-        title = first;
-        i++;
-      }
-    }
-
-    /* 标题之后：跳过空行，识别一个「> 分类 | 日期」行；遇到普通正文行即止 */
-    for (; i < lines.length; i++) {
-      var t = lines[i].trim();
-      if (!t) continue;
-      if (/^>[^>]*\|/.test(t)) {
-        var parts = t.replace(/^>\s*/, '').split('|');
-        category = (parts[0] || '').trim();
-        date = (parts[1] || '').trim();
-        i++;
-      }
-      break;
-    }
-
-    var body = lines.slice(i).join('\n').replace(/^\n+/, '').replace(/\s+$/, '');
-    return { title: title, category: category, date: date, body: body };
-  }
-
-  $('btnImport').onclick = function () { $('fileImport').click(); };
-
-  $('fileImport').addEventListener('change', function () {
-    var file = this.files && this.files[0];
-    this.value = '';
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { toast('文件过大（超过 2 MB），请拆分后导入', true); return; }
-
-    var hasContent = ($('title').value + $('body').value).trim() !== '';
-    if (hasContent && !confirm('当前编辑区已有内容，导入将覆盖。\n\n（需要保留可先点「本地提交」暂存到本机）\n\n继续导入？')) return;
-
-    var reader = new FileReader();
-    reader.onload = function () {
-      var r = parseImported(String(reader.result), file.name);
-      if (!r.title && !r.body) { toast('文件为空，未导入', true); return; }
-      if (r.title) $('title').value = r.title;
-      if (r.category) $('category').value = r.category;
-      if (r.date) $('date').value = r.date;
-      $('body').value = r.body;
-      $('preview').style.display = 'none';
-      updateMeta();
-      refreshLocalBar();
-      toast('已导入「' + file.name + '」（' + r.body.length + ' 字）请核对标题分类后保存');
-      $('title').focus();
-    };
-    reader.onerror = function () { toast('读取文件失败', true); };
-    reader.readAsText(file, 'utf-8');
-  });
-
   /* ---------------- 启动 ---------------- */
-
-  ['title', 'category', 'date', 'status', 'body'].forEach(function (id) {
-    $(id).addEventListener('change', function () { updateMeta(); refreshLocalBar(); });
-  });
-  $('body').addEventListener('input', updateMeta);
 
   checkSession();
 })();
