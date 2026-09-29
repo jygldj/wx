@@ -7,7 +7,7 @@
  *   - 样式/脚本/图片：缓存优先 + 后台静默更新，秒开省流量；
  * 兼容性：不支持 Service Worker 的浏览器自动静默跳过，不影响正常访问。
  */
-var CACHE = 'dxwj-v7';   // ← 版本升至 v7：admin.html 不再缓存（后台页永远走网络，杜绝旧版后台）
+var CACHE = 'dxwj-v8';   // ← v8：从预缓存移除已废弃的 build.html / build-core.js（静态更新工具下线）；后台页仍永远走网络，杜绝旧版后台
 var RACE_TIMEOUT = 3000;
 
 /* 预缓存清单：网站骨架与文章数据 */
@@ -17,11 +17,9 @@ var CORE = [
     './index1.html',
     './search.html',
     './jianjie.html',
-    './build.html',
     './style.css',
     './cover.css',
     './render.js',
-    './build-core.js',
     './articles.js',
     './site-config.js',
     './reader.js'

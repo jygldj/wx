@@ -5,8 +5,8 @@
 # ------------------------------------------------------------
 # 用途：把「D1 数据库导出的 JSON」(functions/api/export.js 产出，
 #       或 backup/articles.json 每日备份) 还原为单篇 .md 合集，
-#       格式与 build-core.js 约定的源文件完全一致，将来可被
-#       「更新网站.bat」重新拼回 articles.js，形成闭环。
+#       格式与 articles/ 源文件约定完全一致（首行 # 标题、次行 > 分类 | 日期），
+#       作为 D1 数据的本地标准源，供备份与核对使用。
 #
 # 用法：
 #   python tools/json2md.py                      # 取 backup/dxwj-export-*.json 最新一份 → articles/
@@ -20,7 +20,7 @@
 # 安全策略：
 #   - 默认跳过已存在的同名文件，绝不删除、绝不覆盖（除非 --force）
 #   - 草稿默认也还原，文件名尾部加「（草稿）」标记，便于一眼识别，
-#     且不影响 build-core.js 解析（编号提取只看文件名开头数字）
+#     且不影响 articles/ 解析（编号提取只看文件名开头数字）
 #
 import sys
 import os
@@ -66,7 +66,7 @@ def load_articles(path):
 
 
 def render_md(a):
-    """把单篇文章渲染成 build-core.js 可解析的 .md 文本。"""
+    """把单篇文章渲染成 articles/ 源文件约定的 .md 文本。"""
     title = (a.get('title') or '未命名').strip()
     cat = (a.get('category') or '未分类').strip()
     date = (a.get('date') or '未标注日期').strip()

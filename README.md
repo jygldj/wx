@@ -7,18 +7,17 @@
 
 ## 一、目录结构（本仓库根目录 F:\github-dx\wx\）
 
-> 维护要点：纯静态站点，无构建命令，Cloudflare Pages 直接托管；后端仅一个 Pages Function（`functions/api/dict.js`，划词查字典）；文章正文在 `articles/`，索引由工具生成于 `articles.js`；`articles.js` 禁止手改。
+> 维护要点：Cloudflare Pages 直接托管；后端为 Pages Functions（D1 存文章 + KV 存字典）；文章正文在 `articles/`，`articles.js` 为 D1 兜底快照与导入源（禁止手改）；后台 `admin.html` 管理文章。
 
 ```
 F:\github-dx\wx\                                # 道玄文集主站（Cloudflare Pages 项目 dxwj）
 ├── index.html            # 扉页（封面）
 ├── index1.html           # 阅读主页：文章目录 + 正文渲染 + 导航栏（含「新华字典」入口）
+├── admin.html            # 后台：D1 文章增删改 + 批量导入 / 导出（含夜间模式 / 字号工具条）
 ├── search.html           # 全文搜索页（已注入 dict.js，支持划词查字）
-├── build.html            # 文章更新工具页（由 更新网站.bat 打开）
 ├── jianjie.html          # 关于作者 / 版权页
 ├── dict.html             # 独立查字页：输入框直查 + 支持 ?word= 自动查词
-├── articles.js           # 文章索引数据（由更新工具自动生成，禁止手改）
-├── build-core.js         # 更新工具核心逻辑（build.html 调用）
+├── articles.js           # 文章索引数据（D1 兜底快照 + 导入源，禁止手改）
 ├── dict.js               # 划词查字典前端脚本（桌面即时弹卡 / 移动端 4 秒后提示）
 ├── render.js             # 正文渲染器 + 夜间模式 / 字号 / 分享工具条
 ├── reader.js             # 阅读器主控：目录渲染 / 搜索 / 文章导航 / 侧边栏
@@ -32,15 +31,15 @@ F:\github-dx\wx\                                # 道玄文集主站（Cloudflar
 ├── articles/             # 文章正文 Markdown 源（001-*.md … 105-*.md，共 105 篇）
 ├── images/               # 文章配图（.webp / .jpg）
 ├── 改动说明.md            # 历次重要改动记录
-├── 更新网站.bat           # 双击打开 build.html 更新工具（Edge）
-├── push-now.bat          # 一键提交并推送 GitHub（已配 schannel 后端）
-└── wsf.jpg / wsf.png / wsf.webp   # 旧版站点配图（OG 分享卡片已移除，未使用）
+├── tools/                # 运维工具：json2md.py（将军用）/ json2md.html（主公用）
+├── backup/               # 每日自动备份的 D1 全量 JSON
+└── wsf.jpg / wsf.webp    # 站点配图（wsf.webp 封面背景，wsf.jpg 作者像；wsf.png 已删除）
 ```
 
 ## 二、项目简介
 
 - **性质**：个人文集网站（诗 / 词 / 散文 / 其它），自娱自乐，朋友圈分享。
-- **类型**：纯静态站点，无构建命令（Cloudflare Pages 直接托管）。
+- **类型**：Cloudflare Pages 托管的动态站点（前端静态 + Pages Functions 后端：D1 存文章、KV 存字典）。
 - **线上域名**：https://dxwj.pages.dev
 - **源码仓库**：https://github.com/jygldj/wx
 - **部署方式**：推送到 GitHub → Cloudflare Pages **自动部署**（约 1–2 分钟）。
@@ -54,23 +53,22 @@ F:\github-dx\wx\                                # 道玄文集主站（Cloudflar
 |---|---|
 | `index.html` | 扉页（封面） |
 | `index1.html` | 阅读主页：文章目录 + 正文渲染 + 导航栏（含「新华字典」入口） |
+| `admin.html` | 后台：D1 文章增删改 + 批量导入 / 导出（含夜间模式 / 字号工具条） |
 | `search.html` | 全文搜索页（已注入 `dict.js`，支持划词查字） |
-| `build.html` | 文章更新工具页（由 `更新网站.bat` 打开） |
 | `jianjie.html` | 关于作者 / 版权页 |
 | `dict.html` | 独立查字页：输入框直查 + 支持 `?word=` 自动查词 |
-| `render.js` | 正文渲染器 + 夜间模式 / 字号 / 分享工具条 |
-| `articles.js` | 文章索引数据（**由更新工具自动生成，禁止手改**） |
-| `build-core.js` | 更新工具核心逻辑（`build.html` 调用） |
+| `render.js` | 正文渲染器 + 夜间模式 / 字号 / 分享工具条（前台后台共用） |
+| `articles.js` | 文章索引数据（**D1 兜底快照 + 导入源，禁止手改**） |
 | `dict.js` | 划词查字典前端脚本（桌面端即时弹卡 / 移动端 4 秒后弹轻量提示） |
 | `style.css` / `cover.css` | 站点样式 |
-| `sw.js` | Service Worker（离线缓存；版本号 `dxwj-v4`，改版时递增并清理旧缓存） |
-| `articles/` | 文章正文 Markdown 源文件（如 `001-道德经.md`） |
+| `sw.js` | Service Worker（离线缓存；版本号 `dxwj-v8`，改版时递增并清理旧缓存） |
+| `articles/` | 文章正文 Markdown 源文件（001-*.md … 105-*.md，共 105 篇，标准源） |
 | `images/` | 文章配图等资源 |
-| `functions/api/dict.js` | Cloudflare Pages Function：字典查询后端（读 KV `DICT_KV`） |
-| `更新网站.bat` | 双击打开 `build.html` 更新工具（Edge 浏览器） |
-| `push-now.bat` | 一键提交并推送到 GitHub（已配 `schannel` 后端，规避代理 SSL 问题） |
+| `functions/` | Cloudflare Pages Functions：D1 文章接口 + 字典（KV `DICT_KV`）后端 |
+| `tools/` | 运维工具：`json2md.py`（将军用）/ `json2md.html`（主公用），D1 导出 JSON → .md 合集 |
+| `backup/` | 每日自动备份的 D1 全量 JSON（`articles.json` 等） |
 | `改动说明.md` | 历次重要改动记录 |
-| `wsf.jpg` / `wsf.png` / `wsf.webp` | 旧版站点配图（OG 分享卡片已移除，未使用） |
+| `wsf.jpg` / `wsf.webp` | 站点配图（`wsf.webp` 封面背景，`wsf.jpg` 作者像；`wsf.png` 已删除） |
 
 ---
 
@@ -86,10 +84,10 @@ F:\github-dx\wx\                                # 道玄文集主站（Cloudflar
 GitHub (jygldj/wx) ──push──> Cloudflare Pages（`dxwj`）自动部署
 ```
 
-> 终态架构（2026-07-28 清理后）：1 个 Pages 项目 + 1 个 Pages Function + 1 个 KV 命名空间。无独立 Worker、无过渡 Pages 项目。
+> 终态架构：1 个 Pages 项目 + 多个 Pages Functions（D1 文章接口、字典、鉴权、导入/导出/迁移）+ 1 个 KV 命名空间（DICT_KV）。无独立 Worker、无过渡 Pages 项目。
 
 - **静态托管**：Cloudflare Pages（`dxwj` 项目）
-- **后端**：Cloudflare Pages Functions（`functions/api/dict.js`）
+- **后端**：Cloudflare Pages Functions —— `functions/api/` 下含 D1 文章接口（`articles.js` / `[aid].js`）、字典（`dict.js`）、鉴权（`login.js` / `session.js` / `_lib/auth.js`）、批量导入/导出/迁移（`import-incremental.js` / `export.js` / `migrate.js`）；文章数据存 Cloudflare D1（SQLite）。
 - **数据存储**：Cloudflare KV，命名空间 **`DICT_KV`**，id：`e9e3ca2874cd4affbc778f7b7e26f765`
 - **字典数据源**：[chinese-xinhua](https://github.com/pwxcoo/chinese-xinhua)（单字 / 词语 / 成语），约 5.3 万条键（首字分桶压缩后）
 
@@ -106,16 +104,13 @@ GitHub (jygldj/wx) ──push──> Cloudflare Pages（`dxwj`）自动部署
 ## 六、日常工作流（更新网站）
 
 ### 1. 写 / 改文章
-- 在 `articles/` 下新增 / 编辑 `.md` 文件；或在 `build.html` 工具里操作。
-- **`articles.js` 由工具自动生成，切勿手动编辑。**
+- 后台 `admin.html`：登录后可视化增删改文章、批量导入、导出数据（数据存于 D1）。
+- 本地 `articles/` 为文章标准源（`.md`），经 `tools/json2md.py` 或 `tools/json2md.html` 由 D1 导出 JSON 还原；**`articles.js` 禁止手改**。
 
 ### 2. 提交并推送
-**方式 A（推荐 · 命令行）**：双击 `F:\github-dx\wx\push-now.bat`
-- 已内置 `git config http.sslbackend=schannel`，可规避本机代理导致的 SSL 证书错误。
-
-**方式 B（GitHub Desktop）**：
-- 打开 GitHub Desktop → 仓库目录选 `F:\github-dx\wx` → `Commit & Push`。
-- ⚠️ 若 Desktop 报 `unable to get local issuer certificate` 之类的 SSL 错误，请改用 **方式 A**。
+- 打开 **GitHub Desktop** → 仓库目录选 `F:\github-dx\wx` → `Commit & Push`。
+- 推送成功后 Cloudflare Pages 在 1–2 分钟内自动部署（无需本地推送脚本）。
+- ⚠️ 若 Desktop 报 SSL 证书错误（`unable to get local issuer certificate`），多为本地代理所致，可临时关闭代理或改用系统证书后再推送。
 
 ### 3. 自动部署
 - 推送成功后，Cloudflare Pages 会在 **1–2 分钟**内自动重新部署。
@@ -147,7 +142,7 @@ GitHub (jygldj/wx) ──push──> Cloudflare Pages（`dxwj`）自动部署
 ### ① 推送失败 / SSL 证书错误
 - **现象**：`git push` 报 `SSL peer certificate or SSH remote key was not OK`；或 GitHub Desktop 报 `unable to get local issuer certificate`。
 - **原因**：本机网络经代理（如 Steam++ / Watt Toolkit）加速 GitHub，SSL 校验失败。
-- **解决**：用 `push-now.bat`（已配 `schannel` 后端，走 Windows 系统证书）。
+- **解决**：先关闭本地代理（如 Steam++ / Watt Toolkit）后重试；仍报 SSL 错误则改用系统证书——GitHub Desktop 设置勾选使用系统证书，或在仓库执行 `git config http.sslbackend schannel` 后重试。
 
 ### ② 字典查不到 / 接口 404
 - 登录 Cloudflare 控制台 → `dxwj` Pages 项目 → **Settings → Bindings** → 确认已绑定 KV 命名空间 **`DICT_KV`**（Variable name 必须为 `DICT_KV`）。
@@ -166,6 +161,13 @@ GitHub (jygldj/wx) ──push──> Cloudflare Pages（`dxwj`）自动部署
 ---
 
 ## 十、清理记录
+
+### 2026-09-29 · 静态更新工具下线 + 后台接入阅读工具
+- **删除静态站残留**（均已全量备份于 `wx-static-memorial`）：`build.html`、`build-core.js`、`更新网站.bat`、`push-now.bat`、`wsf.png`。
+- **导航栏**：`index1.html` 移除「更新工具」入口（指向已删的 `build.html`）。
+- **Service Worker**：`sw.js` 预缓存清单移除 `build.html` / `build-core.js`，版本升至 `dxwj-v8`，旧缓存中的静态工具残留随之清除。
+- **后台 `admin.html`**：引入 `render.js`，新增「夜间模式 + 字号调节」工具条（与阅读页共用 `DXTheme`），后台页整体随主题与字号切换。
+- 保留：`tools/migrate-to-d1.py`、`tools/load-d1.py`、`tools/sql/`（重迁 D1 之需）及全部动态站前端/后端文件。
 
 ### 2026-07-25 · 首次归档（Workers → Pages Functions 迁移）
 - **废弃独立 Cloudflare Worker 方案**（`dict-worker`）：因国内运营商封锁 `*.workers.dev` 子域，改为 **Pages Functions 同域部署**（`daoxuanwenji.pages.dev/api/dict`，后改为 `dxwj.pages.dev/api/dict`）。
@@ -186,8 +188,7 @@ GitHub (jygldj/wx) ──push──> Cloudflare Pages（`dxwj`）自动部署
 
 ## 十一、后续可扩展（暂未实施）
 
-- **前端提交新文章**：用 Cloudflare **D1**（SQLite）存文章元数据 + **R2** 存配图，配合 Pages Functions 接收提交，Cloudflare Access 做鉴权。架构可行，但因写作频率低、现有 `更新网站.bat` 流程已够用，暂未做。
-- 详情见开发对话记录。
+- **前端提交新文章**：✅ 已实现 —— 后台 `admin.html` 经 Pages Functions 将文章写入 Cloudflare **D1**（SQLite）；配图沿用 `images/` 目录托管（未引入 R2）。Cloudflare Access 鉴权由 `functions/_lib/auth.js` 承接。
 
 ---
 

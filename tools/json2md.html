@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JSON → Markdown 转换工具（道玄文集）</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root{
+    --ink:#222; --sub:#666; --line:#e3e3e3; --warn:#c8881a;
+    --bg:#fafafa; --card:#fff; --btn:#2b6cb0; --btn2:#555;
+  }
+  *{box-sizing:border-box}
+  body{font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;color:var(--ink);background:var(--bg);margin:0;padding:24px;line-height:1.6}
+  .wrap{max-width:760px;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:24px}
+  h1{font-size:20px;margin:0 0 4px}
+  .desc{color:var(--sub);font-size:13px;margin:0 0 18px}
+  .row{margin:14px 0}
+  label{display:block;font-weight:600;margin-bottom:6px;font-size:14px}
+  .hint{color:var(--sub);font-size:12px;margin-top:4px}
+  input[type=text]{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:6px;font-size:14px}
+  .filebox{border:2px dashed var(--line);border-radius:8px;padding:18px;text-align:center;color:var(--sub);cursor:pointer}
+  .filebox.hot{border-color:var(--btn);color:var(--btn)}
+  .filename{margin-top:8px;font-size:13px;color:var(--ink)}
+  .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  button{padding:10px 16px;border:0;border-radius:6px;font-size:14px;cursor:pointer;color:#fff}
+  .b-primary{background:var(--btn)} .b-ghost{background:var(--btn2)} button:disabled{opacity:.5;cursor:not-allowed}
+  .chk{display:flex;align-items:center;gap:8px;font-weight:400;font-size:13px}
+  .stat{margin-top:16px;border-top:1px solid var(--line);padding-top:14px;font-size:14px}
+  .stat b{color:var(--btn)}
+  .log{margin-top:10px;background:#f5f5f5;border:1px solid var(--line);border-radius:6px;padding:10px;font-size:12px;max-height:200px;overflow:auto;white-space:pre-wrap;color:#333}
+  .note{margin-top:18px;font-size:12px;color:var(--sub);border-top:1px dashed var(--line);padding-top:12px}
+  code{background:#eee;padding:1px 5px;border-radius:3px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>JSON → Markdown 转换工具</h1>
+  <p class="desc">把 D1 导出的 JSON（后台「导出数据」下载的 <code>dxwj-export-*.json</code>，或 GitHub 每日备份的 <code>backup/articles.json</code>）还原为 <code>NNN-标题.md</code> 单篇合集。<b>纯前端处理，数据不上传任何服务器。</b></p>
+
+  <div class="row">
+    <label>① 选择 JSON 文件（点击或拖入）</label>
+    <div class="filebox" id="drop">点击此处选择文件，或将 .json 文件拖到这里
+      <div class="filename" id="fname">尚未选择</div>
+    </div>
+    <input type="file" id="file" accept=".json,application/json" hidden>
+  </div>
+
+  <div class="row">
+    <label>② 输出文件夹名称（打包后 Zip 内的顶层目录）</label>
+    <input type="text" id="outdir" value="articles-from-json" placeholder="例如 articles-from-json">
+    <div class="hint">下载得到 <code>名称.zip</code>，解压即得到该文件夹；此处即“自定义输出文件夹”。</div>
+  </div>
+
+  <div class="row">
+    <label class="chk"><input type="checkbox" id="pubonly"> 仅还原已发布（跳过草稿）</label>
+  </div>
+
+  <div class="row btns">
+    <button class="b-ghost" id="preview">预览差异</button>
+    <button class="b-primary" id="convert" disabled>转换并下载 Zip</button>
+  </div>
+
+  <div class="stat" id="stat">请先选择 JSON 文件。</div>
+  <div class="log" id="log" style="display:none"></div>
+
+  <div class="note">
+    <b>命名规则（与本机 json2md.py 一致）</b>：文件名 <code>NNN-标题.md</code>，自动去除书名号《》、零宽不可见字符、路径非法字符；草稿文件名尾部加「（草稿）」标记。<br>
+    本页不连接网络处理数据，仅在「下载 Zip」时需要联网加载打包库；若加载失败，会自动退化为逐个文件下载（此时浏览器下载目录不可自定义，请解压 Zip 时使用自定义文件夹名）。
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var fileInput = document.getElementById('file');
+  var drop = document.getElementById('drop');
+  var fname = document.getElementById('fname');
+  var outdir = document.getElementById('outdir');
+  var pubonly = document.getElementById('pubonly');
+  var previewBtn = document.getElementById('preview');
+  var convertBtn = document.getElementById('convert');
+  var stat = document.getElementById('stat');
+  var logEl = document.getElementById('log');
+
+  var currentData = null;   // 解析后的 {count, articles}
+  var currentName = '';
+
+  // ---- 与 json2md.py 一致的清洗规则 ----
+  var RE_ZERO = /[\u200b\u200c\u200d\u2060\ufeff]/g;   // 零宽/不可见字符
+  var RE_BOOK = /\s*[《》]\s*/g;                  // 书名号及两侧空格
+  var RE_ILLEGAL = /[\\/:*?"<>|\r\n\t]/g;        // 路径非法字符
+
+  function safeName(title, maxlen){
+    maxlen = maxlen || 40;
+    var t = (title || '').trim();
+    t = t.replace(RE_ZERO, '');
+    t = t.replace(RE_BOOK, '');
+    t = t.replace(RE_ILLEGAL, '');
+    t = t.replace(/^[.\s]+|[.\s]+$/g, '');
+    if(!t) t = '未命名';
+    if(t.length > maxlen) t = t.slice(0, maxlen);
+    return t;
+  }
+
+  function normBody(b){
+    return (b || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\n+$/,'');
+  }
+
+  function renderMd(a){
+    var title = (a.title || '未命名').trim();
+    var cat = (a.category || '未分类').trim();
+    var date = (a.date || '未标注日期').trim();
+    var body = normBody(a.body);
+    return '# ' + title + '\n\n> ' + cat + ' | ' + date + '\n\n' + body + '\n';
+  }
+
+  function fileNameFor(a){
+    var nid = a.id;
+    if(nid === undefined || nid === null) nid = 0;
+    var nnn = (nid < 1000) ? String(nid).padStart(3,'0') : String(nid);
+    var name = nnn + '-' + safeName(a.title);
+    if((a.status || '') === 'draft') name += '（草稿）';
+    return name + '.md';
+  }
+
+  function extractArticles(data){
+    var arts = data && data.articles;
+    if(arts === undefined || arts === null) arts = data && data.article;
+    if(arts === undefined || arts === null) arts = [];
+    if(!Array.isArray(arts)) arts = [arts];
+    return arts;
+  }
+
+  function log(msg){
+    logEl.style.display = 'block';
+    logEl.textContent += msg + '\n';
+  }
+
+  function clearLog(){ logEl.style.display='none'; logEl.textContent=''; }
+
+  function handleFile(file){
+    if(!file){ return; }
+    currentName = file.name;
+    fname.textContent = '已选择：' + file.name + '（' + (file.size/1024).toFixed(1) + ' KB）';
+    var reader = new FileReader();
+    reader.onload = function(e){
+      try{
+        var data = JSON.parse(e.target.result);
+        currentData = data;
+        convertBtn.disabled = false;
+        stat.textContent = '已解析：' + (data.count!==undefined?data.count:'?') + ' 篇（含草稿标记）。可点「预览差异」或「转换并下载」。';
+      }catch(err){
+        currentData = null; convertBtn.disabled = true;
+        stat.textContent = '解析失败：' + err.message;
+      }
+    };
+    reader.onerror = function(){ stat.textContent = '读取文件失败。'; };
+    reader.readAsText(file, 'utf-8');
+  }
+
+  fileInput.addEventListener('change', function(){ handleFile(fileInput.files[0]); });
+  drop.addEventListener('click', function(){ fileInput.click(); });
+  drop.addEventListener('dragover', function(e){ e.preventDefault(); drop.classList.add('hot'); });
+  drop.addEventListener('dragleave', function(){ drop.classList.remove('hot'); });
+  drop.addEventListener('drop', function(e){
+    e.preventDefault(); drop.classList.remove('hot');
+    if(e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+
+  function buildList(){
+    var arts = extractArticles(currentData).slice().sort(function(a,b){ return (a.id||0)-(b.id||0); });
+    var onlyPub = pubonly.checked;
+    var items = [];
+    for(var i=0;i<arts.length;i++){
+      var a = arts[i];
+      if(onlyPub && (a.status||'')==='draft') continue;
+      items.push({ name: fileNameFor(a), content: renderMd(a), isDraft: (a.status||'')==='draft' });
+    }
+    return items;
+  }
+
+  previewBtn.addEventListener('click', function(){
+    if(!currentData){ stat.textContent = '请先选择 JSON 文件。'; return; }
+    clearLog();
+    var items = buildList();
+    var draft = 0; for(var i=0;i<items.length;i++) if(items[i].isDraft) draft++;
+    stat.innerHTML = '预览：共 <b>' + items.length + '</b> 篇（其中草稿 <b>' + draft + '</b> 篇）。输出目录：<b>' + (outdir.value||'articles-from-json') + '</b>';
+    log('将生成 ' + items.length + ' 个 .md 文件，例如：');
+    for(var k=0;k<Math.min(5,items.length);k++) log('  ' + items[k].name);
+    if(items.length>5) log('  …（其余 ' + (items.length-5) + ' 篇略）');
+  });
+
+  convertBtn.addEventListener('click', function(){
+    if(!currentData){ return; }
+    clearLog();
+    var items = buildList();
+    var dir = (outdir.value || 'articles-from-json').trim().replace(/[\\/:*?"<>|]/g,'') || 'articles-from-json';
+    if(window.JSZip){
+      var zip = new JSZip();
+      var folder = zip.folder(dir);
+      for(var i=0;i<items.length;i++){ folder.file(items[i].name, items[i].content); }
+      zip.generateAsync({type:'blob'}).then(function(blob){
+        triggerDownload(blob, dir + '.zip');
+        log('已打包 ' + items.length + ' 个文件 → ' + dir + '.zip，开始下载。');
+      }).catch(function(err){ log('打包失败：' + err.message + '，已退化为逐个下载。'); fallbackDownload(items, dir); });
+    }else{
+      log('未加载打包库（可能离线），退化为逐个下载到浏览器默认目录。');
+      fallbackDownload(items, dir);
+    }
+  });
+
+  function triggerDownload(blob, name){
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+  }
+
+  function fallbackDownload(items, dir){
+    stat.innerHTML = '逐个下载模式（输出目录自定义仅 Zip 支持）。共 <b>' + items.length + '</b> 篇。';
+    var i = 0;
+    (function next(){
+      if(i >= items.length) { log('全部下载请求已发出。'); return; }
+      var it = items[i++];
+      var blob = new Blob([it.content], {type:'text/markdown;charset=utf-8'});
+      triggerDownload(blob, dir + '_' + it.name);
+      setTimeout(next, 250);
+    })();
+  }
+})();
+</script>
+</body>
+</html>

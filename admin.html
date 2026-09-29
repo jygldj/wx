@@ -23,12 +23,13 @@
   --err:#A8322D;
   --warn:#8A6D1F;
   --fs:16px;            /* 全站基准字号 */
+  --reader-fs:18px;     /* 阅读字号：夜间/字号工具条写入 documentElement，覆盖此默认值 */
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
 body{
   font-family:"楷体","STKaiti","Microsoft YaHei",serif;
-  font-size:var(--fs); color:var(--ink);
+  font-size:var(--reader-fs); color:var(--ink);
   background:var(--paper);
   line-height:1.7;
 }
@@ -67,12 +68,12 @@ aside{
 aside .search{padding:12px}
 aside .search input{
   width:100%;padding:9px 12px;border:1px solid var(--line2);border-radius:4px;
-  background:var(--card);font-size:16px;
+  background:var(--card);font-size:var(--reader-fs);
 }
 #list{overflow-y:auto;flex:1;margin:0;padding:0 0 24px;list-style:none}
 #list li{
   padding:11px 16px;border-bottom:1px solid rgba(58,99,81,.10);
-  cursor:pointer;font-size:16px;line-height:1.55;
+  cursor:pointer;font-size:var(--reader-fs);line-height:1.55;
 }
 #list li:hover{background:var(--hover)}
 #list li.active{background:var(--hover);border-left:4px solid var(--accent);padding-left:12px;color:var(--accent)}
@@ -99,13 +100,13 @@ section.editor{flex:1;overflow-y:auto;padding:20px 26px 80px}
 .field label{display:block;font-size:14.5px;color:var(--muted);margin-bottom:6px;letter-spacing:.5px}
 .field textarea{
   width:100%;padding:10px 13px;border:1px solid var(--line2);border-radius:4px;
-  background:var(--card);font-size:16px;
+  background:var(--card);font-size:var(--reader-fs);
 }
 .field textarea:focus{
   outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(58,99,81,.10);
 }
 textarea#body{
-  min-height:52vh;line-height:1.95;font-size:17px;resize:vertical;
+  min-height:52vh;line-height:1.95;font-size:var(--reader-fs);resize:vertical;
   font-family:"楷体","STKaiti","Microsoft YaHei",serif;
 }
 
@@ -171,7 +172,59 @@ textarea#body{
   .fmt-body td:first-child{white-space:normal;width:auto}
   .toolbar .btn.danger{margin-left:0}
 }
+
+/* ============================================================
+   后台页 · 阅读工具条 / 提示气泡 / 夜间模式（与阅读页共用 DXTheme）
+   ============================================================ */
+.dx-tools{
+  position:fixed;top:72px;right:16px;z-index:120;
+  display:flex;gap:6px;
+}
+.dx-tools button{
+  width:40px;height:40px;border-radius:50%;
+  border:1px solid var(--line2);background:var(--card);
+  cursor:pointer;font-size:15px;font-family:"楷体",serif;
+  color:var(--accent);box-shadow:0 2px 8px rgba(0,0,0,.08);
+  transition:all .2s;display:flex;align-items:center;justify-content:center;
+  padding:0;line-height:1;
+}
+.dx-tools button:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.12);background:var(--hover)}
+@media(max-width:860px){
+  .dx-tools{top:auto;bottom:14px;right:12px;flex-direction:column}
+  .dx-tools button{width:36px;height:36px;font-size:13px}
+}
+.dx-toast{
+  position:fixed;left:50%;bottom:80px;transform:translateX(-50%) translateY(20px);
+  background:rgba(58,99,81,.95);color:#fff;padding:10px 22px;border-radius:24px;
+  font-size:15px;font-family:"楷体",serif;opacity:0;pointer-events:none;
+  transition:opacity .3s,transform .3s;z-index:300;max-width:80vw;text-align:center;
+}
+.dx-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* 夜间模式：覆盖主题变量，后台页整体随主题切换 */
+html.dark{
+  --paper:#1E1B18; --ink:#D8CFC2; --accent:#8FBCA9; --accent-d:#6A9B86;
+  --hover:#31433C; --cell:#26221F; --line:#3A3530; --line2:#4A5A52;
+  --muted:#8A9B8B; --ph:#7d7a70; --card:#2A2622; --err:#E07A74; --warn:#D8B85E;
+}
+html.dark #login{background:rgba(30,27,24,.97)}
+html.dark #login .box{background:var(--card);border-color:var(--line)}
+html.dark #login input{background:var(--paper);color:var(--ink);border-color:var(--line)}
+html.dark .btn{background:var(--card);color:var(--ink);border-color:var(--line2)}
+html.dark .btn:hover{background:var(--hover);border-color:var(--accent);color:var(--accent)}
+html.dark .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+html.dark .btn.primary:hover{background:var(--accent-d);border-color:var(--accent-d)}
+html.dark .btn.danger{border-color:#6b4a4a;color:var(--err)}
+html.dark .btn.danger:hover{background:#3a2626;border-color:var(--err)}
+html.dark .badge{border-color:var(--line2);color:var(--muted)}
+html.dark .localbar{background:#3a3320;color:var(--warn);border-color:#5a4a2e}
+html.dark .fmt{background:rgba(42,38,34,.55)}
+html.dark .fmt summary{color:var(--accent)}
+html.dark .dx-tools button{background:rgba(42,38,34,.94);border-color:var(--line);color:var(--accent);box-shadow:0 2px 8px rgba(0,0,0,.4)}
+html.dark .dx-toast{background:rgba(74,123,107,.97)}
 </style>
+<!-- 阅读工具（render.js）：提供夜间模式 / 字号调节，admin.html 与阅读页共用同一套 DXTheme -->
+<script src="render.js"></script>
 </head>
 <body>
 
@@ -722,6 +775,9 @@ textarea#body{
   };
 
   /* ---------------- 启动 ---------------- */
+
+  /* 注入阅读工具条：夜间模式 + 字号调节（与阅读页共用 DXTheme，后台页无需分享按钮） */
+  if (window.DXTheme) DXTheme.initTools({});
 
   checkSession();
 })();
