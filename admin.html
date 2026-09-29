@@ -43,9 +43,6 @@ header{
   background:rgba(255,254,252,.92);backdrop-filter:blur(4px);
   position:sticky;top:0;z-index:20;
 }
-header h1{font-size:20px;margin:0;font-weight:normal;letter-spacing:2px;color:var(--accent)}
-header .sp{flex:1}
-.badge{font-size:13.5px;padding:3px 11px;border:1px solid var(--line2);border-radius:999px;color:var(--muted)}
 .btn{
   border:1px solid var(--line2);background:var(--card);color:var(--ink);
   padding:8px 16px;border-radius:4px;transition:.18s;
@@ -171,6 +168,10 @@ textarea#body{
   textarea#body{min-height:40vh}
   .fmt-body td:first-child{white-space:normal;width:auto}
   .toolbar .btn.danger{margin-left:0}
+  header{padding:8px 12px;gap:8px;border-bottom:1px solid var(--line)}
+  header .btn{padding:6px 12px;font-size:13.5px}
+  .toolbar{gap:8px}
+  .toolbar .btn{padding:7px 12px;font-size:14px}
 }
 
 /* ============================================================
@@ -216,7 +217,6 @@ html.dark .btn.primary{background:var(--accent);border-color:var(--accent);color
 html.dark .btn.primary:hover{background:var(--accent-d);border-color:var(--accent-d)}
 html.dark .btn.danger{border-color:#6b4a4a;color:var(--err)}
 html.dark .btn.danger:hover{background:#3a2626;border-color:var(--err)}
-html.dark .badge{border-color:var(--line2);color:var(--muted)}
 html.dark .localbar{background:#3a3320;color:var(--warn);border-color:#5a4a2e}
 html.dark .fmt{background:rgba(42,38,34,.55)}
 html.dark .fmt summary{color:var(--accent)}
@@ -229,14 +229,11 @@ html.dark .dx-toast{background:rgba(74,123,107,.97)}
 <body>
 
 <header>
-  <h1>道玄文集 · 后台</h1>
-  <span class="badge" id="stat">检查登录状态…</span>
-  <span class="sp"></span>
   <a class="btn" href="index1.html" target="_blank" style="text-decoration:none">查看前台</a>
-      <button class="btn" id="btnNew">新建文章</button>
-      <button class="btn" id="btnImport">批量导入</button>
-      <button class="btn" id="btnExport" style="display:none">导出数据</button>
-      <button class="btn" id="btnLogout" style="display:none">退出登录</button>
+  <button class="btn" id="btnNew">新建文章</button>
+  <button class="btn" id="btnImport">批量导入</button>
+  <button class="btn" id="btnExport" style="display:none">导出数据</button>
+  <button class="btn" id="btnLogout" style="display:none">退出登录</button>
 </header>
 
 <main>
@@ -260,7 +257,17 @@ html.dark .dx-toast{background:rgba(74,123,107,.97)}
         <textarea id="body" spellcheck="false" placeholder="# 标题&#10;> 分类 | 日期&#10;&#10;正文……"></textarea>
       </div>
 
-      <!-- 写作格式说明：置于编辑区下方，默认收起；编辑已发布文章时整卡隐藏 -->
+      <div class="toolbar">
+        <button class="btn" id="btnLocal">本地缓存</button>
+        <button class="btn" id="btnClear">清空</button>
+        <button class="btn" id="btnDraft">存为草稿</button>
+        <button class="btn primary" id="btnPublish">发布</button>
+        <button class="btn" id="btnSave">保存修改</button>
+        <span class="sp"></span>
+        <button class="btn danger" id="btnDelete">删除本文</button>
+      </div>
+
+      <!-- 写作格式说明：置于编辑区与发布按钮之下，默认收起；编辑已发布文章时整卡隐藏 -->
       <details class="fmt" id="fmt">
         <summary>写作格式 · 文稿首两行与正文标记</summary>
         <div class="fmt-body">
@@ -288,16 +295,6 @@ html.dark .dx-toast{background:rgba(74,123,107,.97)}
 感其情，作诗词一首以记。</pre>
         </div>
       </details>
-
-      <div class="toolbar">
-        <button class="btn" id="btnLocal">本地缓存</button>
-        <button class="btn" id="btnClear">清空</button>
-        <button class="btn" id="btnDraft">存为草稿</button>
-        <button class="btn primary" id="btnPublish">发布</button>
-        <button class="btn" id="btnSave">保存修改</button>
-        <span class="sp"></span>
-        <button class="btn danger" id="btnDelete">删除本文</button>
-      </div>
 
       <div class="meta" id="meta"></div>
     </div>
@@ -479,7 +476,6 @@ html.dark .dx-toast{background:rgba(74,123,107,.97)}
 
   function showLogin() {
     $('login').style.display = 'flex';
-    $('stat').textContent = '未登录';
   }
 
   function checkSession() {
@@ -497,7 +493,6 @@ html.dark .dx-toast{background:rgba(74,123,107,.97)}
     $('login').style.display = 'none';
     $('btnLogout').style.display = 'inline-block';
     $('btnExport').style.display = 'inline-block';
-    $('stat').textContent = '已登录';
     loadList();
   }
 
@@ -521,7 +516,6 @@ html.dark .dx-toast{background:rgba(74,123,107,.97)}
     return api('/api/articles?all=1')
       .then(function (j) {
         cache = j.articles || [];
-        $('stat').textContent = '已登录 · 共 ' + cache.length + ' 篇';
         renderList();
       })
       .catch(function (e) { toast('读取列表失败：' + e.message, true); });
@@ -575,15 +569,15 @@ html.dark .dx-toast{background:rgba(74,123,107,.97)}
 
   function updateMeta() {
     var parts = [];
-    if (currentAid === null) parts.push('新建中（尚未入库）');
-    else {
+    if (currentAid === null) {
+      /* 新建文章：省去冗余的「新建中（尚未入库）」与「本机缓存」提示，节约手机屏幕 */
+    } else {
       parts.push('数据库主键 ' + currentAid);
       parts.push(currentStatus === 'draft' ? '状态：草稿' : '状态：已发布');
       if (updateMeta.updated) parts.push('更新于 ' + updateMeta.updated);
     }
-    var snap = lsGet(currentAid);
-    if (snap) parts.push('本机缓存 ' + fmtTime(snap.at));
     $('meta').textContent = parts.join(' · ');
+    $('meta').style.display = parts.length ? '' : 'none';
   }
 
   /** 按当前文章状态显隐按钮与格式卡（主公钦定规矩）：
