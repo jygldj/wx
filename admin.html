@@ -180,8 +180,10 @@ textarea#body{
   <span class="badge" id="stat">检查登录状态…</span>
   <span class="sp"></span>
   <a class="btn" href="index1.html" target="_blank" style="text-decoration:none">查看前台</a>
-  <button class="btn" id="btnNew">新建文章</button>
-  <button class="btn" id="btnLogout" style="display:none">退出登录</button>
+      <button class="btn" id="btnNew">新建文章</button>
+      <button class="btn" id="btnImport">批量导入</button>
+      <button class="btn" id="btnExport" style="display:none">导出数据</button>
+      <button class="btn" id="btnLogout" style="display:none">退出登录</button>
 </header>
 
 <main>
@@ -435,6 +437,7 @@ textarea#body{
   function onLoggedIn() {
     $('login').style.display = 'none';
     $('btnLogout').style.display = 'inline-block';
+    $('btnExport').style.display = 'inline-block';
     $('stat').textContent = '已登录';
     loadList();
   }
@@ -579,6 +582,58 @@ textarea#body{
   }
 
   $('btnNew').onclick = function () { newArticle(); };   /* 新建直接清空，不弹确认（草稿/新建内容有本机缓存兜底，可经「载入缓存」找回） */
+
+  /* 批量增量导入：先预览（dry）再确认入库；只新增、不覆盖后台文章，无需任何本机令牌 */
+  $('btnImport').onclick = function () {
+    if (busy) return;
+    $('btnImport').disabled = true;
+    api('/api/import-incremental?dry=1', { method: 'POST' })
+      .then(function (j) {
+        $('btnImport').disabled = false;
+        var n = (j.willAdd || []).length;
+        if (!n) {
+          toast('无需导入：静态 articles.js 的 ' + j.sourceCount + ' 篇已全在数据库中，后台文章未动');
+          return;
+        }
+        var list = j.willAdd.slice(0, 12).map(function (a) { return a.id + '. ' + a.title; }).join('\n');
+        if (n > 12) list += '\n…等共 ' + n + ' 篇';
+        if (confirm('将从静态 articles.js 增量导入 ' + n + ' 篇新文到数据库\n（只新增、不覆盖后台文章）：\n\n' + list + '\n\n确认导入？')) {
+          api('/api/import-incremental', { method: 'POST' })
+            .then(function (r) {
+              toast('已增量导入 ' + r.inserted + ' 篇（数据库由 ' + r.dbCountBefore + ' → ' + r.dbCountAfter + ' 篇）');
+              loadList();
+            })
+            .catch(function (e) { toast('导入失败：' + e.message, true); });
+        }
+      })
+      .catch(function (e) { $('btnImport').disabled = false; toast('预览失败：' + e.message, true); });
+  };
+
+  /* 全量导出：管理员把 D1 所有文章（含草稿）下载到本机，需登录；无需任何本机令牌 */
+  $('btnExport').onclick = function () {
+    if (busy) return;
+    if (!confirm('将把数据库全部文章（含草稿）导出为 JSON 文件下载到本机。\n确认导出？')) return;
+    $('btnExport').disabled = true;
+    fetch('/api/export', { credentials: 'same-origin' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (j) {
+        if (!j.ok) throw new Error(j.error || '导出失败');
+        var blob = new Blob([JSON.stringify(j)], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        var ts = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+        a.download = 'dxwj-export-' + ts + '.json';
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(url);
+        toast('已导出并下载 ' + j.count + ' 篇（含草稿全量）');
+      })
+      .catch(function (e) { toast('导出失败：' + e.message, true); })
+      .then(function () { $('btnExport').disabled = false; });
+  };
 
   $('btnClear').onclick = function () {
     if ($('form').style.display === 'none') return;
