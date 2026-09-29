@@ -15,6 +15,7 @@
 #   python tools/json2md.py --dry                # 只打印清单，不写盘
 #   python tools/json2md.py --force              # 覆盖已存在的同名文件
 #   python tools/json2md.py --published-only     # 仅已发布，跳过草稿
+#   双击本脚本亦可运行（自动定位仓库根，结束暂停不闪退）
 #
 # 安全策略：
 #   - 默认跳过已存在的同名文件，绝不删除、绝不覆盖（除非 --force）
@@ -80,6 +81,14 @@ def main():
         sys.stdout.reconfigure(encoding='utf-8')
     except Exception:
         pass
+
+    # 自动把工作目录切到仓库根（tools/ 的父目录），
+    # 这样双击 .py 时，backup/ 与 articles/ 相对路径才能正确解析。
+    _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if os.path.isdir(os.path.join(_ROOT, 'articles')) or os.path.isdir(os.path.join(_ROOT, 'backup')):
+        if os.getcwd() != _ROOT:
+            print('提示：已将工作目录切换为仓库根 ' + _ROOT)
+        os.chdir(_ROOT)
 
     ap = argparse.ArgumentParser(description='D1 导出 JSON → 单篇 .md 合集')
     ap.add_argument('json', nargs='?', help='D1 导出 JSON 路径；缺省取 backup/dxwj-export-*.json 最新')
@@ -158,5 +167,24 @@ def main():
         print('提示：草稿 %d 篇被 --published-only 跳过，如需还原草稿请去掉该参数。' % drafts)
 
 
+def _pause():
+    """双击运行时避免窗口一闪而过；命令行/管道调用不阻塞。"""
+    if os.name == 'nt' and sys.stdin.isatty():
+        try:
+            input('\n按回车键退出...')
+        except EOFError:
+            pass
+
+
 if __name__ == '__main__':
-    main()
+    code = 0
+    try:
+        main()
+    except SystemExit as e:
+        code = e.code if isinstance(e.code, int) else (1 if e.code else 0)
+    except Exception:
+        import traceback
+        traceback.print_exc()
+        code = 1
+    _pause()
+    sys.exit(code)
