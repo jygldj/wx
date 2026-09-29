@@ -7,40 +7,119 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
   :root{
-    --ink:#222; --sub:#666; --line:#e3e3e3; --warn:#c8881a;
-    --bg:#fafafa; --card:#fff; --btn:#2b6cb0; --btn2:#555;
+    --paper:#FFFEFC;      /* 仿古宣纸 */
+    --ink:#5A4A3F;        /* 茶墨 */
+    --accent:#3A6351;     /* 竹青 */
+    --accent-d:#2E5142;
+    --hover:#D1E0D7;      /* 嫩荷 */
+    --cell:#E8F1F2;       /* 青瓷 */
+    --line:#D1D9D9;       /* 冰裂 */
+    --line2:#C7D8D2;
+    --muted:#7A8B7B;      /* 苔绿 */
+    --warn:#8A6D1F;
+    --card:#FFFFFF;
+    --radius:14px;
   }
   *{box-sizing:border-box}
-  body{font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;color:var(--ink);background:var(--bg);margin:0;padding:24px;line-height:1.6}
-  .wrap{max-width:760px;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:24px}
-  h1{font-size:20px;margin:0 0 4px}
-  .desc{color:var(--sub);font-size:13px;margin:0 0 18px}
-  .row{margin:14px 0}
-  label{display:block;font-weight:600;margin-bottom:6px;font-size:14px}
-  .hint{color:var(--sub);font-size:12px;margin-top:4px}
-  input[type=text]{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:6px;font-size:14px}
-  .filebox{border:2px dashed var(--line);border-radius:8px;padding:18px;text-align:center;color:var(--sub);cursor:pointer}
-  .filebox.hot{border-color:var(--btn);color:var(--btn)}
-  .filename{margin-top:8px;font-size:13px;color:var(--ink)}
-  .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
-  button{padding:10px 16px;border:0;border-radius:6px;font-size:14px;cursor:pointer;color:#fff}
-  .b-primary{background:var(--btn)} .b-ghost{background:var(--btn2)} button:disabled{opacity:.5;cursor:not-allowed}
-  .chk{display:flex;align-items:center;gap:8px;font-weight:400;font-size:13px}
-  .stat{margin-top:16px;border-top:1px solid var(--line);padding-top:14px;font-size:14px}
-  .stat b{color:var(--btn)}
-  .log{margin-top:10px;background:#f5f5f5;border:1px solid var(--line);border-radius:6px;padding:10px;font-size:12px;max-height:200px;overflow:auto;white-space:pre-wrap;color:#333}
-  .note{margin-top:18px;font-size:12px;color:var(--sub);border-top:1px dashed var(--line);padding-top:12px}
-  code{background:#eee;padding:1px 5px;border-radius:3px;font-size:12px}
+  body{
+    font-family:"楷体","STKaiti","Microsoft YaHei",serif;
+    color:var(--ink);background:var(--paper);
+    margin:0;padding:32px 16px;line-height:1.7;
+  }
+  .wrap{
+    max-width:780px;margin:0 auto;background:var(--card);
+    border:1px solid var(--line);border-radius:var(--radius);
+    padding:30px 32px 26px;
+    box-shadow:0 10px 36px rgba(58,99,81,.10);
+  }
+  .head{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+  .seal{
+    width:44px;height:44px;border-radius:10px;flex:0 0 44px;
+    background:linear-gradient(135deg,var(--accent),var(--accent-d));
+    color:#fff;display:flex;align-items:center;justify-content:center;
+    font-size:24px;box-shadow:0 4px 12px rgba(58,99,81,.25);
+  }
+  h1{font-size:22px;margin:0;font-weight:normal;letter-spacing:2px;color:var(--accent)}
+  .underline{height:3px;border-radius:3px;margin:10px 0 20px;
+    background:linear-gradient(90deg,var(--accent),transparent)}
+  .desc{color:var(--muted);font-size:13.5px;margin:0 0 20px}
+  .desc b{color:var(--accent)}
+  .row{margin:18px 0}
+  label{display:block;font-weight:600;margin-bottom:8px;font-size:15px;color:var(--ink)}
+  .hint{color:var(--muted);font-size:12.5px;margin-top:6px;line-height:1.6}
+  input[type=text]{
+    width:100%;padding:10px 12px;border:1px solid var(--line2);border-radius:8px;
+    font-size:14px;font-family:inherit;color:var(--ink);background:var(--card);
+    transition:.18s;
+  }
+  input[type=text]:focus{
+    outline:none;border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(58,99,81,.12);
+  }
+  .filebox{
+    border:2px dashed var(--line2);border-radius:10px;padding:22px 18px;
+    text-align:center;color:var(--muted);cursor:pointer;
+    background:rgba(232,241,242,.35);transition:.2s;
+  }
+  .filebox:hover{border-color:var(--accent);background:rgba(209,224,215,.35);color:var(--accent)}
+  .filebox.hot{
+    border-color:var(--accent);background:rgba(209,224,215,.5);color:var(--accent);
+    box-shadow:0 0 0 4px rgba(58,99,81,.10);
+  }
+  .filebox svg{display:block;margin:0 auto 10px}
+  .filename{margin-top:10px;font-size:13px;color:var(--ink)}
+  .btns{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
+  button{
+    padding:11px 18px;border:1px solid transparent;border-radius:8px;
+    font-size:14.5px;cursor:pointer;font-family:inherit;transition:.18s;
+  }
+  .b-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .b-primary:hover{background:var(--accent-d);border-color:var(--accent-d)}
+  .b-ghost{background:var(--card);border-color:var(--line2);color:var(--accent)}
+  .b-ghost:hover{background:var(--hover);border-color:var(--accent);color:var(--accent)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  button:disabled:hover{background:var(--card);border-color:var(--line2);color:var(--accent)}
+  .chk{display:flex;align-items:center;gap:9px;font-weight:400;font-size:14px;color:var(--ink)}
+  .chk input{width:16px;height:16px;accent-color:var(--accent)}
+  .stat{
+    margin-top:20px;border-top:1px solid var(--line);padding-top:16px;
+    font-size:14.5px;color:var(--ink);
+  }
+  .stat b{color:var(--accent)}
+  .log{
+    margin-top:12px;background:rgba(232,241,242,.6);border:1px solid var(--line2);
+    border-radius:8px;padding:12px 14px;font-size:12.5px;
+    max-height:220px;overflow:auto;white-space:pre-wrap;color:#3a4a40;
+    font-family:Consolas,"Courier New",monospace;line-height:1.7;
+  }
+  .note{
+    margin-top:20px;font-size:12.5px;color:var(--muted);
+    border-top:1px dashed var(--line2);padding-top:14px;line-height:1.8;
+  }
+  .note b{color:var(--accent)}
+  code{background:rgba(232,241,242,.8);padding:1px 6px;border-radius:4px;font-size:12px;
+    font-family:Consolas,"Courier New",monospace;color:var(--accent-d)}
+  .foot{margin-top:18px;text-align:center;font-size:12px;color:var(--muted)}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>JSON → Markdown 转换工具</h1>
+  <div class="head">
+    <div class="seal">墨</div>
+    <h1>JSON → Markdown 转换工具</h1>
+  </div>
+  <div class="underline"></div>
   <p class="desc">把 D1 导出的 JSON（后台「导出数据」下载的 <code>dxwj-export-*.json</code>，或 GitHub 每日备份的 <code>backup/articles.json</code>）还原为 <code>NNN-标题.md</code> 单篇合集。<b>纯前端处理，数据不上传任何服务器。</b></p>
 
   <div class="row">
     <label>① 选择 JSON 文件（点击或拖入）</label>
-    <div class="filebox" id="drop">点击此处选择文件，或将 .json 文件拖到这里
+    <div class="filebox" id="drop">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 3v5h5"/>
+        <path d="M5 3h9l5 5v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/>
+        <path d="M9 13h6M9 16.5h6"/>
+      </svg>
+      点击此处选择文件，或将 .json 文件拖到这里
       <div class="filename" id="fname">尚未选择</div>
     </div>
     <input type="file" id="file" accept=".json,application/json" hidden>
@@ -68,6 +147,7 @@
     <b>命名规则（与本机 json2md.py 一致）</b>：文件名 <code>NNN-标题.md</code>，自动去除书名号《》、零宽不可见字符、路径非法字符；草稿文件名尾部加「（草稿）」标记。<br>
     本页不连接网络处理数据，仅在「下载 Zip」时需要联网加载打包库；若加载失败，会自动退化为逐个文件下载（此时浏览器下载目录不可自定义，请解压 Zip 时使用自定义文件夹名）。
   </div>
+  <div class="foot">道玄文集 · 本地转换工具 · 数据不出本机</div>
 </div>
 
 <script>
