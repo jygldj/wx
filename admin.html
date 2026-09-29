@@ -144,7 +144,7 @@ textarea#body{
 .meta{font-size:14px;color:var(--muted);margin:2px 0 14px}
 
 #login{
-  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  position:fixed;inset:0;display:none;align-items:center;justify-content:center;
   background:rgba(255,254,252,.97);z-index:50;
 }
 #login .box{
@@ -477,14 +477,20 @@ html.dark .dx-toast{background:rgba(74,123,107,.97)}
 
   /* ---------------- 登录态 ---------------- */
 
+  function showLogin() {
+    $('login').style.display = 'flex';
+    $('stat').textContent = '未登录';
+  }
+
   function checkSession() {
     return fetch('/api/session', { credentials: 'same-origin' })
       .then(function (r) { return r.json(); })
       .then(function (j) {
-        if (j && j.admin) { onLoggedIn(); return true; }
-        return false;
+        if (j && j.admin) { onLoggedIn(); }
+        else { showLogin(); }
+        return !!(j && j.admin);
       })
-      .catch(function () { return false; });
+      .catch(function () { showLogin(); return false; });
   }
 
   function onLoggedIn() {

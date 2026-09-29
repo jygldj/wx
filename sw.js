@@ -7,7 +7,7 @@
  *   - 样式/脚本/图片：缓存优先 + 后台静默更新，秒开省流量；
  * 兼容性：不支持 Service Worker 的浏览器自动静默跳过，不影响正常访问。
  */
-var CACHE = 'dxwj-v8';   // ← v8：从预缓存移除已废弃的 build.html / build-core.js（静态更新工具下线）；后台页仍永远走网络，杜绝旧版后台
+var CACHE = 'dxwj-v9';   // ← v9：install 预缓存容错（单资源失败不阻断）+ skipWaiting（下次访问即激活，免关浏览器重开）；并清理 v8 旧缓存
 var RACE_TIMEOUT = 3000;
 
 /* 预缓存清单：网站骨架与文章数据 */
@@ -30,11 +30,17 @@ self.addEventListener('install', function (e) {
         caches.open(CACHE).then(function (cache) {
             // 加 ?v=4 绕过 CDN 边缘缓存强制拉新，但按【原始 URL】存盘：
             // 否则预缓存键带参、运行时请求无参，caches.match 永远对不上，离线首开失效。
+            // 单资源失败（404 / 网络抖动）不阻断整体，保证新版本总能装上。
             return Promise.all(CORE.map(function (u) {
-                return fetch(u + '?v=4').then(function (resp) {
-                    return cache.put(u, resp);
-                });
+                return fetch(u + '?v=4')
+                    .then(function (resp) {
+                        if (resp && resp.ok) return cache.put(u, resp);
+                    })
+                    .catch(function () { /* 资源缺失或网络异常：跳过，其余照常预缓存 */ });
             }));
+        }).then(function () {
+            // 装完即激活，下次访问立即生效，不必等用户关闭全部页面。
+            return self.skipWaiting();
         })
     );
 });
