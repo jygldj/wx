@@ -168,7 +168,7 @@ textarea#body{
   textarea#body{min-height:40vh}
   .fmt-body td:first-child{white-space:normal;width:auto}
   .toolbar .btn.danger{margin-left:0}
-  header{padding:8px 12px;gap:8px;border-bottom:1px solid var(--line)}
+  header{padding:8px 12px;gap:8px;border-bottom:1px solid var(--line);flex-wrap:wrap}
   header .btn{padding:6px 12px;font-size:13.5px}
   .toolbar{gap:6px;margin:12px 0 6px}
   .toolbar .btn{padding:6px 10px;font-size:13px}
@@ -252,8 +252,9 @@ html.dark .dx-toast{background:rgba(74,123,107,.97)}
   <a class="btn" href="index1.html" target="_blank" style="text-decoration:none">查看前台</a>
   <button class="btn" id="btnNew">新建文章</button>
   <button class="btn" id="btnImport">批量导入</button>
-  <button class="btn" id="btnExport" style="display:none">导出数据</button>
-  <button class="btn" id="btnLogout" style="display:none">退出登录</button>
+      <button class="btn" id="btnExport" style="display:none">导出数据</button>
+      <button class="btn" id="btnLogout" style="display:none">退出登录</button>
+      <button class="btn" id="btnRefresh">↻ 刷新</button>
 </header>
 
 <main>
@@ -540,6 +541,10 @@ html.dark .dx-toast{background:rgba(74,123,107,.97)}
 
   $('btnLogout').onclick = function () {
     api('/api/session', { method: 'POST' }).then(function () { location.reload(); });
+  };
+
+  $('btnRefresh').onclick = function () {
+    if (confirm('刷新将丢弃未保存的编辑，确定？')) location.reload();
   };
 
   /* ---------------- 列表（已发布在前，草稿居末、黄字） ---------------- */
