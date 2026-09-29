@@ -30,11 +30,18 @@ import argparse
 
 # Windows / 各平台文件名非法字符
 _ILLEGAL = re.compile(r'[\\/:*?"<>|\r\n\t]')
+# 书名号及其邻近空格（与 articles/ 命名规范保持一致，去掉《》）
+_BOOK = re.compile(r'\s*[《》]\s*')
+# 零宽 / 不可见字符（多因从微信/网页复制粘贴引入）
+_ZERO = re.compile(r'[\u200b\u200c\u200d\u2060\ufeff]')
 
 
 def safe_name(title, maxlen=40):
-    """把标题清洗为合法文件名片段（不含路径分隔与尖括号等）。"""
+    """把标题清洗为合法文件名片段，规则与 articles/ 命名规范一致：
+    去书名号《》、去零宽不可见字符、去路径非法字符。"""
     t = (title or '').strip()
+    t = _ZERO.sub('', t)
+    t = _BOOK.sub('', t)
     t = _ILLEGAL.sub('', t)
     t = t.strip('. ')
     if not t:
