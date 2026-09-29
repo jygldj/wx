@@ -163,7 +163,7 @@ textarea#body{
 
 @media(max-width:860px){
   main{flex-direction:column;height:auto;overflow:visible}
-  aside{width:auto;flex:none;max-height:38vh;border-right:none;border-bottom:1px solid var(--line)}
+  aside{width:auto;flex:none;max-height:calc(100vh - 140px);border-right:none;border-bottom:1px solid var(--line)}
   section.editor{padding:16px}
   textarea#body{min-height:40vh}
   .fmt-body td:first-child{white-space:normal;width:auto}
@@ -172,6 +172,7 @@ textarea#body{
   header .btn{padding:6px 12px;font-size:13.5px}
   .toolbar{gap:6px;margin:12px 0 6px}
   .toolbar .btn{padding:6px 10px;font-size:13px}
+  #welcome{font-size:13.5px;padding:12px 14px;line-height:1.5}
 }
 
 /* 专注撰写模式：隐藏左侧列表与顶栏，编辑区占满视口（手机端由 newArticle/openArticle 自动进入） */
