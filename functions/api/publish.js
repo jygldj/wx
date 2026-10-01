@@ -1,21 +1,21 @@
 // wx/functions/api/publish.js
 // 道玄文集 · 合并发布端点（手机端专用）
 //
-// 设计目的：手机端 WorkBuddy 无需处理会话 Cookie 与 X-DX-Admin 头，
-//           一次调用（密码 + 文章）即可完成"登录 + 写库"。
-//           鉴权复用 ADMIN_PASSWORD_HASH，与 /api/login 同等级。
-//
 // POST /api/publish
 //   请求体：{ password, title, body, category?, date?, status? }
 //   成功：{ ok:true, article:{ aid, id, title, category, date, status } }
-//   失败：{ ok:false, error }  （密码错 401 / 字段错 400 / 写入失败 500）
+//   失败：{ ok:false, error }
+//
+// 时间约定（道玄裁定·2026-10-02）：
+//   date 由作者写稿时自行提供（如农历落款「丙午年八月廿二」），
+//   服务端不自动计算、不做兜底；前端不传则留空。
 
 import { verifyPassword, json } from '../_lib/auth.js';
 
 const MAX_TITLE = 200;
 const MAX_DATE = 80;
 const MAX_CATEGORY = 30;
-const MAX_BODY = 400 * 1024;   // 400 KB 单篇上限
+const MAX_BODY = 400 * 1024;
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -38,7 +38,7 @@ export async function onRequestPost(context) {
   const title = String(p.title || '').trim();
   const body = String(p.body || '');
   const category = String(p.category || '').trim() || '其它';
-  const date = String(p.date || '').trim();
+  const date = String(p.date || '').trim();   // 由作者提供，不自动计算
   const status = p.status === 'draft' ? 'draft' : 'published';
 
   if (!title) return json({ ok: false, error: '标题不能为空' }, 400);
