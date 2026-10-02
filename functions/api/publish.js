@@ -6,7 +6,7 @@
 //       不做兜底；前端不传则留空。道玄裁定·2026-10-02（为手机端通路测试重建）。
 // 重触发部署：修复 2026-10-02 瞬时 build 失败（代码本身无误）。
 
-import { verifyPassword, json } from '../../_lib/auth.js';
+import { verifyPassword, json } from '../_lib/auth.js';
 
 export async function onRequestPost({ request, env }) {
   try {
